@@ -1,0 +1,53 @@
+# Operational config. Values here are bound by config/preregistration.yaml;
+# any divergence is a pre-registration violation and must be justified in a commit.
+master_seed: 20260904
+
+data:
+  dataset: glue
+  dataset_config: sst2
+  split: train
+  text_column: sentence
+  label_column: label
+  max_samples: null          # null = full split
+
+model:
+  name: google/gemma-2-2b
+  dtype: float32
+  layer: 20
+  attn_implementation: eager
+  batch_size: 64
+  max_seq_len: 128
+
+sae:
+  release: gemma-scope-2b-pt-res-canonical
+  sae_id: layer_20/width_16k/canonical
+
+aggregation:
+  primary: mean
+  cached: [mean, max, last]
+
+latent_filter:
+  min_firing_rate: 0.01
+  max_retained: 2048
+
+covariance:
+  ill_conditioned_cond_number: 1.0e4
+  standardise: true
+
+knockoffs:
+  s_method: equicorrelated
+  sample_tol: 1.0e-5
+
+diagnostics:
+  swap_sizes: [0, 1, 10, 50, all]
+  classifier_max_iter: 100
+  holdout_fraction: 0.3
+  n_label_permutations: 20
+  mmd_subsample: 2000
+  mmd_permutations: 500
+  synthetic_n_rows: 20000
+  synthetic_replicates: 10
+
+paths:
+  cache_dir: data/cache
+  results_dir: results

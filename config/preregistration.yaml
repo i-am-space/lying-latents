@@ -1,0 +1,211 @@
+# PRE-REGISTRATION — Stage 2 exchangeability audit
+#
+# Frozen before any experiment was run. Committed as its own commit so the git
+# timestamp precedes the first results commit. Every threshold, seed and decision
+# rule below was fixed in advance. If any of it is changed later, the change must
+# be a separate commit with a stated reason, and the original must remain in history.
+#
+# The paper's thesis is that the field selects on its own results. This file is the
+# evidence that we did not.
+
+meta:
+  stage: 2
+  date_registered: "2026-09-04"
+  scope: >
+    Activation cache, distributional summary, Gaussian second-order knockoff
+    generation, exchangeability diagnostics with a validated null harness.
+    Stages 1, 3, 4 and 5 are out of scope and are not built.
+
+# ---------------------------------------------------------------------------
+# Seeds
+# ---------------------------------------------------------------------------
+seeds:
+  master: 20260904
+  # Per-component streams are derived deterministically from the master seed via
+  # numpy.random.SeedSequence(master).spawn(), in this fixed order. Do not reorder.
+  streams:
+    - dataset_order      # 0
+    - torch_global       # 1
+    - knockoff_sampler   # 2
+    - row_partition      # 3
+    - classifier         # 4
+    - mmd_permutation    # 5
+    - synthetic_null     # 6
+
+# ---------------------------------------------------------------------------
+# Data / model / SAE  (verified to resolve before registration)
+# ---------------------------------------------------------------------------
+data:
+  dataset: glue
+  dataset_config: sst2
+  split: train
+  n_expected: 67349          # full split, no subsampling
+  text_column: sentence
+  label_column: label
+
+model:
+  name: google/gemma-2-2b
+  dtype: float32
+  layer: 20
+  hook: resid_post           # HF hidden_states[layer+1]
+  attn_implementation: eager # required for correct Gemma-2 logit soft-capping
+
+sae:
+  release: gemma-scope-2b-pt-res-canonical
+  sae_id: layer_20/width_16k/canonical
+  d_sae: 16384
+  architecture: jumprelu
+
+# ---------------------------------------------------------------------------
+# Aggregation  (see NOTES_reference.md §2 and §7)
+# ---------------------------------------------------------------------------
+aggregation:
+  primary: mean
+  cached:
+    - mean          # mean over non-special tokens
+    - max           # max over non-special tokens
+    - last          # last non-special token (defensible analogue of the reference)
+  exclude_tokens: [pad, bos, eos]
+  rationale: >
+    The build instructions make max primary only if the reference uses max. It does
+    not: it takes position -1 of a right-padded batch, which is a pad token for most
+    rows (verified, NOTES_reference.md §2.1). Mean therefore stays primary. `last` is
+    cached so their intended aggregator can be reported separately from their padding
+    bug. The reference's literal [:, -1, :] is not reproduced.
+
+# ---------------------------------------------------------------------------
+# High-activity latent filter
+# ---------------------------------------------------------------------------
+latent_filter:
+  statistic: firing_rate       # Pr(X_j > 0) across the corpus
+  min_firing_rate: 0.01
+  max_retained: 2048           # top-p by firing rate if more survive
+  applied_on: primary_aggregator
+  note: >
+    The reference instead takes top-1024 by mean |activation| ("energy"). That
+    statistic is recorded per latent so the two selections can be compared, but it
+    is not used for selection here.
+
+# ---------------------------------------------------------------------------
+# DECISION RULE 1 — premise check (Deliverable 2)
+# ---------------------------------------------------------------------------
+# Evaluated on median_j Pr(X_j = 0) over RETAINED latents, exact zeros only,
+# under the PRIMARY aggregator. Reported for every aggregator regardless.
+premise_check:
+  statistic: median_zero_mass_retained_primary
+  rules:
+    - if: ">= 0.80"
+      verdict: PREMISE_HOLDS
+      action: proceed to the exchangeability audit as specified
+    - if: "0.50 <= x < 0.80"
+      verdict: PREMISE_WEAKENED
+      action: >
+        proceed, but the writeup must state that the atom argument rests on a
+        smaller atom than the >0.95 figure claimed in the proposal, and must report
+        the realised value in place of that claim.
+    - if: "< 0.50"
+      verdict: PREMISE_FAILS
+      action: >
+        stop. Report the number. The atom argument needs rewriting around the
+        aggregator before any further work is committed.
+
+# ---------------------------------------------------------------------------
+# DECISION RULE 2 — covariance conditioning
+# ---------------------------------------------------------------------------
+covariance:
+  estimators: [sample, ledoit_wolf]   # both always reported
+  ill_conditioned_if_cond_number_above: 1.0e4
+  primary_selection_rule: >
+    If cond(sample covariance of standardised columns) > 1e4, ledoit_wolf is primary
+    and sample is reported alongside. Otherwise sample is primary.
+  standardise_columns_before_construction: true
+  also_run_unstandardised: true       # exposes the reference's scale confound
+
+# ---------------------------------------------------------------------------
+# Knockoff construction
+# ---------------------------------------------------------------------------
+knockoffs:
+  library: knockpy
+  sampler: knockpy.knockoffs.GaussianSampler
+  s_method_primary: equicorrelated    # matches the reference's scalar-s construction
+  s_method_secondary: mvr
+  sample_tol: 1.0e-5
+
+# ---------------------------------------------------------------------------
+# DECISION RULE 3 — harness validation (§7.2). Runs BEFORE the real diagnostics.
+# ---------------------------------------------------------------------------
+# Synthetic data: multivariate Gaussian with the SAME covariance as the real
+# retained latents. Second-order knockoffs are exactly valid there, so every
+# diagnostic must return null. If any fires, the harness is broken.
+synthetic_null:
+  n_rows: 20000
+  n_replicates: 10
+  pass_criteria:
+    classifier_auc_ci95_must_contain: 0.50
+    mmd_pvalue_uniformity_ks_test_p_min: 0.05   # KS test of the 10 p-values vs U(0,1)
+    max_abs_standardised_moment_gap: 0.10
+  on_failure: >
+    Fix the harness. Do not run the real diagnostics. A diagnostic that fires on
+    exactly-valid Gaussian knockoffs would produce a result that looks like a
+    finding and is not.
+
+# ---------------------------------------------------------------------------
+# Diagnostics (§7.3)
+# ---------------------------------------------------------------------------
+diagnostics:
+  # (a) zero-mass discrepancy — the trivial classifier 1{x = 0}
+  zero_mass:
+    expected_under_exchangeability: 0.50
+    report: distribution across retained latents
+
+  # (b) swap two-sample tests
+  swap:
+    subset_sizes: [0, 1, 10, 50, "all"]   # |S| = 0 is the built-in negative control
+    row_partition: 0.5                     # half unswapped, half swapped
+    classifier:
+      model: sklearn.ensemble.HistGradientBoostingClassifier
+      max_iter: 100
+      holdout_fraction: 0.3
+      null_band_from: label_permutation
+      n_permutations: 20
+    mmd:
+      kernel: gaussian
+      bandwidth: median_heuristic
+      subsample_per_group: 2000
+      n_permutations: 500
+
+  # (c) higher moments and tails
+  moments:
+    must_match: [mean, variance]           # matched by construction; if not, misconfigured
+    match_tolerance_relative: 0.05
+    compared: [skewness, kurtosis, q90, q99, q999, max]
+
+# ---------------------------------------------------------------------------
+# DECISION RULE 4 — what counts as a violation
+# ---------------------------------------------------------------------------
+violation_criteria:
+  zero_mass: "median per-latent accuracy of 1{x=0} > 0.55"
+  swap_auc: "held-out AUC exceeds the |S|=0 null band's 97.5th percentile"
+  moments: "skewness or kurtosis gap exceeds the synthetic-null gap by >5x"
+
+# ---------------------------------------------------------------------------
+# Interpretation constraints — fixed in advance, must survive into the paper
+# ---------------------------------------------------------------------------
+interpretation_constraints:
+  - >
+    The null set is unknown on real data. Exchangeability is only REQUIRED on nulls.
+    These are therefore necessary-condition tests: sufficient to falsify, not to
+    confirm. We may not claim to have "confirmed the violation on nulls".
+  - >
+    A violation of exchangeability VOIDS the guarantee. It does not demonstrate that
+    realised FDR exceeds the target. That is Stage 3 and is out of scope. No
+    conclusion may assert demonstrated FDR inflation from Stage 2 evidence.
+  - >
+    The zero-mass diagnostic is deliberately the simplest possible falsification. Its
+    force is that it needs no test at all, only the definition. It must not be
+    oversold as a sophisticated finding.
+  - >
+    The reference's padding bug and its unstandardised scalar-s covariance scaling are
+    defects of that implementation. They are reported SEPARATELY from the zero-atom
+    argument, which is a defect of the Gaussian surrogate itself and would survive a
+    correct implementation.
