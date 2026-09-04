@@ -269,8 +269,32 @@ predates every results commit.
 5. **`ill_conditioned_cond_number` written as `10000.0`** rather than `1.0e4`. PyYAML
    parses an unsigned exponent as a string. Value unchanged.
 
+6. **`s_method_secondary: mvr` was pre-registered and is reported separately below**
+   rather than as part of the main audit. It bears only on power, not on validity: the
+   zero-mass diagnostic gives accuracy `(1 + p₀)/2` for *any* second-order Gaussian
+   construction, because every such knockoff is continuous and so never attains an exact
+   zero. No choice of `S` can repair that.
+
 Items 1–2 are applied identically to the |S| = 0 negative control and to the Gaussian
 control, both of which return null, so they cannot manufacture a positive result.
+
+### Correction to the commit record
+
+Commit `5e0559d` ("Add Stage 2 pipeline") carries the line *"No results committed at
+this commit"*. **That statement is false.** A `git add -A` swept the distributional
+summary outputs — `results/fig1_zero_mass_hist.png`, `fig2_marginals.png`,
+`fig3_eigenspectrum.png`, `stage2_describe.json`, `stage2_latent_table.npz` — into that
+commit alongside the code. The history is not rewritten to hide this; the error is
+recorded here instead.
+
+What the error does **not** affect is the claim the pre-registration exists to support.
+The pre-registration commit `ecbf77d` (2026-09-04 10:27:20 +0000) contains
+`config/preregistration.yaml` and **no results of any kind** — verified by
+`git ls-tree -r --name-only ecbf77d`, which lists nothing under `results/` or `data/`.
+Every result in this repository post-dates it. The mislabelled commit is the *code*
+commit, one commit later, and the results it accidentally contains are the
+distributional summary, which was itself produced after the pre-registration was
+frozen.
 
 ## 8. Reproduction
 
