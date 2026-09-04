@@ -226,10 +226,28 @@ It is confounded with raw activation energy, exactly as anticipated.
 
 Note that this is not fixed by standardising. On the correlation scale the equicorrelated
 rule still gives `s = 0.0228` (Ledoit–Wolf) or `0.0084` (sample), i.e.
-`corr(X_j, X̃_j)` of 0.977 and 0.992. The cause is the ill-conditioned correlation matrix
-(λ_min = 0.0042), and the fix would be a different `S` (MVR or SDP), not a different
-scale. We report it because a Stage 3 power measurement against this baseline would be
-measuring the `S` choice as much as the Gaussian assumption.
+`corr(X_j, X̃_j)` of 0.977 and 0.992.
+
+**The cause is the equicorrelated choice of `S`, not the data, and this was tested
+rather than assumed.** On the same Ledoit–Wolf correlation matrix restricted to the top
+512 latents — the reference's own dimension, used because MVR does not converge at
+p = 2048 within 30 minutes:
+
+| `S` method | mean `s` | median | min | max | mean `corr(X_j, X̃_j)` |
+|---|---|---|---|---|---|
+| equicorrelated (theirs, and ours) | 0.0300 | 0.0300 | 0.0300 | 0.0300 | **0.970** |
+| MVR | 0.3345 | 0.3403 | 0.0123 | 0.7168 | **0.666** |
+| SDP | 0.5152 | 0.5226 | 0.0000 | 0.9980 | **0.485** |
+
+MVR gives an 11× larger `s` and SDP a 17× larger one, so the near-degeneracy is an
+artefact of the equicorrelated construction and is repairable. It matters for Stage 3:
+a realised-FDR comparison against the equicorrelated baseline would be measuring the
+`S` choice at least as much as the Gaussian assumption, and should use MVR or report
+both. (Reproduce with `scripts/compare_smatrix.py`.)
+
+None of this touches validity. Every one of these constructions is continuous, so all
+of them have `Pr(X̃_j = 0) = 0` and all of them fail the zero-mass diagnostic
+identically. No choice of `S` can repair exchangeability here.
 
 ## 6. What this establishes, and what it does not
 
@@ -269,9 +287,9 @@ predates every results commit.
 5. **`ill_conditioned_cond_number` written as `10000.0`** rather than `1.0e4`. PyYAML
    parses an unsigned exponent as a string. Value unchanged.
 
-6. **`s_method_secondary: mvr` was pre-registered and is reported separately below**
-   rather than as part of the main audit. It bears only on power, not on validity: the
-   zero-mass diagnostic gives accuracy `(1 + p₀)/2` for *any* second-order Gaussian
+6. **`s_method_secondary: mvr` was run at p = 512, not p = 2048** (§5 table). MVR did
+   not converge at p = 2048 within 30 minutes. It bears only on power, not on validity:
+   the zero-mass diagnostic gives accuracy `(1 + p₀)/2` for *any* second-order Gaussian
    construction, because every such knockoff is continuous and so never attains an exact
    zero. No choice of `S` can repair that.
 

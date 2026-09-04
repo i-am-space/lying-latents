@@ -35,7 +35,7 @@ results/                      figures, JSON summaries, stage2_findings.md
 pip install -r requirements.txt
 python src/cache_activations.py --config config/default.yaml   # ~5 min, 1 GPU
 python src/describe_latents.py  --config config/default.yaml   # ~2 min, CPU
-python src/knockoff_audit.py    --config config/default.yaml   # ~30 min, CPU
+python src/knockoff_audit.py    --config config/default.yaml   # ~85 min, CPU
 ```
 
 Every run is determined by `master_seed` in the config. Per-component RNG streams are
@@ -55,3 +55,16 @@ aggregated over non-special tokens only; **BOS must be excluded** — it is an
 attention sink with residual norm ~2900 against ~350 for content tokens, and the SAE
 does not model it (L0 ~7000 there against ~69 on real tokens). Retained latents are
 those firing on ≥1% of sentences, capped at the top 2048 by firing rate.
+
+## Result
+
+Exchangeability is violated. Median accuracy of the trivial classifier `1{x = 0}` at
+separating a real column from its knockoff is **0.945** (0.50 under exchangeability),
+and swapping a **single** latent out of 2048 is detected by a held-out classifier at
+**AUC 0.9966**, 65 standard deviations above a label-permutation null — against a
+harness that returns AUC 0.4973 (CI containing 0.50) on Gaussian data where the same
+knockoffs are provably valid.
+
+This **voids the FDR guarantee**. It does not show that realised FDR exceeds the
+nominal target; that is Stage 3 and was not run. Full writeup with the interpretation
+constraints in [results/stage2_findings.md](results/stage2_findings.md).
