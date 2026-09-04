@@ -114,7 +114,7 @@ premise_check:
 # ---------------------------------------------------------------------------
 covariance:
   estimators: [sample, ledoit_wolf]   # both always reported
-  ill_conditioned_if_cond_number_above: 1.0e4
+  ill_conditioned_if_cond_number_above: 10000.0
   primary_selection_rule: >
     If cond(sample covariance of standardised columns) > 1e4, ledoit_wolf is primary
     and sample is reported alongside. Otherwise sample is primary.
@@ -129,7 +129,7 @@ knockoffs:
   sampler: knockpy.knockoffs.GaussianSampler
   s_method_primary: equicorrelated    # matches the reference's scalar-s construction
   s_method_secondary: mvr
-  sample_tol: 1.0e-5
+  sample_tol: 1.0e-05
 
 # ---------------------------------------------------------------------------
 # DECISION RULE 3 — harness validation (§7.2). Runs BEFORE the real diagnostics.

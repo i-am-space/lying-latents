@@ -31,13 +31,17 @@ latent_filter:
   max_retained: 2048
 
 covariance:
-  ill_conditioned_cond_number: 1.0e4
+  ill_conditioned_cond_number: 10000.0
   standardise: true
 
 knockoffs:
   s_method: equicorrelated
-  sample_tol: 1.0e-5
+  sample_tol: 1.0e-05
 
+# computational parameters added after pre-registration (see commit message
+# and results/stage2_findings.md "Deviations"). These control cost only; they do
+# not alter any decision rule, and the |S|=0 negative control is subject to the
+# identical treatment, so they cannot manufacture a positive result.
 diagnostics:
   swap_sizes: [0, 1, 10, 50, all]
   classifier_max_iter: 100
@@ -45,9 +49,12 @@ diagnostics:
   n_label_permutations: 20
   mmd_subsample: 2000
   mmd_permutations: 500
+  n_clf_rows: 20000        # rows fed to the two-sample classifier (cost cap)
+  swap_replicates: 3       # independent draws of S for |S| in {1, 10, 50}
   synthetic_n_rows: 20000
   synthetic_replicates: 10
 
 paths:
   cache_dir: data/cache
   results_dir: results
+
