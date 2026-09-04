@@ -57,8 +57,17 @@ tokens shape           : (2, 15)
 rows whose [-1] is PAD : 1/2
 ```
 
-So for most examples the "activation vector" is the SAE encoding of the residual stream
-at a padding position, not at any content token. The per-example feature vector is
+**How often this happens is bounded without reference to their shuffle.** Within a
+batch, only the rows attaining the batch's maximum token length receive a real final
+token; every shorter row is read at a pad position. With `activation_batch_size = 16`
+that is at most one row in sixteen (plus ties), i.e. **at least ~94% of rows are read
+at a pad position**, whatever permutation the shuffle produces. Simulating their exact
+defaults (SST-2 validation, `shuffle(seed=2025)`, `max_samples=512`, batches of 16;
+token lengths median 25, max 61 under their tokenizer with BOS prepended) gives
+**476/512 = 93.0%** of rows read at a pad token.
+
+So for the overwhelming majority of examples the "activation vector" is the SAE
+encoding of the residual stream at a padding position, not at any content token. The per-example feature vector is
 largely a function of *how long the other 15 sentences in the batch happened to be*.
 
 This is worse than the dilution failure mode anticipated in the build instructions §2:
