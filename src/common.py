@@ -19,6 +19,7 @@ STREAMS = [
     "classifier",
     "mmd_permutation",
     "synthetic_null",
+    "label_permutation",   # Stage 1: FWER calibration
 ]
 
 

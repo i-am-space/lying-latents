@@ -209,3 +209,87 @@ interpretation_constraints:
     defects of that implementation. They are reported SEPARATELY from the zero-atom
     argument, which is a defect of the Gaussian surrogate itself and would survive a
     correct implementation.
+
+# ===========================================================================
+# PRE-REGISTRATION — Stage 1 FWER calibration
+# ===========================================================================
+# Appended to the same pre-registration file. All Stage 2 rules above are
+# unchanged. This block must be committed before any Stage 1 results.
+
+stage1:
+  meta:
+    date_registered: "2026-09-10"
+    scope: >
+      FWER calibration of the standard search-then-validate pipeline under the
+      global null (label permutation). Reuses the Stage 2 activation cache;
+      no new GPU work. All analysis is CPU-bound.
+
+  seeds:
+    stream: label_permutation   # index 7 in STREAMS (appended, preserving 0-6)
+
+  n_permutations: 500
+
+  scoring_methods:
+    mean_diff:
+      definition: "|mean(X_j | y=1) - mean(X_j | y=0)| on the train split"
+    auroc:
+      definition: >
+        |AUC(y, X_j) - 0.5| on the train split, computed via the rank-sum
+        (Mann-Whitney U) formula. Ties broken by stable sort order.
+    probe_weight:
+      definition: >
+        |β_j| from L1-logistic regression on all retained latents, train split.
+        Columns standardised (zero mean, unit variance) before fitting.
+
+  selection:
+    top_k: 10
+    note: >
+      Top-10 matches a realistic practitioner use case (pick a handful of
+      candidates). The scoring method determines the ranking.
+
+  validation:
+    method: latent_zeroing
+    description: >
+      Zero the candidate latent's column in X_test, re-evaluate the logistic
+      probe's held-out accuracy. If accuracy drops by >= delta, the latent is
+      "certified" (passes the search-then-validate workflow).
+    ablation_delta: 0.02
+    note: >
+      This is a latent-space proxy for model-level ablation. True model-level
+      ablation would require a forward pass per candidate per permutation
+      (500 * k = 5000 GPU forward passes), which is out of scope. The proxy
+      is faithful to the logic of the standard pipeline: a latent is certified
+      iff it both ranks highly AND zeroing it changes predictions.
+    probe:
+      penalty: l1
+      solver: saga
+      C: 1.0
+      max_iter: 200
+    holdout_fraction: 0.3
+
+  fwer_definition: >
+    Fraction of B permutations in which at least one latent is certified.
+    Reported separately for each scoring method.
+
+  westfall_young:
+    description: >
+      The permutation null distribution of max_j score(j, y_π) across all B
+      permutations. Single-step Westfall-Young correction. Per-latent adjusted
+      p-values: p_j = (1 + #{b : max_null_b >= real_score_j}) / (1 + B).
+    alpha: [0.05, 0.01]
+
+  interpretation_constraints:
+    - >
+      FWER under the global null measures how often the pipeline falsely
+      certifies ANY feature when no feature carries signal. It is a property
+      of the selection and validation procedure, not of the data.
+    - >
+      The Westfall-Young correction provides a multiplicity-adjusted threshold
+      usable independently of the knockoff framework.
+    - >
+      A high FWER does not by itself prove that published feature claims are
+      wrong. It shows that the pipeline does not control the error rate it
+      implicitly claims to control. Analogous to demonstrating that a
+      confidence interval has the wrong coverage: the parameter may still
+      be in the interval, but the guarantee is void.
+

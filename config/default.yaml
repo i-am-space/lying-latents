@@ -54,6 +54,15 @@ diagnostics:
   synthetic_n_rows: 20000
   synthetic_replicates: 10
 
+stage1:
+  n_permutations: 500
+  scoring_methods: [mean_diff, auroc, probe_weight]
+  top_k_certify: 10
+  ablation_delta: 0.02
+  probe_holdout_fraction: 0.3
+  probe_max_iter: 200
+  probe_C: 1.0
+
 paths:
   cache_dir: data/cache
   results_dir: results
