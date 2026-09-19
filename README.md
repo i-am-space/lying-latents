@@ -3,9 +3,10 @@
 Auditing whether the Model-X knockoff framework, as applied to SAE latents by
 Enkhbayar (2025), satisfies the exchangeability property its FDR guarantee requires.
 
-**Scope of this repository is Stage 2 only** — activation cache, distributional
-summary, Gaussian knockoff generation, and exchangeability diagnostics with a
-validated null harness. Stages 1, 3, 4 and 5 are deliberately not built.
+**Scope of this repository is Stages 1–3** — activation cache, distributional
+summary, Gaussian knockoff generation, exchangeability diagnostics with a
+validated null harness, FWER calibration of the standard pipeline, and
+semi-synthetic planted-signal FDR benchmark. Stages 4 and 5 are not built.
 
 ## What this does and does not establish
 
@@ -23,10 +24,12 @@ config/default.yaml           operational config (bound by the above)
 src/cache_activations.py      SST-2 -> Gemma Scope SAE latents -> data/cache/<hash>.npz
 src/describe_latents.py       distributional summary + premise check
 src/knockoff_audit.py         harness validation, then the exchangeability diagnostics
+src/calibrate_pipeline.py     Stage 1: FWER calibration under the global null
+src/planted_fdr.py            Stage 3: planted-signal FDR benchmark with amplitude sweep
 src/common.py                 config loading, seed derivation, cache hashing
 scripts/                      one-off verification of reference-code behaviour
 NOTES_reference.md            what the audited pipeline actually does
-results/                      figures, JSON summaries, stage2_findings.md
+results/                      figures, JSON summaries, per-stage findings
 ```
 
 ## Reproducing
@@ -36,6 +39,8 @@ pip install -r requirements.txt
 python src/cache_activations.py --config config/default.yaml   # ~5 min, 1 GPU
 python src/describe_latents.py  --config config/default.yaml   # ~2 min, CPU
 python src/knockoff_audit.py    --config config/default.yaml   # ~85 min, CPU
+python src/calibrate_pipeline.py --config config/default.yaml --device cuda  # ~3 min, GPU
+python src/planted_fdr.py       --config config/default.yaml --device cuda  # ~15 min, GPU
 ```
 
 Every run is determined by `master_seed` in the config. Per-component RNG streams are

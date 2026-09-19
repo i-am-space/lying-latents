@@ -278,7 +278,7 @@ def main() -> None:
         print(f"\nCALIBRATION: AUC {np.mean(aucs):.4f} CI95 {ci}  "
               f"MMD-p KS={ks.pvalue:.3f}  moment gap {max(gaps):.4f}  -> "
               f"{'PASS' if passed else 'FAIL'}")
-        json.dump(out, open(rd / "stage2_audit.json", "w"), indent=2, default=float)
+        (rd / "stage2_audit.json").write_text(json.dumps(out, indent=2, default=float))
         if not passed:
             raise SystemExit("Harness validation FAILED. Fix the diagnostics before "
                              "running on real latents (preregistration §7.2).")
@@ -331,7 +331,7 @@ def main() -> None:
           f"{np.median(np.diag(Sig_raw)):.4g}  -> ratio "
           f"{out['reference_style']['s_over_median_variance']:.3g}")
 
-    json.dump(out, open(rd / "stage2_audit.json", "w"), indent=2, default=float)
+    (rd / "stage2_audit.json").write_text(json.dumps(out, indent=2, default=float))
     np.savez(rd / "stage2_zero_mass.npz", **zm_arrays)
     make_figures(out, zm_arrays, rd, p)
     print(f"\nwrote {rd}/stage2_audit.json + figures")

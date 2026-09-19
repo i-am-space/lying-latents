@@ -66,9 +66,10 @@ stage1:
 stage3:
   signal_sizes: [10, 20, 30]
   nominal_fdr_targets: [0.05, 0.10, 0.20]
-  replicates: 20
+  replicates: 10
   functional_forms: [linear, interaction]
-  signal_amplitude: 3.0
+  signal_amplitudes: [0.5, 1.0, 2.0, 3.0]   # amplitude sweep: tests the failure boundary
+  knockoff_redraws: 3                         # independent knockoff generations for honest SEs
   lasso_lambda: 0.02
   lasso_max_iter: 500
   lasso_lr: 0.1

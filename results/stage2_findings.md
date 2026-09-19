@@ -21,7 +21,7 @@ variables they are supposed to be decoys for.
 
 **What this establishes:** the finite-sample FDR guarantee of Model-X knockoffs does
 not hold for this construction on this data. **What it does not establish:** that the
-realised FDR exceeds the nominal target. That is Stage 3 and was not run.
+realised FDR exceeds the nominal target. That is Stage 3 (see `results/stage3_findings.md`).
 
 ## 1. Setup
 

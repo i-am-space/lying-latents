@@ -1,12 +1,17 @@
 """Stage 3 — Realised FDR against known ground truth (planted signal).
 
 Evaluates whether the finite-sample FDR guarantee of Gaussian second-order knockoffs
-holds empirically, or whether the exchangeability violation demonstrated in Stage 2
-inflates realised false discoveries above the nominal target q in {0.05, 0.10, 0.20}.
+holds empirically across a range of signal amplitudes, or whether the exchangeability
+violation demonstrated in Stage 2 inflates realised false discoveries above the
+nominal target q in {0.05, 0.10, 0.20}.
 
-The real activation matrix X (preserving zero-atom, tails, and feature correlation)
-is retained, while synthetic binary labels Y are generated from a planted subset S
-of true signals. All latents outside S are conditionally null by construction.
+Key design choices:
+- Amplitude sweep: tests FDR control at multiple signal strengths (0.5–3.0),
+  not just the easy high-SNR regime where the filter is never stressed.
+- Multiple knockoff draws: captures knockoff-generation randomness in SEs.
+  Replicates within a single draw share X and X_tilde (only Y changes),
+  so without redraws the SEs underestimate true variability.
+- Two FDR control criteria: strict (mean ≤ q) and CI-based (upper CI ≤ q).
 
 Usage: python src/planted_fdr.py --config config/default.yaml [--device cuda]
 """
@@ -166,96 +171,131 @@ def evaluate_discoveries(
 # Visualizations
 # ---------------------------------------------------------------------------
 
-def make_stage3_figures(
-    results_dict: dict,
-    rd: Path,
-) -> None:
-    """Generate Fig 7 (Nominal vs Realised FDR) and Fig 8 (Power vs Signal Size)."""
+def make_stage3_figures(results_dict: dict, rd: Path) -> None:
+    """Generate Stage 3 figures.
+
+    Fig 7: FDR vs Signal Amplitude (the key diagnostic — does FDR blow up
+           at lower signal strengths where the filter is stressed?)
+    Fig 8: Power vs Signal Amplitude
+    Fig 9: Nominal q vs Realised FDR (at max amplitude, backward compatible)
+    """
     records = results_dict["records"]
+    amplitudes = results_dict["signal_amplitudes"]
     signal_sizes = results_dict["signal_sizes"]
     fdr_targets = results_dict["nominal_fdr_targets"]
     forms = results_dict["functional_forms"]
 
-    # --- Fig 7: Nominal vs Realised FDR ---
+    colors_k = {10: "#3b6ea5", 20: "#e07b39", 30: "#5b8c5a"}
+    q_ref = 0.10  # standard benchmark target for amplitude plots
+
+    # --- Fig 7: FDR vs Signal Amplitude ---
     fig, axes = plt.subplots(1, len(forms), figsize=(6 * len(forms), 5), sharey=True)
     if len(forms) == 1:
         axes = [axes]
 
-    colors = {10: "#3b6ea5", 20: "#e07b39", 30: "#5b8c5a"}
+    for ax, form in zip(axes, forms):
+        ax.axhline(q_ref, color="k", ls="--", lw=1.5,
+                    label=f"Nominal q = {q_ref}", alpha=0.7)
+        for k in signal_sizes:
+            fdrs_mean, fdrs_err, amps_valid = [], [], []
+            for amp in amplitudes:
+                subset = [r for r in records
+                          if r["signal_size"] == k and r["form"] == form
+                          and r["q"] == q_ref and r["amplitude"] == amp]
+                if not subset:
+                    continue
+                vals = [r["knockoff_fdr"] for r in subset]
+                fdrs_mean.append(np.mean(vals))
+                fdrs_err.append(np.std(vals) / np.sqrt(len(vals)))
+                amps_valid.append(amp)
+
+            ax.errorbar(amps_valid, fdrs_mean, yerr=fdrs_err, marker="o",
+                        label=f"|S| = {k}", color=colors_k.get(k, "blue"),
+                        capsize=4, lw=1.5)
+
+        ax.set_title(f"FDR vs Signal Amplitude ({form.capitalize()})")
+        ax.set_xlabel("Signal Amplitude")
+        ax.set_ylabel("Realised FDR")
+        ax.set_ylim(-0.02, max(0.25, q_ref * 2.5))
+        ax.legend(fontsize=9)
+        ax.grid(True, ls=":", alpha=0.5)
+
+    fig.suptitle(f"Stage 3: FDR Control Across Signal Strengths (q = {q_ref})", y=1.02)
+    fig.tight_layout()
+    fig.savefig(rd / "fig7_fdr_vs_amplitude.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+    # --- Fig 8: Power vs Signal Amplitude ---
+    fig, axes = plt.subplots(1, len(forms), figsize=(6 * len(forms), 5), sharey=True)
+    if len(forms) == 1:
+        axes = [axes]
 
     for ax, form in zip(axes, forms):
-        # Diagonal line: ideal FDR control
-        ax.plot([0, 0.25], [0, 0.25], "k--", label="Ideal Control (Realised = Nominal)", alpha=0.7)
-
         for k in signal_sizes:
-            fdrs_mean = []
-            fdrs_err = []
+            powers_mean, powers_err, amps_valid = [], [], []
+            for amp in amplitudes:
+                subset = [r for r in records
+                          if r["signal_size"] == k and r["form"] == form
+                          and r["q"] == q_ref and r["amplitude"] == amp]
+                if not subset:
+                    continue
+                vals = [r["knockoff_power"] for r in subset]
+                powers_mean.append(np.mean(vals))
+                powers_err.append(np.std(vals) / np.sqrt(len(vals)))
+                amps_valid.append(amp)
+
+            ax.errorbar(amps_valid, powers_mean, yerr=powers_err, marker="s",
+                        label=f"|S| = {k}", color=colors_k.get(k, "blue"),
+                        capsize=4, lw=1.5)
+
+        ax.set_title(f"Power vs Signal Amplitude ({form.capitalize()})")
+        ax.set_xlabel("Signal Amplitude")
+        ax.set_ylabel("Statistical Power")
+        ax.set_ylim(-0.02, 1.05)
+        ax.legend(fontsize=9)
+        ax.grid(True, ls=":", alpha=0.5)
+
+    fig.suptitle(f"Stage 3: Power Across Signal Strengths (q = {q_ref})", y=1.02)
+    fig.tight_layout()
+    fig.savefig(rd / "fig8_power_vs_amplitude.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+    # --- Fig 9: Nominal q vs Realised FDR (at max amplitude) ---
+    max_amp = max(amplitudes)
+    fig, axes = plt.subplots(1, len(forms), figsize=(6 * len(forms), 5), sharey=True)
+    if len(forms) == 1:
+        axes = [axes]
+
+    for ax, form in zip(axes, forms):
+        ax.plot([0, 0.25], [0, 0.25], "k--",
+                label="Ideal Control (Realised = Nominal)", alpha=0.7)
+        for k in signal_sizes:
+            fdrs_mean, fdrs_err = [], []
             for q in fdr_targets:
-                subset = [r for r in records if r["signal_size"] == k and r["form"] == form and r["q"] == q]
+                subset = [r for r in records
+                          if r["signal_size"] == k and r["form"] == form
+                          and r["q"] == q and r["amplitude"] == max_amp]
                 vals = [r["knockoff_fdr"] for r in subset]
                 fdrs_mean.append(np.mean(vals))
                 fdrs_err.append(np.std(vals) / np.sqrt(len(vals)))
 
-            ax.errorbar(
-                fdr_targets,
-                fdrs_mean,
-                yerr=fdrs_err,
-                marker="o",
-                label=f"|S| = {k} signals",
-                color=colors.get(k, "blue"),
-                capsize=4,
-                lw=1.5,
-            )
+            ax.errorbar(fdr_targets, fdrs_mean, yerr=fdrs_err, marker="o",
+                        label=f"|S| = {k} signals", color=colors_k.get(k, "blue"),
+                        capsize=4, lw=1.5)
 
-        ax.set_title(f"Knockoff FDR Control ({form.capitalize()})")
+        ax.set_title(f"Knockoff FDR Control ({form.capitalize()}, amp={max_amp})")
         ax.set_xlabel("Nominal FDR Target (q)")
         ax.set_ylabel("Realised FDR")
         ax.set_xlim(0, 0.25)
-        ax.set_ylim(-0.02, max(0.4, max(r["knockoff_fdr"] for r in records) * 1.15))
+        fdr_max = max((r["knockoff_fdr"] for r in records if r["amplitude"] == max_amp),
+                      default=0.1)
+        ax.set_ylim(-0.02, max(0.4, fdr_max * 1.15))
         ax.legend(fontsize=9)
         ax.grid(True, ls=":", alpha=0.5)
 
-    fig.suptitle("Stage 3: Realised False Discovery Rate on Semi-Synthetic Ground Truth", y=1.02)
+    fig.suptitle(f"Stage 3: Nominal vs Realised FDR (amplitude = {max_amp})", y=1.02)
     fig.tight_layout()
-    fig.savefig(rd / "fig7_fdr_control.png", dpi=150, bbox_inches="tight")
-    plt.close(fig)
-
-    # --- Fig 8: Statistical Power Comparison ---
-    fig, axes = plt.subplots(1, len(forms), figsize=(6 * len(forms), 5), sharey=True)
-    if len(forms) == 1:
-        axes = [axes]
-
-    for ax, form in zip(axes, forms):
-        for q in fdr_targets:
-            powers_mean = []
-            powers_err = []
-            for k in signal_sizes:
-                subset = [r for r in records if r["signal_size"] == k and r["form"] == form and r["q"] == q]
-                vals = [r["knockoff_power"] for r in subset]
-                powers_mean.append(np.mean(vals))
-                powers_err.append(np.std(vals) / np.sqrt(len(vals)))
-
-            ax.errorbar(
-                signal_sizes,
-                powers_mean,
-                yerr=powers_err,
-                marker="s",
-                label=f"q = {q}",
-                capsize=4,
-                lw=1.5,
-            )
-
-        ax.set_title(f"Knockoff Power ({form.capitalize()})")
-        ax.set_xlabel("Planted Signal Size (|S|)")
-        ax.set_ylabel("Statistical Power (True Positive Rate)")
-        ax.set_ylim(-0.02, 1.05)
-        ax.set_xticks(signal_sizes)
-        ax.legend(fontsize=9)
-        ax.grid(True, ls=":", alpha=0.5)
-
-    fig.suptitle("Stage 3: Statistical Power across Signal Sizes", y=1.02)
-    fig.tight_layout()
-    fig.savefig(rd / "fig8_power_comparison.png", dpi=150, bbox_inches="tight")
+    fig.savefig(rd / "fig9_fdr_control.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -264,11 +304,16 @@ def make_stage3_figures(
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Stage 3 — Realised FDR on semi-synthetic ground truth")
-    parser.add_argument("--config", default="config/default.yaml", help="Path to config YAML")
-    parser.add_argument("--cache", default=None, help="Override path to activation cache")
-    parser.add_argument("--device", default=None, help="torch device, e.g. 'cuda' or 'cpu'")
-    parser.add_argument("--limit-reps", type=int, default=None, help="Override number of replicates for quick testing")
+    parser = argparse.ArgumentParser(
+        description="Stage 3 — Realised FDR on semi-synthetic ground truth")
+    parser.add_argument("--config", default="config/default.yaml",
+                        help="Path to config YAML")
+    parser.add_argument("--cache", default=None,
+                        help="Override path to activation cache")
+    parser.add_argument("--device", default=None,
+                        help="torch device, e.g. 'cuda' or 'cpu'")
+    parser.add_argument("--limit-reps", type=int, default=None,
+                        help="Override number of replicates for quick testing")
     args = parser.parse_args()
 
     # Device selection
@@ -281,8 +326,8 @@ def main() -> None:
     # Config & Paths
     cfg = load_config(args.config)
     rd = results_dir(cfg)
-    cp = args.cache or cache_path(cfg)
-    if not cp.exists() if hasattr(cp, "exists") else True:
+    cp = Path(args.cache) if args.cache else cache_path(cfg)
+    if not cp.exists():
         raise SystemExit(f"Cache not found at {cp}. Run src/cache_activations.py first.")
 
     d = np.load(cp, allow_pickle=True)
@@ -297,145 +342,173 @@ def main() -> None:
     signal_sizes = cfg_s3["signal_sizes"]
     fdr_targets = cfg_s3["nominal_fdr_targets"]
     forms = cfg_s3["functional_forms"]
-    amplitude = float(cfg_s3.get("signal_amplitude", 3.0))
+
+    # Support both old (single) and new (list) amplitude config
+    if "signal_amplitudes" in cfg_s3:
+        amplitudes = [float(a) for a in cfg_s3["signal_amplitudes"]]
+    else:
+        amplitudes = [float(cfg_s3.get("signal_amplitude", 3.0))]
+
+    n_ko_draws = cfg_s3.get("knockoff_redraws", 1)
 
     # Standardize X
     X_sub = X_raw[:n_samples]
     Z, mu, sd = standardise(X_sub)
     print(f"Standardized features: shape={Z.shape}")
 
-    # Step 1: Generate Gaussian Knockoffs (Model-X unsupervised property)
-    print("\n=== Generating Gaussian Second-Order Knockoffs (knockpy) ===")
+    # Covariance estimation (shared across knockoff draws)
+    print("\n=== Estimating covariance (Ledoit-Wolf) ===")
     t0 = time.time()
     Sigma = estimate_cov(Z, "ledoit_wolf")
-    seed_k = int(rng_for(cfg, "knockoff_sampler").integers(2**31))
-    Zk, S_mat = make_knockoffs(Z, Sigma, cfg["knockoffs"]["s_method"], seed_k)
-    print(f"Knockoffs generated in {time.time() - t0:.1f}s | mean s = {np.diag(S_mat).mean():.4f}")
+    print(f"Covariance estimated in {time.time() - t0:.1f}s")
 
-    # Full concatenated design matrix [X, Xk]
-    ZZ = np.hstack([Z, Zk]).astype(np.float32)
-    ZZ_t = torch.from_numpy(ZZ).to(device)
-
-    # Optional: Stage 1 baseline threshold for comparison if available
-    s1_path = rd / "stage1_calibration.json"
-    wy_threshold = None
-    if s1_path.exists():
-        try:
-            s1_data = json.loads(s1_path.read_text())
-            wy_threshold = s1_data.get("permutation", {}).get("mean_diff", {}).get("max_score_null_q95")
-            print(f"Stage 1 Westfall-Young 95th threshold loaded: {wy_threshold:.4f}")
-        except Exception:
-            pass
+    # Derive knockoff seeds from the knockoff_sampler stream
+    rng_ko = rng_for(cfg, "knockoff_sampler")
+    ko_seeds = [int(rng_ko.integers(2**31)) for _ in range(n_ko_draws)]
 
     rng_plant = rng_for(cfg, "planted_signal")
 
-    # Replicate Loop
-    records = []
-    print(f"\n=== Running Stage 3 Benchmark ({n_reps} reps, |S| in {signal_sizes}, forms in {forms}) ===")
-    start_all = time.time()
+    # Compute total runs for progress tracking
+    total_runs = (n_ko_draws * len(amplitudes) * len(forms)
+                  * len(signal_sizes) * n_reps)
 
-    total_runs = len(forms) * len(signal_sizes) * n_reps
+    print(f"\n=== Stage 3 Benchmark ===")
+    print(f"  Knockoff draws   : {n_ko_draws}")
+    print(f"  Amplitudes       : {amplitudes}")
+    print(f"  Forms            : {forms}")
+    print(f"  Signal sizes     : {signal_sizes}")
+    print(f"  FDR targets      : {fdr_targets}")
+    print(f"  Reps per draw    : {n_reps}")
+    print(f"  Total Lasso fits : {total_runs}")
+
+    records = []
+    start_all = time.time()
     run_idx = 0
 
-    for form in forms:
-        for k in signal_sizes:
-            for rep in range(n_reps):
-                run_idx += 1
-                # 1. Select ground-truth signals S
-                S_idx = np.sort(rng_plant.choice(p, size=k, replace=False))
-                true_set = set(S_idx.tolist())
+    for ko_draw in range(n_ko_draws):
+        print(f"\n--- Knockoff draw {ko_draw + 1}/{n_ko_draws} "
+              f"(seed={ko_seeds[ko_draw]}) ---")
+        t0 = time.time()
+        Zk, S_mat = make_knockoffs(
+            Z, Sigma, cfg["knockoffs"]["s_method"], ko_seeds[ko_draw])
+        print(f"  Generated in {time.time() - t0:.1f}s | "
+              f"mean s = {np.diag(S_mat).mean():.4f}")
 
-                # 2. Generate labels Y
-                y_np, _ = generate_planted_labels(Z, S_idx, form, amplitude, rng_plant)
-                y_t = torch.from_numpy(y_np).to(device)
+        ZZ = np.hstack([Z, Zk]).astype(np.float32)
+        ZZ_t = torch.from_numpy(ZZ).to(device)
 
-                # 3. Fit Lasso on [X, Xk]
-                w = fit_lasso(
-                    ZZ_t,
-                    y_t,
-                    lam=cfg_s3.get("lasso_lambda", 0.02),
-                    lr=cfg_s3.get("lasso_lr", 0.05),
-                    max_iter=cfg_s3.get("lasso_max_iter", 500),
-                )
-                w_np = w.cpu().numpy()
+        for amplitude in amplitudes:
+            for form in forms:
+                for k in signal_sizes:
+                    for rep in range(n_reps):
+                        run_idx += 1
 
-                # 4. Feature contrast statistics W_j = |beta_j| - |beta_tilde_j|
-                w_real = w_np[:p]
-                w_knock = w_np[p:]
-                W = np.abs(w_real) - np.abs(w_knock)
+                        # 1. Select ground-truth signals S
+                        S_idx = np.sort(
+                            rng_plant.choice(p, size=k, replace=False))
+                        true_set = set(S_idx.tolist())
 
-                # Optional: Mean Difference scores for Westfall-Young comparator
-                mask1 = y_np == 1.0
-                mean_diff_scores = np.abs(Z[mask1].mean(axis=0) - Z[~mask1].mean(axis=0))
+                        # 2. Generate labels Y
+                        y_np, _ = generate_planted_labels(
+                            Z, S_idx, form, amplitude, rng_plant)
+                        y_t = torch.from_numpy(y_np).to(device)
 
-                # 5. Evaluate for each nominal target q
-                for q in fdr_targets:
-                    tau = compute_knockoff_plus_threshold(W, q)
-                    if np.isinf(tau):
-                        discovered_ko = set()
-                    else:
-                        discovered_ko = set(np.where(W >= tau)[0].tolist())
+                        # 3. Fit Lasso on [X, Xk]
+                        w = fit_lasso(
+                            ZZ_t, y_t,
+                            lam=cfg_s3.get("lasso_lambda", 0.02),
+                            lr=cfg_s3.get("lasso_lr", 0.05),
+                            max_iter=cfg_s3.get("lasso_max_iter", 500),
+                        )
+                        w_np = w.cpu().numpy()
 
-                    fdr_ko, pwr_ko = evaluate_discoveries(discovered_ko, true_set)
+                        # 4. Feature contrast statistics
+                        w_real = w_np[:p]
+                        w_knock = w_np[p:]
+                        W = np.abs(w_real) - np.abs(w_knock)
 
-                    # Stage 1 Westfall-Young comparison
-                    if wy_threshold is not None:
-                        discovered_wy = set(np.where(mean_diff_scores >= wy_threshold)[0].tolist())
-                        fdr_wy, pwr_wy = evaluate_discoveries(discovered_wy, true_set)
-                    else:
-                        fdr_wy, pwr_wy = None, None
+                        # 5. Evaluate for each nominal target q
+                        for q in fdr_targets:
+                            tau = compute_knockoff_plus_threshold(W, q)
+                            if np.isinf(tau):
+                                discovered_ko = set()
+                            else:
+                                discovered_ko = set(
+                                    np.where(W >= tau)[0].tolist())
 
-                    records.append({
-                        "form": form,
-                        "signal_size": k,
-                        "rep": rep,
-                        "q": q,
-                        "knockoff_tau": float(tau) if not np.isinf(tau) else -1.0,
-                        "knockoff_n_discoveries": len(discovered_ko),
-                        "knockoff_fdr": fdr_ko,
-                        "knockoff_power": pwr_ko,
-                        "wy_n_discoveries": len(discovered_wy) if discovered_wy is not None else 0,
-                        "wy_fdr": fdr_wy,
-                        "wy_power": pwr_wy,
-                    })
+                            fdr_ko, pwr_ko = evaluate_discoveries(
+                                discovered_ko, true_set)
 
-                if run_idx % 10 == 0 or run_idx == total_runs:
-                    elapsed = time.time() - start_all
-                    eta = (elapsed / run_idx) * (total_runs - run_idx)
-                    print(
-                        f"  [{run_idx:>3}/{total_runs}] Form={form:<11} |S|={k:<2} rep={rep:<2} | "
-                        f"Elapsed: {elapsed/60:.1f}m ETA: {eta/60:.1f}m",
-                        flush=True,
-                    )
+                            records.append({
+                                "ko_draw": ko_draw,
+                                "amplitude": amplitude,
+                                "form": form,
+                                "signal_size": k,
+                                "rep": rep,
+                                "q": q,
+                                "knockoff_tau": (float(tau)
+                                                 if not np.isinf(tau)
+                                                 else -1.0),
+                                "knockoff_n_discoveries": len(discovered_ko),
+                                "knockoff_fdr": fdr_ko,
+                                "knockoff_power": pwr_ko,
+                            })
+
+                        if run_idx % 20 == 0 or run_idx == total_runs:
+                            elapsed = time.time() - start_all
+                            eta = ((elapsed / run_idx)
+                                   * (total_runs - run_idx))
+                            print(
+                                f"  [{run_idx:>4}/{total_runs}] "
+                                f"amp={amplitude:<4} {form:<11} "
+                                f"|S|={k:<2} rep={rep:<2} | "
+                                f"Elapsed: {elapsed/60:.1f}m "
+                                f"ETA: {eta/60:.1f}m",
+                                flush=True,
+                            )
 
     total_time = time.time() - start_all
     print(f"\nStage 3 benchmark completed in {total_time/60:.1f} minutes.")
 
-    # Aggregate summaries by condition
+    # Aggregate summaries by condition (across ko_draws and reps)
     condition_summary = []
-    for form in forms:
-        for k in signal_sizes:
-            for q in fdr_targets:
-                subset = [r for r in records if r["form"] == form and r["signal_size"] == k and r["q"] == q]
-                fdrs = [r["knockoff_fdr"] for r in subset]
-                powers = [r["knockoff_power"] for r in subset]
-                discs = [r["knockoff_n_discoveries"] for r in subset]
+    for amplitude in amplitudes:
+        for form in forms:
+            for k in signal_sizes:
+                for q in fdr_targets:
+                    subset = [
+                        r for r in records
+                        if r["amplitude"] == amplitude
+                        and r["form"] == form
+                        and r["signal_size"] == k
+                        and r["q"] == q
+                    ]
+                    fdrs = [r["knockoff_fdr"] for r in subset]
+                    powers = [r["knockoff_power"] for r in subset]
+                    discs = [r["knockoff_n_discoveries"] for r in subset]
 
-                fdr_mean = float(np.mean(fdrs))
-                fdr_se = float(np.std(fdrs) / np.sqrt(len(fdrs)))
-                is_controlled = fdr_mean <= (q + 1.96 * fdr_se)
+                    fdr_mean = float(np.mean(fdrs))
+                    fdr_se = float(np.std(fdrs) / np.sqrt(len(fdrs)))
+                    ci_upper = fdr_mean + 1.96 * fdr_se
 
-                condition_summary.append({
-                    "form": form,
-                    "signal_size": k,
-                    "nominal_q": q,
-                    "realised_fdr_mean": fdr_mean,
-                    "realised_fdr_se": fdr_se,
-                    "power_mean": float(np.mean(powers)),
-                    "power_se": float(np.std(powers) / np.sqrt(len(powers))),
-                    "mean_discoveries": float(np.mean(discs)),
-                    "fdr_controlled": is_controlled,
-                })
+                    condition_summary.append({
+                        "amplitude": amplitude,
+                        "form": form,
+                        "signal_size": k,
+                        "nominal_q": q,
+                        "realised_fdr_mean": fdr_mean,
+                        "realised_fdr_se": fdr_se,
+                        "realised_fdr_ci95_upper": float(ci_upper),
+                        "power_mean": float(np.mean(powers)),
+                        "power_se": float(
+                            np.std(powers) / np.sqrt(len(powers))),
+                        "mean_discoveries": float(np.mean(discs)),
+                        "n_replicates_total": len(subset),
+                        # Strict: mean must be at or below target
+                        "fdr_controlled_strict": bool(fdr_mean <= q),
+                        # CI: upper 95% CI must be at or below target
+                        "fdr_controlled_ci": bool(ci_upper <= q),
+                    })
 
     results_dict = {
         "config_hash": str(d["config_hash"]),
@@ -443,32 +516,41 @@ def main() -> None:
         "n_samples": n_samples,
         "p": p,
         "signal_sizes": signal_sizes,
+        "signal_amplitudes": amplitudes,
         "nominal_fdr_targets": fdr_targets,
         "functional_forms": forms,
-        "replicates": n_reps,
+        "replicates_per_draw": n_reps,
+        "knockoff_redraws": n_ko_draws,
         "elapsed_minutes": round(total_time / 60, 2),
         "conditions": condition_summary,
         "records": records,
     }
 
-    # Save JSON and generate figures
+    # Save JSON
     out_json_path = rd / "stage3_planted_fdr.json"
     out_json_path.write_text(json.dumps(results_dict, indent=2))
-    print(f"Wrote summary results to {out_json_path}")
+    print(f"Wrote results to {out_json_path}")
 
+    # Generate figures
     make_stage3_figures(results_dict, rd)
-    print(f"Generated figures {rd}/fig7_fdr_control.png and {rd}/fig8_power_comparison.png")
+    print(f"Generated figures: fig7_fdr_vs_amplitude.png, "
+          f"fig8_power_vs_amplitude.png, fig9_fdr_control.png")
 
-    # Print summary table to console
-    print("\n" + "=" * 75)
-    print(f"{'Form':<12} {'|S|':<4} {'Nominal q':<10} {'Realised FDR':<16} {'Power':<12} {'Controlled?':<12}")
-    print("-" * 75)
+    # Print summary table
+    print("\n" + "=" * 100)
+    print(f"{'Amp':<5} {'Form':<12} {'|S|':<4} {'q':<6} "
+          f"{'FDR (mean±SE)':<18} {'Power':<14} "
+          f"{'Ctrl(strict)':<13} {'Ctrl(CI)':<10}")
+    print("-" * 100)
     for c in condition_summary:
         fdr_str = f"{c['realised_fdr_mean']:.3f} ± {c['realised_fdr_se']:.3f}"
         pwr_str = f"{c['power_mean']:.3f} ± {c['power_se']:.3f}"
-        ctrl_str = "YES" if c["fdr_controlled"] else "NO (INFLATED)"
-        print(f"{c['form']:<12} {c['signal_size']:<4} {c['nominal_q']:<10} {fdr_str:<16} {pwr_str:<12} {ctrl_str:<12}")
-    print("=" * 75)
+        s_ctrl = "YES" if c["fdr_controlled_strict"] else "NO"
+        c_ctrl = "YES" if c["fdr_controlled_ci"] else "NO"
+        print(f"{c['amplitude']:<5} {c['form']:<12} {c['signal_size']:<4} "
+              f"{c['nominal_q']:<6} {fdr_str:<18} {pwr_str:<14} "
+              f"{s_ctrl:<13} {c_ctrl:<10}")
+    print("=" * 100)
 
 
 if __name__ == "__main__":

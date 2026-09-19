@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -34,7 +35,7 @@ def main() -> None:
     torch.manual_seed(np.random.SeedSequence(cfg["master_seed"]).spawn(7)[1].generate_state(1)[0])
     torch.set_grad_enabled(False)
 
-    out = cache_path(cfg) if args.out is None else __import__("pathlib").Path(args.out)
+    out = cache_path(cfg) if args.out is None else Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     print(f"config hash : {config_hash(cache_config(cfg))}")
     print(f"output      : {out}")
