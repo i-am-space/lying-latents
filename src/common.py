@@ -20,6 +20,7 @@ STREAMS = [
     "mmd_permutation",
     "synthetic_null",
     "label_permutation",   # Stage 1: FWER calibration
+    "planted_signal",      # Stage 3: Planted signal FDR benchmark
 ]
 
 

@@ -293,3 +293,58 @@ stage1:
       confidence interval has the wrong coverage: the parameter may still
       be in the interval, but the guarantee is void.
 
+# ===========================================================================
+# PRE-REGISTRATION — Stage 3 Realised FDR on Planted Ground Truth
+# ===========================================================================
+# Appended to the same pre-registration file. All Stage 1 and Stage 2 rules
+# above remain unchanged. This block must be committed before Stage 3 results.
+
+stage3:
+  meta:
+    date_registered: "2026-09-19"
+    scope: >
+      Evaluate realised False Discovery Rate (FDR) and statistical power of
+      Gaussian second-order knockoffs on semi-synthetic ground truth. The real
+      activation matrix X is retained (preserving exact zero-mass and correlation
+      structure) while synthetic task labels Y are generated from a known subset
+      S of true signals. All latents outside S are conditionally null by construction.
+
+  seeds:
+    stream: planted_signal      # index 8 in STREAMS
+
+  signal_sizes: [10, 20, 30]
+  nominal_fdr_targets: [0.05, 0.10, 0.20]
+  replicates_per_condition: 20
+
+  functional_forms:
+    linear:
+      description: "Logits = X_S * beta, where beta_j has random signs (+/- 1) with magnitude normalized"
+    interaction:
+      description: "Logits = X_S * beta + sum_{pairs} gamma_ij * X_si * X_sj with pairwise non-linear interactions"
+
+  model_fitting:
+    loss: "L1-penalised logistic regression (Lasso)"
+    penalty_parameter: "cross-validated or fixed regularisation path"
+    knockoff_statistic: "W_j = |beta_j| - |beta_tilde_j|"
+    filter_rule: "Knockoff+ threshold (offset = 1)"
+
+  baseline_comparison:
+    method: "Westfall-Young max-statistic correction from Stage 1"
+    description: "Benchmark whether assumption-free permutation testing achieves FDR control and what power it yields"
+
+  decision_rules:
+    fdr_controlled: "Mean realised FDR <= nominal target q + 1.96 * SE"
+    fdr_inflated: "Mean realised FDR > nominal target q + 1.96 * SE"
+
+  interpretation_constraints:
+    - >
+      Planted signal semi-synthetic benchmark isolates the effect of the
+      discrete-continuous zero atom on FDR control while preserving true feature correlations.
+    - >
+      If realised FDR exceeds nominal q, the exchangeability violation is proven
+      to cause practical harm in scientific feature discovery.
+    - >
+      If realised FDR tracks nominal q, the Gaussian surrogate is empirically
+      robust despite mathematical misspecification.
+
+

@@ -63,7 +63,19 @@ stage1:
   probe_max_iter: 200
   probe_C: 1.0
 
+stage3:
+  signal_sizes: [10, 20, 30]
+  nominal_fdr_targets: [0.05, 0.10, 0.20]
+  replicates: 20
+  functional_forms: [linear, interaction]
+  signal_amplitude: 3.0
+  lasso_lambda: 0.02
+  lasso_max_iter: 500
+  lasso_lr: 0.1
+  n_samples: 20000          # computational subsample for fast multi-replicate fitting
+
 paths:
   cache_dir: data/cache
   results_dir: results
+
 
