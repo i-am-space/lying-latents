@@ -1,7 +1,8 @@
-# Lying Latents — Stage 2: Model-X exchangeability audit
+# Lying Latents: Auditing Distribution-Free Inference for SAE Feature Discovery
 
-Auditing whether the Model-X knockoff framework, as applied to SAE latents by
-Enkhbayar (2025), satisfies the exchangeability property its FDR guarantee requires.
+Auditing whether the Model-X knockoff framework, as applied to Sparse Autoencoder (SAE) latents by
+Enkhbayar (2025), satisfies the exchangeability property its FDR guarantee requires, and evaluating
+its realised error control and statistical power against known ground truth.
 
 **Scope of this repository is Stages 1–3** — activation cache, distributional
 summary, Gaussian knockoff generation, exchangeability diagnostics with a
