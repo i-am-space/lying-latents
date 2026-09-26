@@ -73,6 +73,22 @@ stage1:
     form: linear
     min_detect_fraction: 0.8
 
+# Stage 1, validate step (config/preregistration.yaml stage1_amendment_2). Probe, scoring
+# methods and split fraction are taken from the stage1 block above, so the probe is identical.
+stage1_validate:
+  n_permutations: 500
+  top_k: 10
+  alpha: 0.05                   # one-sided paired test of "ablation raises the probe's log-loss"
+  loss: log_loss
+  primary_variant: joint        # all top_k ablated together; per-latent variants are secondary
+  planted_check:
+    replicates: 20
+    k: 10
+    amplitudes: [3.0, 1.0]      # 3.0 is the gate; 1.0 is descriptive
+    gate_amplitude: 3.0
+    min_detect_fraction: 0.8
+    form: linear
+
 stage3:
   signal_sizes: [10, 20, 30]
   nominal_fdr_targets: [0.05, 0.10, 0.20]

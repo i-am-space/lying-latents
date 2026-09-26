@@ -454,3 +454,110 @@ stage1_amendment_1:
     - >
       Behavioural change here is a change in a linear probe's predictions on cached
       latents, not in the model's generated output (unchanged from stage 1 v1).
+
+# ===========================================================================
+# AMENDMENT 2 - Stage 1 validate step (written BEFORE the code below was run)
+# ===========================================================================
+# Appended; no earlier line is altered. Fixes the design of a validate step that can
+# detect a real effect, so the false-certification rate of the conventional
+# search-then-validate workflow (proposal Sec. 5.1) can be measured. Everything here is
+# fixed before the new script exists or is run.
+
+stage1_amendment_2:
+  meta:
+    date_written: "2026-09-27"
+    status: written_before_run
+    ordering_note: >
+      Intended to be committed together with the code BEFORE the real run so that git
+      history shows this design preceding its results. If that did not happen, the
+      results commit must say so here.
+    trigger: >
+      Amendment 1 found that the v1 certification criterion (zero one latent, require a
+      held-out accuracy drop of at least 0.02) has no power: 0/10 certified on the real
+      labels, and it fires in 10%, 50% and 50% of planted-signal replicates. Its FWER
+      (0.2-1.6%) is therefore uninformative and the false-certification rate of the
+      conventional workflow is still unmeasured.
+    diagnosis:
+      - >
+        A magnitude threshold on a noisy, discrete statistic is arbitrary. The label-free
+        flip rate has a null spread of up to 0.35-0.45 and the real-label value lies inside
+        it, so a fixed flip-rate threshold gives FWER of 0 or 1 depending on where it is set.
+      - >
+        v1 validated on held-out rows, which is sample-splitting, the remedy for the
+        data-reuse problem of proposal Sec. 3, not the conventional workflow.
+
+  design:
+    search_step: >
+      Unchanged: score every latent (mean_diff, auroc, probe_weight) on the training split
+      and take the top k = 10. The probe, its hyperparameters and the 70/30 split fraction
+      are those of the stage1 block (identical code path), refit on every permutation.
+    validate_step:
+      statistic: >
+        Per row i, d_i = logloss_i(ablated) - logloss_i(full) for the fitted probe, where
+        ablating a latent sets its raw activation to 0. Log-loss is what the probe is trained on.
+      test: >
+        One-sided paired t-test (normal approximation; n >= 6000 rows) of mean(d) > 0, i.e.
+        "ablating these latents hurts the task".
+      alpha: 0.05
+      certified_if: "p <= alpha"
+    primary_variant:
+      definition: "All top-10 candidates ablated jointly: one test per scoring method per permutation."
+      rationale: "Proposal Sec. 6: take the top-k, ablate, record whether the behavioural change clears the threshold."
+    secondary_variants:
+      - "Each of the top-10 ablated alone; certified if any of the 10 tests has p <= 0.05 (uncorrected, common practice)."
+      - "The same with Bonferroni, p <= 0.05 / 10."
+    regimes:
+      same_data: "Validate on the rows the probe was fit on and the scores came from: the conventional workflow."
+      held_out: "Validate on the 30% of rows never used for fitting or scoring: sample-splitting."
+    fwer: >
+      Fraction of B = 500 label permutations in which at least one certification occurs,
+      per (scoring method, regime, variant), with Wilson 95% intervals. Fresh RNG streams
+      validate_permutation (index 9) and validate_planted (index 10); existing streams untouched.
+    headline: >
+      The primary variant's same-data FWER, reported next to its held-out FWER. All variants
+      are reported; none may replace the primary after seeing results.
+
+  power_check:
+    generator: "Stage 3 generate_planted_labels, linear form, k = 10 planted latents, 20 replicates"
+    gate_amplitude: 3.0
+    descriptive_amplitude: 1.0
+    gate: >
+      criterion_has_power holds for a regime iff, at the gate amplitude, the primary variant
+      certifies in at least 80% of replicates for at least one scoring method. It must hold
+      in BOTH regimes for the FWER contrast to be interpreted.
+
+  decision_rules:
+    - id: B1
+      rule: >
+        If the power gate fails in either regime, the FWERs of that regime are reported as
+        uninformative and no statement about the workflow's false-certification rate is made
+        from them.
+    - id: B2
+      rule: >
+        No tuning to pass: alpha, k, the statistic, the variants and the gate are not changed
+        after seeing results. A failure is the result; redesign needs a further amendment.
+    - id: B3
+      rule: >
+        A valid held-out test is expected to have FWER at or below about 0.05. If the held-out
+        primary FWER is clearly above that, the test or the code is wrong and this is
+        investigated before any interpretation.
+
+  expectations_not_rules:
+    - "Held-out FWER at or below alpha (a valid test, conservative because removing fitted noise moves the probe toward the base rate)."
+    - "Same-data FWER may exceed alpha: in-sample, any ablation moves the fit away from its optimum. If it does not, that is reported as a finding."
+
+  interpretation_constraints:
+    - >
+      The joint-ablation idea was suggested by exploratory v2 results on this same data. The
+      design is fixed here before the run and all permutations and planted labels are fresh
+      draws, but the dataset and activation cache are the same, so this is not independent
+      confirmatory evidence.
+    - >
+      Behavioural change is a change in a linear probe's log-loss on cached latents, not in
+      the model's generated output.
+    - >
+      Certification rates are properties of this procedure with these settings, not of the
+      field's pipeline in general.
+    - >
+      The search step still tests marginal association; a latent that co-fires with a true
+      carrier can be selected and certified. This amendment does not address that.

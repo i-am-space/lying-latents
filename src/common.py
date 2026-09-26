@@ -21,6 +21,8 @@ STREAMS = [
     "synthetic_null",
     "label_permutation",   # Stage 1: FWER calibration
     "planted_signal",      # Stage 3: Planted signal FDR benchmark
+    "validate_permutation",  # Stage 1 validate step: label permutations + splits
+    "validate_planted",      # Stage 1 validate step: planted-signal power check
 ]
 
 
