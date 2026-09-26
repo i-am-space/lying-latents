@@ -1,162 +1,165 @@
 # Stage 1 findings — FWER calibration of the standard search-then-validate pipeline
 
-Config hash `d33d210c5acb` · master seed `20260904` · pre-registered in
-`config/preregistration.yaml` · Stage 1 rules appended after Stage 2 freeze.
+Config hash `d33d210c5acb` · master seed `20260904` · v1 pre-registered in
+`config/preregistration.yaml` (`stage1`); v2 additions registered *after* v1 results, in
+`stage1_amendment_1` — every v2 item is post-hoc and is labelled as such below.
 
 ## Summary
 
-The conventional search-then-validate pipeline — score every retained SAE latent,
-take the top-k, certify via latent-zeroing ablation — has an **empirical FWER of
-≤ 2% under all three scoring methods** when labels are globally null. Under
-Westfall–Young correction using B = 500 permutations, the real-data maximum score
-is in the extreme tail of every method's null distribution (WY p = 0.002 for all
-three), and between 141 and 1052 individual latents survive WY correction at α = 0.01
-depending on the scoring method.
+1. **An uncorrected per-latent scan is unusable.** Under permuted labels a naive |t| > 1.96
+   test passes **104.2 latents per experiment (5.1% of p = 2,048; expected 102.4)** and
+   the family-wise error rate is **1.000**. Bonferroni and Westfall–Young hold it at
+   **0.054 / 0.050**. On the real labels 1,764 latents pass naively, 1,408 pass Bonferroni,
+   1,407 pass WY. This is the proposal's §3 claim, measured directly.
+2. **The certification step v1 relied on has no demonstrated power, so v1's FWER of
+   0.2–1.6% says nothing about the pipeline.** It certifies 0/10 latents on the real
+   labels for every method, and on planted signals (k = 10, amplitude 3.0) it fires in only
+   10% / 50% / 50% of replicates (needed: ≥ 80%). Per pre-registered rule A1 the
+   accuracy-drop FWERs are reported as **uninformative**. The v1 conclusion "the pipeline
+   does not inflate FWER" is withdrawn.
+3. **v1's numbers reproduce exactly** on different hardware (FWER counts 8/6/1 of 500,
+   WY p = 0.002, survivors, top-10 sets), so the arithmetic was right; the interpretation
+   was not.
+4. **Exploratory, post-hoc:** ablating the top-10 *jointly* does separate real from null
+   (joint accuracy drop, WY p = 0.004–0.048) and fires on planted signals (90–100% for
+   AUROC / probe weight), unlike single-latent zeroing. Not pre-registered; see §5.
 
-This means the uncorrected pipeline, left to rank and certify candidates without any
-multiplicity adjustment, **does not inflate FWER catastrophically** — but many
-individual latents survive even a rigorous Westfall–Young threshold, making latent-level
-claims dependent on which scoring method is used. The probe-weight method has the lowest
-FWER (0.2%) and also the fewest WY-surviving latents in absolute terms; mean-diff has
-the highest FWER (1.6%) but a tightly concentrated null.
-
-**What this establishes:** the calibration numbers needed for Stage 3. The pipeline's
-FWER is below 5% under the global null, so any excess of certified discoveries over this
-baseline on real labels is attributable to genuine signal — not to the pipeline's own
-false-positive rate. **What it does not establish:** anything about FDR on real data.
-That is Stage 3.
+**What this establishes:** naive scanning has FWER ≈ 1 and ~5% spurious passes;
+Bonferroni/WY control it; the single-latent zeroing criterion is powerless here.
+**What it does not establish:** the false-certification rate of the *conventional*
+pipeline (the criterion cannot detect anything, so its null rate is uninformative);
+anything about the model's generated behaviour (ablation is a change in a linear probe's
+predictions on cached latents); anything about FDR (Stage 3).
 
 ## 1. Setup
 
 | | |
 |---|---|
-| Cache | `d33d210c5acb`, n = 67,349 sentences, p = 2,048 retained latents |
-| Aggregator | mean over non-special tokens (primary) |
+| Cache | `d33d210c5acb`, n = 67,349 sentences, p = 2,048 retained latents, mean-pooled |
 | Class balance | 55.8% positive (n₁ = 37,569, n₀ = 29,780) |
-| Scoring methods | mean activation difference, AUROC (rank-sum), probe weight (L2 logistic) |
-| Probe | L2-penalised logistic regression, C = 1.0, 300 gradient-descent steps on GPU |
-| Ablation | latent-zeroing: zero column j on held-out split, measure accuracy drop |
-| top-k | 10 candidates per method per permutation |
-| δ (ablation threshold) | 0.02 accuracy drop required for certification |
+| Scoring | mean activation difference (on **raw** activations, hence scale-dependent), AUROC (rank-sum, ties by stable sort order), \|probe weight\| |
+| Probe | **L2** logistic, C = 1.0, **200** gradient-descent steps, lr 0.1, on GPU, fit on a fresh random 70% split per permutation |
+| Ablation | zero the latent's raw activation, re-predict with the same fitted probe (no refit) |
+| Certification (v1) | ≥ 1 of the top-10 whose zeroing drops held-out accuracy by ≥ δ = 0.02 |
 | Permutations | B = 500 |
-| Runtime | 3.0 min on NVIDIA L40S (GPU) |
+| Runtime | teammates' v1 run: 3.0 min (reported, NVIDIA L40S). This re-run incl. v2 additions: 6.1 min on an RTX 5050 laptop GPU, peak 2.4 GB GPU / 3.0 GB host RAM |
 
-**Note on probe implementation.** The pre-registration specified an L1/SAGA probe
-(sklearn). The GPU implementation uses L2 gradient descent, which is equivalent for
-the purposes of *ranking* latents (both give sparse-ish weight vectors for this data)
-but differs in the tail of the weight distribution. The FWER and WY statistics are
-based on max-score permutation null, so what matters is that the same probe is applied
-consistently to real and permuted labels — which it is. Any mild regularisation
-mismatch affects real and null equally and cannot bias the calibration.
+## 2. v1 results (reproduced)
 
-## 2. Real-label baseline
+Every v1 quantity below matches the committed v1 run exactly (FWER counts, WY p, survivor
+counts, top-10 index sets); null max-scores agree to ≤ 6e-5 relative (GPU float noise).
 
-| method | max score | certified / top-10 |
-|---|---|---|
-| mean_diff | **2.977347** | 0 / 10 |
-| auroc | **0.257274** | 0 / 10 |
-| probe_weight | **0.392511** | 0 / 10 |
+| method | real max score | certified / top-10 (real labels) | null 95th | WY p (max) |
+|---|---|---|---|---|
+| mean_diff | 2.977347 | 0 / 10 | 0.228073 | 0.0020 |
+| auroc | 0.257274 | 0 / 10 | 0.010329 | 0.0020 |
+| probe_weight | 0.392511 | 0 / 10 | 0.047340 | 0.0020 |
 
-**Zero certified on real labels.** This reflects that the ablation criterion (≥ 2%
-accuracy drop from zeroing a single latent) is conservative. With 2048 correlated
-latents the probe is redundant and any single latent's zeroing has small marginal effect.
+WY p = 0.002 is the minimum attainable at B = 500. Latents surviving per-latent WY
+correction: mean_diff 181 / 141, auroc 1,145 / 1,052, probe_weight 215 / 189 (α = 0.05 / 0.01);
+**mean_diff has the fewest**, not probe_weight as v1's summary said.
 
-## 3. Permutation null and FWER
+v1 certification FWER (held-out): mean_diff 0.016, auroc 0.012, probe_weight 0.002
+(8 / 6 / 1 of 500). **See §3: these cannot be interpreted.**
 
-### 3.1 FWER
+## 3. Power check — the certification step fails it
 
-| method | FWER | mean certified per perm |
-|---|---|---|
-| mean_diff | 0.0160 (1.6%) | 0.02 |
-| auroc | 0.0120 (1.2%) | 0.01 |
-| probe_weight | 0.0020 (0.2%) | 0.00 |
+Labels generated from 10 known latents (Stage 3's linear generator, amplitude 3.0), 10
+replicates, same pipeline:
 
-All three methods are well below the pre-registered 5% threshold. The pipeline does not
-routinely certify latents under the global null.
-
-**probe_weight has the lowest FWER by a factor of 6–8.** This is expected: the probe
-is fitted to the same (permuted) labels used to select top-k, so its weights are not
-inflated by label correlation with the data; only chance covariance between the latent
-and the permuted label can produce a large weight, and that is harder to compound into a
-zeroing-detectable drop than a large mean difference or rank separation.
-
-### 3.2 Westfall–Young null distribution
-
-| method | real max score | null 95th | WY p (max) |
+| method | recall@10 of the planted latents | v1 criterion fires | same-data variant fires |
 |---|---|---|---|
-| mean_diff | 2.977347 | 0.228076 | **0.0020** |
-| auroc | 0.257274 | 0.010329 | **0.0020** |
-| probe_weight | 0.392511 | 0.047340 | **0.0020** |
+| mean_diff | 0.08 | 10% | 0% |
+| auroc | 0.35 | 50% | 30% |
+| probe_weight | 0.99 | 50% | 30% |
 
-The real-data maximum score sits **13× (mean_diff), 25× (auroc), and 8× (probe_weight)**
-above the 95th percentile of the null. WY p = 0.002 is the minimum achievable at
-B = 500 (one out of 501). The signal is not marginal.
+Pre-registered criterion: ≥ 80% for at least one method → **`criterion_has_power = False`**.
+Per rule A1 the accuracy-drop FWERs (held-out 1.6/1.2/0.2%; same-data 0.4/0.4/0.6%) are
+uninformative, and per rule A2 the criterion is not adjusted to make it pass.
 
-### 3.3 Per-latent WY-adjusted discoveries
+Why: zeroing one latent out of 2,048 correlated, 89%-zero latents rarely moves a probe's
+accuracy by 2%, even when that latent is a true signal (probe_weight finds 99% of them, yet
+certifies in half the replicates). mean_diff on raw activations ranks high-variance latents,
+not the planted (standardised) ones, hence recall 0.08.
 
-| method | surviving WY α = 0.05 | surviving WY α = 0.01 |
-|---|---|---|
-| mean_diff | 181 | 141 |
-| auroc | **1145** | **1052** |
-| probe_weight | 215 | 189 |
+The same-data (conventional) variant does **not** show inflated FWER relative to the
+held-out split. Under a criterion this weak that is not evidence that data reuse is
+harmless — only that this test cannot see it.
 
-**AUROC identifies over half of all retained latents (p = 2048) as individually
-significant after Westfall–Young correction.** The per-latent counts say that real-data
-AUROC scores for >1000 latents exceed the *maximum* AUROC across all 2048 latents under
-any of the 500 null permutations — i.e., the signal at those latents is stronger than
-anything chance alone ever produced across the entire latent space.
+## 4. Naive per-latent testing under the null (post-hoc addition)
 
-The spread between methods (141 to 1052) reflects that mean_diff and probe_weight
-concentrate power on fewer latents while AUROC, a rank-based statistic invariant to
-monotone rescaling, is sensitive to a much broader population of differentially activated
-features.
+Welch |t| per latent on the training split, B = 500 permutations:
 
-## 4. Interpretation for Stage 3
+| procedure | threshold | mean false passes per null experiment | FWER | passes on real labels |
+|---|---|---|---|---|
+| naive | \|t\| > 1.96 | 104.2 (expected 102.4) | **1.000** | 1,764 |
+| Bonferroni | \|t\| > 4.22 | 0.056 | 0.054 | 1,408 |
+| Westfall–Young | \|t\| > 4.24 (95th pct of max\|t\|) | — | 0.050 (in-sample, by construction) | 1,407 |
 
-Two numbers from this calibration carry forward:
+(`fig11_stage1_naive_vs_corrected.png`.) Passing a marginal test is not a causal claim: it
+says the latent is associated with the label, not that it carries it.
 
-1. **Baseline certified-discovery rate ≤ 1.6%.** Under the global null the pipeline
-   certifies at least one candidate in at most 1 in 60 experiments (mean_diff). Any
-   empirical FDR study from Stage 3 that compares real-data certifications to this
-   baseline has a well-calibrated floor.
+## 5. Behavioural effects of ablation (post-hoc, exploratory)
 
-2. **WY threshold for per-latent claims.** To make a multiplicity-corrected per-latent
-   claim at α = 0.05, the threshold to beat is the 95th percentile of the max-score
-   null: 0.228 (mean_diff), 0.0103 (auroc), 0.0473 (probe_weight). The saved
-   `stage1_adjusted_pvalues.npz` contains exact adjusted p-values for every retained
-   latent under all three methods.
+Effect of ablating the top-10 (jointly) or the best single latent on the fitted probe,
+held-out split, real-label value vs the permutation null (WY-style p = (1 + #{null ≥ real}) / 501).
+`fig10_stage1_behaviour_curve.png` gives the FWER(τ) curves.
 
-**Scoring method choice matters for Stage 3.** AUROC produces a far larger set of
-WY-significant latents than the other two methods, which may indicate either higher power
-or a softer signal that does not translate into ablation-certified discoveries. Stage 3
-should report all three methods and note this divergence explicitly.
+| method | effect | real | null 95th | p |
+|---|---|---|---|---|
+| mean_diff | joint accuracy drop | 0.0135 | 0.0124 | 0.048 |
+| | joint mean \|Δp\| | 0.0441 | 0.0379 | 0.044 |
+| | joint flip rate | 0.0405 | 0.1410 | 0.549 |
+| | best-single flip rate | 0.0210 | 0.1301 | 0.721 |
+| auroc | joint accuracy drop | 0.0319 | 0.0077 | 0.006 |
+| | joint mean \|Δp\| | 0.0678 | 0.0238 | 0.010 |
+| | joint flip rate | 0.0618 | 0.0811 | 0.138 |
+| | best-single flip rate | 0.0082 | 0.0584 | 0.834 |
+| probe_weight | joint accuracy drop | 0.0297 | 0.0084 | 0.004 |
+| | joint mean \|Δp\| | 0.0649 | 0.0241 | 0.008 |
+| | joint flip rate | 0.0571 | 0.0888 | 0.693 |
+| | best-single flip rate | 0.0082 | 0.0613 | 1.000 |
 
-## 5. Deviations from the pre-registration
+- **Flip rate is not informative:** the real-label value sits inside the null and the null
+  ranges up to 0.35–0.45, so any fixed flip-rate threshold is arbitrary (this is why v2
+  reports curves, not one threshold).
+- **Joint accuracy drop and joint mean |Δp| do separate real from null** for AUROC and
+  probe weight, and on planted signals joint accuracy drop exceeds the null 95th percentile
+  in 90% (auroc) and 100% (probe_weight) of replicates (mean_diff: 30%).
+- Choosing among these effects after seeing results is a forking path. Treat this as a
+  hypothesis for a second, pre-registered amendment, not a finding.
 
-1. **GPU probe (L2 gradient descent) in place of sklearn L1/SAGA.** Motivation: the
-   CPU SAGA solver at n = 67,349 and p = 2048 was taking ~5.9 min per permutation
-   (projected total ~49 h). The GPU implementation reduces this to ~0.36 sec per
-   permutation (3 min total). The switch is from L1 to L2 regularisation; both produce
-   a ranking of latents by coefficient magnitude, which is all that the scoring step
-   requires. The FWER statistic is max-null calibrated — it is self-correcting for
-   changes to the probe as long as the same probe is applied to real and permuted labels.
-2. **`--device cuda` flag added.** `calibrate_pipeline.py` now accepts a `--device`
-   argument; it defaults to `cuda` if available, `cpu` otherwise. This is a usability
-   change with no effect on the numerics.
+## 6. Deviations and corrections
 
-## 6. Reproduction
+**Deviations from the pre-registered v1 (both in the original commit):**
+1. L2 gradient-descent probe on GPU instead of L1/SAGA on CPU (SAGA projected ~49 h). The
+   v1 claim that this "cannot bias the calibration" is **withdrawn**: it is true for the
+   WY max-score null, but the probe sets how much one latent's ablation moves predictions,
+   so it bears on any certification FWER. L2 weights are dense, not sparse.
+2. `--device` flag; no numerical effect.
+
+**Corrections to the v1 writeup:** 300 → 200 gradient steps; "probe_weight has the fewest
+WY-surviving latents" → mean_diff does; "any excess of certified discoveries is attributable
+to signal" → vacuous (none certified on real labels); "FWER ≤ 5% so the calibration is
+sound" → unsupported (§3). `stage1.meta.date_registered: 2026-09-10` is not corroborated by
+git history (first appears 2026-09-17, in the same commit as the code).
+
+**Post-hoc additions (after v1 results were seen):** naive/Bonferroni/WY testing (§4),
+label-free and joint behavioural effects and their null curves (§5), same-data variant and
+planted-signal power check (§3). None of these is confirmatory.
+
+## 7. Reproduction
 
 ```bash
-# cache must exist first:
-python src/cache_activations.py --config config/default.yaml   # ~5 min, GPU
+# cache must exist first (GPU machine, ~5 min):
+python src/cache_activations.py --config config/default.yaml
 
-# Stage 1 (GPU strongly recommended):
+# Stage 1 (v1 numbers + v2 additions; ~6 min on an 8 GB laptop GPU, or --device cpu):
 python src/calibrate_pipeline.py --config config/default.yaml --device cuda
+# quick check: add --limit-perms 20 --skip-planted
 ```
 
-Runtime: **3.0 min** on NVIDIA L40S.
-
-Artefacts: `results/stage1_calibration.json` (all FWER, WY, and baseline numbers),
-`results/stage1_adjusted_pvalues.npz` (per-latent WY-adjusted p-values for all three
-methods), `results/fig5_permutation_null.png` (null distributions with real-label max
-marked), `results/fig6_fwer_by_method.png` (FWER bar chart).
+Artefacts: `results/stage1_calibration.json` (v1 keys unchanged; new `v2` block),
+`results/stage1_adjusted_pvalues.npz` (per-latent WY-adjusted p), `results/stage1_behaviour_null.npz`
+(per-permutation null arrays), `fig5_permutation_null.png`, `fig6_fwer_by_method.png`,
+`fig10_stage1_behaviour_curve.png`, `fig11_stage1_naive_vs_corrected.png`.

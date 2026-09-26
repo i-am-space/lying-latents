@@ -348,3 +348,109 @@ stage3:
       robust despite mathematical misspecification.
 
 
+
+# ===========================================================================
+# AMENDMENT 1 - Stage 1 (written AFTER the v1 results; exploratory additions)
+# ===========================================================================
+# Appended to the same file. No earlier line is altered. Written after the v1
+# Stage 1 results (commit f4f2280) had been seen, so everything below is post-hoc:
+# it is disclosed as such and must not be described as pre-registered in the
+# confirmatory sense. The v1 criterion and v1 numbers are retained unchanged.
+
+stage1_amendment_1:
+  meta:
+    date_written: "2026-09-25"
+    status: post_results_exploratory
+    ordering_note: >
+      This amendment was written before the v2 run but is committed together with the
+      code and the v2 results in a single commit. Git history therefore does NOT show
+      it preceding those results; that ordering rests on file timestamps and this
+      statement only. Decision rules A1 and A2 were applied as written: the power check
+      failed and the criterion was not adjusted.
+    trigger: >
+      v1 certified 0 of the top-10 latents on the REAL labels for all three scoring
+      methods (results/stage1_calibration.json), although 141-1052 latents are
+      Westfall-Young significant. A certification step that never fires on real
+      signal cannot show that the false-certification rate under the null is low, and
+      v1 validated on a held-out split against the permuted label, which cannot
+      systematically lose accuracy by construction (that is sample-splitting, the
+      remedy for the data-reuse problem the proposal describes, not the conventional
+      pipeline). v1 also never measured the proposal's motivating quantity: how many
+      latents pass an uncorrected per-latent test under a random label.
+
+  record_corrections:
+    - >
+      stage1.meta.date_registered above reads 2026-09-10. Git history does not
+      corroborate it: the stage1 block first appears in e378e1c (2026-09-17), in the
+      same commit as the pipeline code, and results followed five minutes later in
+      f4f2280. The date should not be relied on.
+    - >
+      The stage1 block above specifies an L1/SAGA probe and states the analysis is
+      CPU-bound. The code committed alongside it used an L2 gradient-descent probe on
+      GPU (deviation 1 in results/stage1_findings.md). The findings' claim that the
+      L1 -> L2 switch "cannot bias the calibration" is withdrawn: it holds for the
+      Westfall-Young max-score null, but the probe sets how strongly a single latent's
+      ablation moves the predictions, so it does bear on any certification FWER. L2
+      weights are dense, not sparse.
+
+  retained_unchanged:
+    - v1 scoring methods, top_k=10, delta=0.02, held-out accuracy-drop criterion
+    - v1 RNG consumption (label_permutation stream), so v1 numbers must reproduce
+    - >
+      regression check: on re-run, FWER counts 8/6/1 of 500 (mean_diff/auroc/probe_weight),
+      WY p = 0.002, WY survivors at 0.05/0.01 = 181/141, 1145/1052, 215/189, up to GPU
+      float noise. A failure means the v2 code changed v1 behaviour and is a bug.
+
+  additions:
+    naive_testing:
+      statistic: "Welch |t| per latent on the training split"
+      thresholds: "uncorrected |t| > z(1-0.05/2); Bonferroni; Westfall-Young from the null of max|t|"
+      purpose: >
+        Measures the proposal's motivating claim directly: under a random label an
+        uncorrected 5% scan passes about 0.05*p latents, so FWER is about 1.
+    behavioural_effects:
+      label_free: [flip rate of probe predictions, mean |dp|]
+      label_dependent: [accuracy drop]
+      variants: [best single latent among the top-k, all top-k ablated jointly]
+      splits: [held_out, train]
+      reporting: >
+        Reported as null curves FWER(tau) with the real-label value marked, not as
+        FWER at one tuned threshold: the label-free effects have a noise floor that
+        depends on p and the probe, so any single threshold is arbitrary.
+    same_data_variant:
+      definition: >
+        Same certification rule as v1 but the accuracy drop is measured on the training
+        split the probe was fit to (the conventional workflow reuses its search data).
+        Reported next to the pre-registered held-out FWER.
+    planted_signal_check:
+      generator: "Stage 3's generate_planted_labels, form linear"
+      k: 10
+      amplitude: 3.0
+      replicates: 10
+      stream: planted_signal
+      pass_criterion: >
+        criterion_has_power is True iff, for at least one scoring method, the v1
+        certification fires (>= 1 certified in the top-10) in at least 80% of replicates.
+
+  decision_rules:
+    - id: A1
+      rule: >
+        FWER under an accuracy-drop certification criterion is interpreted only if
+        criterion_has_power is True. Otherwise it is reported as uninformative and no
+        statement about the standard pipeline's false-certification rate is made from it.
+    - id: A2
+      rule: >
+        The planted-signal check is a sanity check on the criterion, not a tuning target.
+        If it fails, the criterion is not adjusted until it passes; the failure is the
+        result. Any redesign requires a further amendment.
+
+  interpretation_constraints:
+    - >
+      Held-out validation against the permuted label is sample-splitting. Its low FWER
+      says a split pipeline is safe, not that the conventional same-data pipeline is.
+    - >
+      The Westfall-Young and naive/Bonferroni results are about marginal association
+      of single latents with the label. They are not conditional-independence tests.
+    - >
+      Behavioural change here is a change in a linear probe's predictions on cached
+      latents, not in the model's generated output (unchanged from stage 1 v1).

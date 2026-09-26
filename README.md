@@ -40,7 +40,7 @@ pip install -r requirements.txt
 python src/cache_activations.py --config config/default.yaml   # ~5 min, 1 GPU
 python src/describe_latents.py  --config config/default.yaml   # ~2 min, CPU
 python src/knockoff_audit.py    --config config/default.yaml   # ~85 min, CPU
-python src/calibrate_pipeline.py --config config/default.yaml --device cuda  # ~3 min, GPU
+python src/calibrate_pipeline.py --config config/default.yaml --device cuda  # ~6 min, GPU (fits in 8 GB)
 python src/planted_fdr.py       --config config/default.yaml --device cuda  # ~15 min, GPU
 ```
 
