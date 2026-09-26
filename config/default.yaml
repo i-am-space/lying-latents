@@ -101,6 +101,30 @@ stage3:
   lasso_lr: 0.1
   n_samples: 20000          # computational subsample for fast multi-replicate fitting
 
+# Stage 3 v2 (config/preregistration.yaml stage3_amendment_1): fair test of the zero atom.
+stage3_v2:
+  p: 512                        # MVR converges at 512, not 2048 (Stage 2); proposal sec. 7: top few hundred
+  n_rows: 20000
+  latent_subset: random         # seeded random subset of the retained latents (representative zero mass)
+  signal_sizes: [10, 20, 30]
+  nominal_fdr_targets: [0.05, 0.10, 0.20]
+  functional_forms: [linear, interaction]
+  signal_amplitudes: [0.5, 1.0, 2.0, 3.0, 5.0, 8.0]   # extended past 3.0 to look for the failure boundary
+  replicates: 30                # independent: fresh knockoff draw per replicate
+  datasets: [real_mvr, real_equi, gauss_mvr]
+  lasso:
+    lambda: 0.02
+    max_iter: 1000
+    tol: 1.0e-4                 # proximal-gradient residual; non-convergence is reported
+    lambda_sensitivity: [0.01, 0.05]
+    sensitivity_amplitude: 2.0
+  wy_baseline:
+    n_permutations: 200
+  null_harness:
+    replicates: 50              # k = 0: no signal at all
+  diagnose:
+    pilot_replicates: 10
+
 paths:
   cache_dir: data/cache
   results_dir: results

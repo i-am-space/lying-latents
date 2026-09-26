@@ -23,6 +23,9 @@ STREAMS = [
     "planted_signal",      # Stage 3: Planted signal FDR benchmark
     "validate_permutation",  # Stage 1 validate step: label permutations + splits
     "validate_planted",      # Stage 1 validate step: planted-signal power check
+    "s3v2_data",             # Stage 3 v2: latent/row subsets and the Gaussian control data
+    "s3v2_planted",          # Stage 3 v2: planted signals and labels (per-cell streams)
+    "s3v2_knockoff",         # Stage 3 v2: knockoff draws and WY permutations (per-cell streams)
 ]
 
 

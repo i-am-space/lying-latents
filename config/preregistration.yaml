@@ -561,3 +561,98 @@ stage1_amendment_2:
     - >
       The search step still tests marginal association; a latent that co-fires with a true
       carrier can be selected and certified. This amendment does not address that.
+
+# ===========================================================================
+# AMENDMENT 1 - Stage 3 v2 (post-hoc; written BEFORE the v2 script exists or runs)
+# ===========================================================================
+# Appended; no earlier line is altered. The v1 Stage 3 block above and its results
+# (results/stage3_planted_fdr.json, commits c37beee..23e3500) are kept as history. This
+# amendment fixes the design of a re-run that can attribute the behaviour of Gaussian
+# knockoffs to the zero atom. It is post-hoc: it follows a review of v1 and v1's own results.
+
+stage3_amendment_1:
+  meta:
+    date_written: "2026-09-27"
+    status: written_before_v2_ran
+    ordering_note: >
+      Intended to be committed with the v2 script BEFORE the full run so git history shows this
+      design preceding its results. If that did not happen the results commit must say so here.
+    trigger:
+      - >
+        v1 used s_method equicorrelated (its findings say ASDP). Stage 2 measured that S as giving
+        near-copy knockoffs (corr(X_j, X~_j) about 0.977 at p = 2048; 0.970 at p = 512) and MVR as
+        repairing it (0.666), and its findings said a Stage 3 baseline should use MVR. v1's power
+        loss is therefore confounded with the S choice.
+      - >
+        v1 has no control for which Gaussian knockoffs are exactly valid, so neither its FDR nor its
+        power can be attributed to the zero atom rather than to signal strength or S.
+      - >
+        v1 reports zero power at k = 10, q = 0.05 as a finding; Knockoff+ needs at least 1/q = 20
+        discoveries, so that cell is zero by arithmetic.
+      - >
+        v1's amplitude sweep stops at 3.0 while FDR is still rising with amplitude, and its
+        replicates within a knockoff draw share X and X~ but are treated as independent.
+      - >
+        v1's pre-registered Westfall-Young baseline was not implemented, and the design changed after
+        the first result (single amplitude 3.0 -> sweep; 20 -> 3 x 10 replicates) with no amendment.
+
+  design:
+    latents_and_rows: >
+      p = 512 latents: a seeded random subset of the 2048 retained (median Pr(X=0) 0.895, so the
+      atom is representative; the top 512 by firing rate have median 0.762 and would understate it).
+      n = 20000 rows: a seeded random subset. MVR did not converge at p = 2048 in 30 minutes
+      (Stage 2) and does at 512; proposal Sec. 7 asks for knockoffs on the top few hundred latents
+      with n/p reported (39). p differs from v1's 2048.
+    datasets:
+      real_mvr: "PRIMARY. Real latents, MVR S."
+      real_equi: "Real latents, equicorrelated S (v1's choice): isolates the near-copy effect."
+      gauss_mvr: >
+        Gaussian control. X ~ N(0, Sigma) with Sigma the covariance estimated from the real
+        latents, same n, same S. Gaussian knockoffs are exactly valid here up to estimation error,
+        so this is the procedure with no zero atom. real_mvr vs gauss_mvr isolates the atom.
+    covariance: "Stage 2 rule: Ledoit-Wolf if cond(sample) > 1e4, otherwise the sample covariance."
+    knockoffs: >
+      knockpy GaussianSampler. S computed once per dataset; a fresh knockoff draw for every
+      replicate, so replicates are independent given X. The control reuses the primary S if
+      2*Sigma - S stays positive definite, otherwise MVR is recomputed.
+    signal: >
+      Unchanged generator (Stage 3 generate_planted_labels): linear and pairwise-interaction forms,
+      k in {10, 20, 30}, q in {0.05, 0.10, 0.20}. Amplitudes [0.5, 1, 2, 3, 5, 8]. 30 independent
+      replicates per cell. Signal sets, weights and label noise are seeded per cell and shared
+      across datasets, so datasets are compared on identical draws.
+    filter: >
+      L1-logistic lasso (FISTA, lambda 0.02) on [X, X~], W_j = |w_j| - |w~_j|, Knockoff+. Step size
+      1/L with L = 0.25 * (lambda_max(Phi'Phi/n) + 1), up to 1000 iterations, with the
+      proximal-gradient residual reported; the fraction of fits that hit the cap is reported.
+      lambda sensitivity {0.01, 0.05} at amplitude 2.0, linear form.
+    secondary_columns:
+      - "Knockoff with offset 0 (separates the +1 floor from real power loss)."
+      - "Westfall-Young marginal baseline (200 permutations, max |correlation|, alpha = q), scored against the CONDITIONAL truth."
+      - "Cells with k < ceil(1/q) are flagged structurally zero-power and are not counted as power evidence."
+    global_null_harness: "k = 0 (labels independent of X), 50 replicates per dataset: P(any discovery) is expected to be at most q."
+    statistics: >
+      Per cell: mean, SE (ddof = 1) over independent replicates, 95% interval. Inflated iff
+      mean - 1.96*SE > q. Controlled (strict) iff mean <= q. Key contrasts: FDR and power of
+      real_mvr minus gauss_mvr per cell, and real_equi minus real_mvr, with SE from independent replicates.
+
+  decision_rules:
+    - id: C1
+      rule: >
+        The Gaussian control must show FDR at or below q (within SE) in every cell and the k = 0
+        harness must hold for it. If not, the pipeline or statistic is wrong and this is
+        investigated before any interpretation.
+    - id: C2
+      rule: >
+        A power loss is attributed to the zero atom only in cells where real_mvr power is
+        significantly below gauss_mvr power at the same amplitude, k and q. Otherwise it is
+        attributed to signal strength or S.
+    - id: C3
+      rule: >
+        No tuning of lambda, S, amplitudes, cells or replicates after seeing results. A failure is
+        the result; redesign needs a further amendment.
+
+  interpretation_constraints:
+    - "Planted labels are a semi-synthetic stand-in for real concepts; results are about this procedure on these latents."
+    - "Same dataset and activation cache as Stage 2, so not independent of it."
+    - "Realised FDR is a Monte Carlo estimate over independent replicates conditional on this X."
+    - "This tests second-order Gaussian knockoffs with a fixed-lambda lasso statistic, not knockoff methods in general."
