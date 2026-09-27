@@ -1,0 +1,138 @@
+{
+  "info": {
+    "n": 20000,
+    "p": 2048,
+    "n_over_p": 9.765625,
+    "covariance": "ledoit_wolf",
+    "s_method": "equicorrelated",
+    "gauss_control_S": "reused the real_random S",
+    "datasets": {
+      "real_first": {
+        "median_zero_mass": 0.89035,
+        "mean_s": 0.05495638450611333,
+        "min_s": 0.0549563845060844,
+        "max_s": 0.054956384506142354
+      },
+      "real_random": {
+        "median_zero_mass": 0.8913,
+        "mean_s": 0.054626990611403664,
+        "min_s": 0.054626990611374014,
+        "max_s": 0.054626990611432016
+      },
+      "gauss": {
+        "median_zero_mass": 0.0,
+        "mean_s": 0.054626990611403664,
+        "min_s": 0.054626990611374014,
+        "max_s": 0.054626990611432016
+      }
+    }
+  },
+  "pilot": {
+    "v1_setup": {
+      "dataset": "real_first",
+      "solver": "v1",
+      "power_q0.10": 0.25,
+      "fdr_q0.10": 0.0,
+      "fraction_converged": 1.0,
+      "median_residual": 2.0730153664771933e-06
+    },
+    "first_fixed": {
+      "dataset": "real_first",
+      "solver": "fixed",
+      "power_q0.10": 0.25,
+      "fdr_q0.10": 0.0,
+      "fraction_converged": 1.0,
+      "median_residual": 8.638847793918103e-05
+    },
+    "random_fixed": {
+      "dataset": "real_random",
+      "solver": "fixed",
+      "power_q0.10": 0.0,
+      "fdr_q0.10": 0.0,
+      "fraction_converged": 1.0,
+      "median_residual": 8.947052992880344e-05
+    },
+    "gauss_fixed": {
+      "dataset": "gauss",
+      "solver": "fixed",
+      "power_q0.10": 0.0,
+      "fdr_q0.10": 0.0,
+      "fraction_converged": 1.0,
+      "median_residual": 9.815718658501282e-05
+    },
+    "gauss_v1": {
+      "dataset": "gauss",
+      "solver": "v1",
+      "power_q0.10": 0.0,
+      "fdr_q0.10": 0.0,
+      "fraction_converged": 1.0,
+      "median_residual": 2.556755589466775e-06
+    }
+  },
+  "draws": {
+    "real_first": {
+      "lambda_max": [
+        108.46353912353516,
+        108.46044158935547,
+        108.4709243774414
+      ],
+      "safe_step": [
+        0.03324747366209354,
+        0.03324841528800804,
+        0.03324522881842541
+      ],
+      "mean_corr_X_Xk": [
+        0.9456914973946446,
+        0.9456670950494814,
+        0.9456874065920211
+      ]
+    },
+    "real_random": {
+      "lambda_max": [
+        109.64125061035156,
+        109.6202163696289,
+        109.65110778808594
+      ],
+      "safe_step": [
+        0.032893282701655965,
+        0.03289954244618472,
+        0.0328903500465262
+      ],
+      "mean_corr_X_Xk": [
+        0.9459826446523554,
+        0.9459959624222095,
+        0.9459609475183666
+      ]
+    },
+    "gauss": {
+      "lambda_max": [
+        107.62017059326172,
+        107.63069915771484,
+        107.6006088256836
+      ],
+      "safe_step": [
+        0.033505835993224826,
+        0.033502585863907336,
+        0.033511876313839596
+      ],
+      "mean_corr_X_Xk": [
+        0.9458648121499653,
+        0.945833245634585,
+        0.9458425153449022
+      ]
+    }
+  },
+  "timing": {
+    "seconds_per_draw": {
+      "real_first": 34.45877877871195,
+      "real_random": 34.19421664873759,
+      "gauss": 34.20765566825867
+    },
+    "seconds_per_fit": {
+      "fixed": 0.4893946382734511,
+      "v1": 0.8185107707977295
+    }
+  },
+  "projected_full_minutes": 70.06155828634898,
+  "minutes": 6.774489045143127
+}
