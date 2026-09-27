@@ -1,0 +1,335 @@
+{
+  "config_hash": "d33d210c5acb",
+  "master_seed": 20260904,
+  "n": 67349,
+  "p": 2048,
+  "n_permutations": 500,
+  "top_k": 10,
+  "alpha": 0.05,
+  "scoring_methods": [
+    "mean_diff",
+    "auroc",
+    "probe_weight"
+  ],
+  "null": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.984,
+          "n_certified": 492,
+          "ci95": [
+            0.9687485245822888,
+            0.9918708446797967
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.852,
+          "n_certified": 426,
+          "ci95": [
+            0.818193200072725,
+            0.8804390684815191
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.388,
+          "n_certified": 194,
+          "ci95": [
+            0.34629528411824795,
+            0.4314126304326744
+          ]
+        },
+        "joint_mean_d_null_mean": 0.0010480030014732619
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.274,
+          "n_certified": 137,
+          "ci95": [
+            0.2367399762569261,
+            0.31470635131904223
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.656,
+          "n_certified": 328,
+          "ci95": [
+            0.6133133706304251,
+            0.6963077483879331
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.278,
+          "n_certified": 139,
+          "ci95": [
+            0.24053595389789068,
+            0.31884937672983044
+          ]
+        },
+        "joint_mean_d_null_mean": 0.0005997314552109856
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.758,
+          "n_certified": 379,
+          "ci95": [
+            0.7185828923419191,
+            0.7934828044961348
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.116,
+          "n_certified": 58,
+          "ci95": [
+            0.09081324505614743,
+            0.14704246197558635
+          ]
+        },
+        "joint_mean_d_null_mean": 0.0007785373684891966
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.096,
+          "n_certified": 48,
+          "ci95": [
+            0.07317313790557156,
+            0.12498755386739835
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.4,
+          "n_certified": 200,
+          "ci95": [
+            0.35797823817783564,
+            0.44354668552834503
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.118,
+          "n_certified": 59,
+          "ci95": [
+            0.09259259259259259,
+            0.14923261596501758
+          ]
+        },
+        "joint_mean_d_null_mean": 4.033466860067847e-05
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.614,
+          "n_certified": 307,
+          "ci95": [
+            0.57061231973477,
+            0.655649267240184
+          ]
+        },
+        "joint_mean_d_null_mean": 0.0018237498118542136
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.106,
+          "n_certified": 53,
+          "ci95": [
+            0.08195666053446124,
+            0.1360515388678906
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.592,
+          "n_certified": 296,
+          "ci95": [
+            0.5483787038455701,
+            0.6342183663447436
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.158,
+          "n_certified": 79,
+          "ci95": [
+            0.1286522063728175,
+            0.1925630327023204
+          ]
+        },
+        "joint_mean_d_null_mean": 2.431640998671014e-05
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 0.0,
+        "joint_mean_d": 0.027377741411328316,
+        "single_p_min": 5.786199579936105e-40,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.0,
+        "joint_mean_d": 0.03011181391775608,
+        "single_p_min": 2.8651652121208043e-31,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 0.0,
+        "joint_mean_d": 0.057597409933805466,
+        "single_p_min": 5.786199579936105e-40,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.0,
+        "joint_mean_d": 0.060536231845617294,
+        "single_p_min": 2.8651652121208043e-31,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 0.0,
+        "joint_mean_d": 0.05810406059026718,
+        "single_p_min": 5.786199579936105e-40,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.0,
+        "joint_mean_d": 0.06125902384519577,
+        "single_p_min": 2.8651652121208043e-31,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "planted": {
+    "replicates": 20,
+    "k": 10,
+    "gate_amplitude": 3.0,
+    "min_detect_fraction": 0.8,
+    "by_amplitude": {
+      "3.0": {
+        "mean_diff": {
+          "mean_recall_at_k": 0.05000000000000001,
+          "same_data": {
+            "joint": 0.9,
+            "any_uncorrected": 1.0,
+            "any_bonferroni": 0.95
+          },
+          "held_out": {
+            "joint": 0.85,
+            "any_uncorrected": 0.95,
+            "any_bonferroni": 0.75
+          }
+        },
+        "auroc": {
+          "mean_recall_at_k": 0.355,
+          "same_data": {
+            "joint": 1.0,
+            "any_uncorrected": 1.0,
+            "any_bonferroni": 1.0
+          },
+          "held_out": {
+            "joint": 1.0,
+            "any_uncorrected": 1.0,
+            "any_bonferroni": 1.0
+          }
+        },
+        "probe_weight": {
+          "mean_recall_at_k": 1.0,
+          "same_data": {
+            "joint": 1.0,
+            "any_uncorrected": 1.0,
+            "any_bonferroni": 1.0
+          },
+          "held_out": {
+            "joint": 1.0,
+            "any_uncorrected": 1.0,
+            "any_bonferroni": 1.0
+          }
+        }
+      },
+      "1.0": {
+        "mean_diff": {
+          "mean_recall_at_k": 0.095,
+          "same_data": {
+            "joint": 1.0,
+            "any_uncorrected": 0.85,
+            "any_bonferroni": 0.7
+          },
+          "held_out": {
+            "joint": 0.85,
+            "any_uncorrected": 0.9,
+            "any_bonferroni": 0.8
+          }
+        },
+        "auroc": {
+          "mean_recall_at_k": 0.305,
+          "same_data": {
+            "joint": 1.0,
+            "any_uncorrected": 0.95,
+            "any_bonferroni": 0.95
+          },
+          "held_out": {
+            "joint": 0.95,
+            "any_uncorrected": 1.0,
+            "any_bonferroni": 0.95
+          }
+        },
+        "probe_weight": {
+          "mean_recall_at_k": 0.9949999999999999,
+          "same_data": {
+            "joint": 1.0,
+            "any_uncorrected": 1.0,
+            "any_bonferroni": 1.0
+          },
+          "held_out": {
+            "joint": 1.0,
+            "any_uncorrected": 1.0,
+            "any_bonferroni": 1.0
+          }
+        }
+      }
+    },
+    "criterion_has_power": {
+      "same_data": true,
+      "held_out": true
+    },
+    "criterion_has_power_both": true
+  }
+}

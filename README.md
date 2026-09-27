@@ -26,6 +26,7 @@ src/cache_activations.py      SST-2 -> Gemma Scope SAE latents -> data/cache/<ha
 src/describe_latents.py       distributional summary + premise check
 src/knockoff_audit.py         harness validation, then the exchangeability diagnostics
 src/calibrate_pipeline.py     Stage 1: FWER calibration under the global null
+src/calibrate_validation.py   Stage 1: validate-step FWER (same-data vs held-out) + power gate
 src/planted_fdr.py            Stage 3: planted-signal FDR benchmark with amplitude sweep
 src/common.py                 config loading, seed derivation, cache hashing
 scripts/                      one-off verification of reference-code behaviour
@@ -41,6 +42,7 @@ python src/cache_activations.py --config config/default.yaml   # ~5 min, 1 GPU
 python src/describe_latents.py  --config config/default.yaml   # ~2 min, CPU
 python src/knockoff_audit.py    --config config/default.yaml   # ~85 min, CPU
 python src/calibrate_pipeline.py --config config/default.yaml --device cuda  # ~6 min, GPU (fits in 8 GB)
+python src/calibrate_validation.py --config config/default.yaml --device cuda  # ~5 min, GPU (Stage 1 validate step)
 python src/planted_fdr.py       --config config/default.yaml --device cuda  # ~15 min, GPU
 ```
 

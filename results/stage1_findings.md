@@ -23,13 +23,24 @@ Config hash `d33d210c5acb` · master seed `20260904` · v1 pre-registered in
 4. **Exploratory, post-hoc:** ablating the top-10 *jointly* does separate real from null
    (joint accuracy drop, WY p = 0.004–0.048) and fires on planted signals (90–100% for
    AUROC / probe weight), unlike single-latent zeroing. Not pre-registered; see §5.
+5. **A powerful validate step (Amendment 2, pre-registered before the run, §6) certifies
+   noise.** A paired test that ablating the top-10 raises the probe's log-loss passes the
+   power gate in both regimes, and under permuted labels certifies in **98–100% of
+   experiments when validated on the same data** (the conventional workflow) and in
+   **9.6–27% when validated on held-out rows** (nominal 5%). Even ablating 10 *random*
+   latents is significant in 84% of same-data experiments (exploratory diagnostic), so
+   the certification says almost nothing about the selected latents. The held-out excess
+   over 5% triggered rule B3; the cause is that the test's null ("ablation changes
+   nothing") is false even under the global null, not a coding error.
 
 **What this establishes:** naive scanning has FWER ≈ 1 and ~5% spurious passes;
-Bonferroni/WY control it; the single-latent zeroing criterion is powerless here.
-**What it does not establish:** the false-certification rate of the *conventional*
-pipeline (the criterion cannot detect anything, so its null rate is uninformative);
-anything about the model's generated behaviour (ablation is a change in a linear probe's
-predictions on cached latents); anything about FDR (Stage 3).
+Bonferroni/WY control it; the single-latent zeroing criterion is powerless here; and a
+same-data significance test of ablation certifies essentially every noise experiment.
+**What it does not establish:** a calibrated false-certification rate (no test we have
+built has a valid null: it needs a null-intervention reference, e.g. matched random
+latents, which is a further amendment); anything about the model's generated behaviour
+(ablation is a change in a linear probe's predictions on cached latents); anything about
+FDR (Stage 3).
 
 ## 1. Setup
 
@@ -129,7 +140,77 @@ held-out split, real-label value vs the permutation null (WY-style p = (1 + #{nu
 - Choosing among these effects after seeing results is a forking path. Treat this as a
   hypothesis for a second, pre-registered amendment, not a finding.
 
-## 6. Deviations and corrections
+## 6. The validate step (Amendment 2 — pre-registered before the run)
+
+Design fixed in `stage1_amendment_2` and committed (`a17be07`) before this script ran on
+real data. Search is unchanged (top-10 by score). Validate: one-sided paired test that
+ablating the candidates raises the probe's log-loss, certify at p ≤ 0.05. Primary variant:
+all ten ablated jointly. Two regimes: **same-data** (validate on the rows the probe was fit
+on: the conventional workflow) and **held-out** (the 30% never used). B = 500 fresh
+permutations (`validate_permutation` stream). Script: `src/calibrate_validation.py`.
+
+**FWER of the primary variant** (fraction of permuted-label experiments with a
+certification; Wilson 95% interval):
+
+| method | same-data | held-out |
+|---|---|---|
+| mean_diff | 0.984 [0.969, 0.992] | 0.274 [0.237, 0.315] |
+| auroc | 1.000 [0.992, 1.000] | 0.096 [0.073, 0.125] |
+| probe_weight | 1.000 [0.992, 1.000] | 0.106 [0.082, 0.136] |
+
+Secondary variants (any of the 10 latents tested alone; same-data / held-out):
+
+| method | any-of-10, uncorrected | any-of-10, Bonferroni |
+|---|---|---|
+| mean_diff | 0.852 / 0.656 | 0.388 / 0.278 |
+| auroc | 0.758 / 0.400 | 0.116 / 0.118 |
+| probe_weight | 1.000 / 0.592 | 0.614 / 0.158 |
+
+On the **real labels** every method certifies in both regimes (p underflows to 0).
+
+**Power gate (B1)** — labels from 10 planted latents, 20 replicates, primary variant
+certifies (same-data / held-out): amplitude 3.0: mean_diff 90% / 85%, auroc 100% / 100%,
+probe_weight 100% / 100%; amplitude 1.0 (descriptive): 100% / 85%, 100% / 95%, 100% / 100%.
+**Gate passed in both regimes.** But recall@10 of the planted latents is 0.05 (mean_diff),
+0.35 (auroc), 0.99 (probe_weight): mean_diff certifies in 90% of replicates while picking the
+*wrong* latents 95% of the time. The gate shows the test detects *an* ablation effect, not
+that it identifies the right latents; it is not specific.
+
+**Rule B3 triggered.** A valid held-out test should have FWER ≤ ~0.05; ours is 0.096–0.274
+with intervals excluding 0.05, so it was investigated before interpretation. Findings
+(exploratory diagnostics on the saved nulls and a 100-permutation rerun with `probe_weight`,
+seed not pre-registered):
+- The ablation arithmetic is not the problem (same identity that reproduced v1's held-out
+  certification 0/1500). The hypothesis that ablation shifts the probe's mean logit
+  (miscalibrating it) is **refuted**: the mean shift is 0.000 (sd 0.041).
+- Held-out t-statistics across permutations are centred near zero (mean −0.24 to −0.06 for
+  auroc / probe_weight, +0.82 for mean_diff) but **over-dispersed: sd 1.31, 1.53, 2.07
+  instead of 1**. Under the global null, ablating latents still changes the probe's
+  expected loss by a small systematic amount whose sign and size depend on the random
+  probe; at ~20k rows that is detectable. The test rejects "ablation changes nothing",
+  which is false under the null, so it is not a level-α test that the latents carry signal.
+- **Null-intervention control:** ablating 10 *random* latents instead of the top-10 gives
+  held-out 0.06 (top-10: 0.08; B = 100, interval about ±0.05) and same-data **0.84** (top-10:
+  1.00). In-sample, almost any ablation is "significant"; selection adds little.
+
+**Interpretation.**
+1. The conventional same-data validate step certifies essentially every experiment on pure
+   noise (0.98–1.00), and mostly because any in-sample ablation registers, not because the
+   selected latents matter. This is the proposal's §3 point (data reuse, and no null
+   intervention to compare against), now measured.
+2. Sample-splitting cuts the rate to 0.10–0.27 but does not reach nominal, for the reason
+   above. No procedure here has a calibrated FWER.
+3. The natural repair is a **null-intervention reference**: certify only if the effect
+   exceeds that of matched random latents (as Stage 5 proposes). That is a new design and
+   needs its own amendment; per B2 it is not applied to these data now.
+
+Caveats: the joint-ablation idea came from exploratory v2 results on this same dataset, so
+this is not independent confirmatory evidence; behaviour is the probe's log-loss on cached
+latents, not the model's output. A plotting bug (negative error bar when FWER = 1.0) crashed
+the run's final step after results were saved; it was fixed and `fig12` regenerated from the
+saved JSON, with no recomputation.
+
+## 7. Deviations and corrections
 
 **Deviations from the pre-registered v1 (both in the original commit):**
 1. L2 gradient-descent probe on GPU instead of L1/SAGA on CPU (SAGA projected ~49 h). The
@@ -148,7 +229,7 @@ git history (first appears 2026-09-17, in the same commit as the code).
 label-free and joint behavioural effects and their null curves (§5), same-data variant and
 planted-signal power check (§3). None of these is confirmatory.
 
-## 7. Reproduction
+## 8. Reproduction
 
 ```bash
 # cache must exist first (GPU machine, ~5 min):
@@ -157,7 +238,12 @@ python src/cache_activations.py --config config/default.yaml
 # Stage 1 (v1 numbers + v2 additions; ~6 min on an 8 GB laptop GPU, or --device cpu):
 python src/calibrate_pipeline.py --config config/default.yaml --device cuda
 # quick check: add --limit-perms 20 --skip-planted
+
+# Stage 1 validate step (Amendment 2; ~5 min on an 8 GB laptop GPU):
+python src/calibrate_validation.py --config config/default.yaml --device cuda
 ```
+Validate-step artefacts: `results/stage1_validation.json`, `results/stage1_validation_null.npz`
+(per-permutation p-values), `results/fig12_stage1_validation.png`.
 
 Artefacts: `results/stage1_calibration.json` (v1 keys unchanged; new `v2` block),
 `results/stage1_adjusted_pvalues.npz` (per-latent WY-adjusted p), `results/stage1_behaviour_null.npz`

@@ -203,7 +203,7 @@ def make_figure(out: dict, methods: list[str], sv: dict, rd: Path) -> None:
         vals, lo, hi = [], [], []
         for m in methods:
             f = out["null"][m][reg]["joint"]
-            vals.append(f["fwer"]); lo.append(f["fwer"] - f["ci95"][0]); hi.append(f["ci95"][1] - f["fwer"])
+            vals.append(f["fwer"]); lo.append(max(0.0, f["fwer"] - f["ci95"][0])); hi.append(max(0.0, f["ci95"][1] - f["fwer"]))
         ax.bar(x + (j - 0.5) * 0.36, vals, 0.34, yerr=[lo, hi], color=col, capsize=3,
                label=reg.replace("_", "-"))
     ax.axhline(sv["alpha"], color="k", ls="--", lw=1)
