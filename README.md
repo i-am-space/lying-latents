@@ -15,7 +15,8 @@ These are **necessary-condition** tests. Exchangeability is required only on nul
 latents, and the null set is unknown on real data, so the diagnostics are sufficient
 to *falsify* exchangeability, never to confirm it. A violation **voids the FDR
 guarantee**; it does not demonstrate that realised FDR exceeds the nominal target.
-That is Stage 3 and is out of scope here.
+That is Stage 3 (`results/stage3_findings.md`): no inflation beyond q was found in the tested
+range, but the margin a valid construction has erodes as signal strength grows.
 
 ## Layout
 
@@ -27,7 +28,8 @@ src/describe_latents.py       distributional summary + premise check
 src/knockoff_audit.py         harness validation, then the exchangeability diagnostics
 src/calibrate_pipeline.py     Stage 1: FWER calibration under the global null
 src/calibrate_validation.py   Stage 1: validate-step FWER (same-data vs held-out) + power gate
-src/planted_fdr.py            Stage 3: planted-signal FDR benchmark with amplitude sweep
+src/planted_fdr.py            Stage 3 v1: planted-signal FDR benchmark (superseded, kept as history)
+src/planted_fdr_controls.py   Stage 3 v2: same benchmark with a Gaussian control, MVR S, WY baseline
 src/common.py                 config loading, seed derivation, cache hashing
 scripts/                      one-off verification of reference-code behaviour
 NOTES_reference.md            what the audited pipeline actually does
@@ -43,7 +45,8 @@ python src/describe_latents.py  --config config/default.yaml   # ~2 min, CPU
 python src/knockoff_audit.py    --config config/default.yaml   # ~85 min, CPU
 python src/calibrate_pipeline.py --config config/default.yaml --device cuda  # ~6 min, GPU (fits in 8 GB)
 python src/calibrate_validation.py --config config/default.yaml --device cuda  # ~5 min, GPU (Stage 1 validate step)
-python src/planted_fdr.py       --config config/default.yaml --device cuda  # ~15 min, GPU
+python src/planted_fdr.py       --config config/default.yaml --device cuda  # ~15 min, GPU (v1)
+python src/planted_fdr_controls.py --config config/default.yaml --device cuda --stage full  # ~76 min, GPU; needs knockpy
 ```
 
 Every run is determined by `master_seed` in the config. Per-component RNG streams are
