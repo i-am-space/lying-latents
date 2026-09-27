@@ -47,6 +47,7 @@ python src/calibrate_pipeline.py --config config/default.yaml --device cuda  # ~
 python src/calibrate_validation.py --config config/default.yaml --device cuda  # ~5 min, GPU (Stage 1 validate step)
 python src/planted_fdr.py       --config config/default.yaml --device cuda  # ~15 min, GPU (v1)
 python src/planted_fdr_controls.py --config config/default.yaml --device cuda --stage full  # ~76 min, GPU; needs knockpy
+python src/planted_fdr_controls.py --config config/default.yaml --device cuda --experiment p2048 --stage full  # p = 2048 follow-up
 ```
 
 Every run is determined by `master_seed` in the config. Per-component RNG streams are

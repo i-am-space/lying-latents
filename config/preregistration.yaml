@@ -656,3 +656,76 @@ stage3_amendment_1:
     - "Same dataset and activation cache as Stage 2, so not independent of it."
     - "Realised FDR is a Monte Carlo estimate over independent replicates conditional on this X."
     - "This tests second-order Gaussian knockoffs with a fixed-lambda lasso statistic, not knockoff methods in general."
+
+# ===========================================================================
+# AMENDMENT 2 - Stage 3 p = 2048 follow-up (written BEFORE any real-data run of it)
+# ===========================================================================
+# Appended; no earlier line is altered. Asks why v1 reported a power collapse that v2
+# (stage3_amendment_1, p = 512) does not reproduce.
+
+stage3_amendment_2:
+  meta:
+    date_written: "2026-09-27"
+    status: written_before_run
+    ordering_note: >
+      To be committed and pushed before anyone runs the p2048 experiment on real data, so git
+      history shows this design preceding its results. If that did not happen, the results
+      commit must say so here.
+    trigger: >
+      At q = 0.10, v1 (p = 2048) reported power 0.633 / 0.178 / 0.038 for linear signals at
+      amplitude 0.5 with k = 10 / 20 / 30, and 0.351 for interaction signals at amplitude 1.0,
+      k = 30. v2 (p = 512) found 0.900 / 0.820 / 0.503 and 0.834. The two runs differ in the
+      number of latents (n/p 9.8 vs 39), the solver, the row subset and the S matrix at once,
+      so the cause of the collapse is unknown.
+    design_diagnostics_measured_before_writing: >
+      On the real cache (first 20000 rows, p = 2048, Ledoit-Wolf, equicorrelated S) one knockoff
+      draw gave lambda_max(Phi'Phi/n) = 108.4, so a safe lasso step is 1/L = 0.033; v1 used a fixed
+      step of 0.1, three times the safe step, for 500 iterations with no convergence check. One
+      knockpy draw at p = 2048 took about 21 s. No lasso fit on planted labels at p = 2048 was run
+      before this amendment.
+
+  design:
+    fixed_to_v1: >
+      p = 2048 (all retained latents), n = 20000, Ledoit-Wolf covariance, equicorrelated S (MVR
+      does not converge at 2048), lambda 0.02, the unchanged label generator, amplitudes 0.5 and
+      1.0 (where v1 reported the collapse), linear and interaction forms, k in {10, 20, 30},
+      q in {0.05, 0.10, 0.20}.
+    arms:
+      v1_setup: "first 20000 rows, v1 solver (verbatim copy: step 0.1, 500 iterations). Should reproduce v1."
+      first_fixed: "first 20000 rows, fixed solver (step 1/L, up to 1000 iterations, residual checked)."
+      random_fixed: "seeded random 20000 rows, fixed solver."
+      gauss_fixed: "Gaussian data with the random-row covariance and the same S, fixed solver: no zero atom."
+      gauss_v1: "Gaussian data, v1 solver: the solver's effect without the atom."
+    replicates: >
+      30 per cell. Each dataset has a bank of 30 knockoff draws and replicate r uses draw r in every
+      cell (a fresh draw per cell would cost about 10 hours at p = 2048). Replicates within a cell
+      are independent; cells share draws; arms on the same dataset share draws and labels, so their
+      contrasts are paired.
+    contrasts: >
+      Paired over replicates, per cell, with SE (ddof = 1): solver = first_fixed - v1_setup;
+      rows = random_fixed - first_fixed; zero_atom = gauss_fixed - random_fixed;
+      solver_without_atom = gauss_fixed - gauss_v1.
+    reported_per_fit: "convergence (proximal-gradient residual at the safe step), non-finite fits, discoveries."
+
+  decision_rules:
+    - id: D1
+      rule: >
+        Reproduction check. A v1_setup cell reproduces v1 if its power is within max(2 SE, 0.10) of
+        v1's reported power. v1 counts as reproduced if at least 80% of the 36 compared cells do. If
+        not, that failure is reported and investigated before any attribution.
+    - id: D2
+      rule: >
+        A factor contributes to the collapse in a cell only where its paired power contrast is
+        positive and exceeds 1.96 SE. Counts over all 36 cells are reported per contrast; cells are
+        not selected after seeing results.
+    - id: D3
+      rule: >
+        Whatever power gap remains between random_fixed at p = 2048 and v2's real_equi at p = 512 is
+        attributed jointly to the number of latents and the near-copy S, which this experiment
+        cannot separate.
+    - id: D4
+      rule: "No tuning of any setting after seeing results; redesign needs a further amendment."
+
+  interpretation_constraints:
+    - "This explains a discrepancy between two runs; it is not a new estimate of knockoff FDR."
+    - "Same dataset and cache as all other stages; planted labels are a semi-synthetic stand-in."

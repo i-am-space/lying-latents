@@ -26,6 +26,9 @@ STREAMS = [
     "s3v2_data",             # Stage 3 v2: latent/row subsets and the Gaussian control data
     "s3v2_planted",          # Stage 3 v2: planted signals and labels (per-cell streams)
     "s3v2_knockoff",         # Stage 3 v2: knockoff draws and WY permutations (per-cell streams)
+    "s3p2048_data",          # Stage 3 p2048: row subset and the Gaussian control data
+    "s3p2048_planted",       # Stage 3 p2048: planted signals and labels (per-cell streams)
+    "s3p2048_knockoff",      # Stage 3 p2048: knockoff draw bank (per dataset and replicate)
 ]
 
 

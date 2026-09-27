@@ -16,7 +16,11 @@ knockoff offset 0, and the Westfall-Young marginal baseline scored against the c
 Stages:  --stage diagnose  S statistics, k = 0 harness, small pilot (rule C1), in minutes
          --stage full      the whole grid
 
+--experiment p2048 runs the follow-up on v1's power collapse at p = 2048 instead
+(stage3_amendment_2): v1's solver, v1's rows and the zero atom are changed one at a time.
+
 Usage: python src/planted_fdr_controls.py --config config/default.yaml --device cuda --stage diagnose
+       python src/planted_fdr_controls.py --config config/default.yaml --device cuda --experiment p2048 --stage full
 """
 from __future__ import annotations
 
@@ -365,6 +369,349 @@ def make_figures(conds, info, amps, forms, ks, names, q_ref, rd):
 
 
 # ---------------------------------------------------------------------------
+# p2048 experiment (stage3_amendment_2): why did v1 see a power collapse that v2 does not?
+# Arms change one thing at a time: v1's solver, v1's first-20000 rows, and the zero atom,
+# all at v1's p = 2048 with v1's equicorrelated S and Ledoit-Wolf covariance.
+# ---------------------------------------------------------------------------
+
+def fit_lasso_v1(Phi: torch.Tensor, y: torch.Tensor, lam: float, lr: float, max_iter: int):
+    """v1's solver, copied verbatim from planted_fdr.fit_lasso (fixed step, fixed iteration
+    count, no convergence check), except that it also returns the intercept."""
+    n, dim = Phi.shape
+    w = torch.zeros(dim, device=Phi.device, dtype=Phi.dtype)
+    b = torch.zeros(1, device=Phi.device, dtype=Phi.dtype)
+    w_prev = w.clone()
+    for t in range(1, max_iter + 1):
+        beta = (t - 1.0) / (t + 2.0)
+        v = w + beta * (w - w_prev)
+        w_prev.copy_(w)
+        logits = Phi @ v + b
+        p = torch.sigmoid(logits)
+        err = (p - y) / n
+        grad_w = Phi.t() @ err
+        grad_b = err.sum()
+        u = v - lr * grad_w
+        b = b - lr * grad_b
+        thresh = lr * lam
+        w = torch.sign(u) * torch.clamp(u.abs() - thresh, min=0.0)
+    return w, b
+
+
+def prox_residual(Phi: torch.Tensor, y: torch.Tensor, w: torch.Tensor, b: torch.Tensor,
+                  lam: float, lr: float) -> float:
+    """Proximal-gradient residual at (w, b) with a safe step: 0 at the lasso optimum."""
+    err = (torch.sigmoid(Phi @ w + b) - y) / Phi.shape[0]
+    u = w - lr * (Phi.t() @ err)
+    w2 = torch.sign(u) * torch.clamp(u.abs() - lr * lam, min=0.0)
+    return float((w - w2).abs().max() / lr)
+
+
+def build_datasets_p2048(cfg: dict, sec: dict, X_all: np.ndarray) -> tuple[dict, dict]:
+    from knockpy import smatrix
+    from knockpy.knockoffs import GaussianSampler
+
+    rng = rng_for(cfg, "s3p2048_data")
+    n_all, p_all = X_all.shape
+    if sec["p"] != p_all:
+        raise SystemExit(f"stage3_p2048.p = {sec['p']} but the cache has {p_all} latents")
+    n = sec["n_rows"]
+    rows = {"real_first": np.arange(n),                                   # v1: X_raw[:20000]
+            "real_random": np.sort(rng.choice(n_all, n, replace=False))}
+    ds = {}
+    for name, r in rows.items():
+        X = X_all[r].astype(np.float64)
+        p0 = (X == 0).mean(axis=0)
+        Z, _, _ = standardise(X)
+        del X
+        Sigma = estimate_cov(Z, sec["covariance"])
+        S = np.asarray(smatrix.compute_smatrix(Sigma, method=sec["s_method"]))
+        ds[name] = {"Z": Z, "Sigma": Sigma, "S": S, "median_zero_mass": float(np.median(p0))}
+
+    # Gaussian control: same covariance as the random-row real data, same n; the covariance
+    # is re-estimated from the Gaussian sample exactly as for the real data.
+    base = ds["real_random"]
+    Lc = np.linalg.cholesky(base["Sigma"] + 1e-10 * np.eye(p_all))
+    Zg, _, _ = standardise(rng.standard_normal((n, p_all)) @ Lc.T)
+    Sigma_g = estimate_cov(Zg, sec["covariance"])
+    if np.linalg.eigvalsh(2 * Sigma_g - base["S"]).min() > 1e-8:
+        S_g, note = base["S"], "reused the real_random S"
+    else:
+        S_g, note = np.asarray(smatrix.compute_smatrix(Sigma_g, method=sec["s_method"])), "recomputed"
+    ds["gauss"] = {"Z": Zg, "Sigma": Sigma_g, "S": S_g, "median_zero_mass": 0.0}
+
+    info = {"n": n, "p": p_all, "n_over_p": n / p_all, "covariance": sec["covariance"],
+            "s_method": sec["s_method"], "gauss_control_S": note, "datasets": {}}
+    for name, d in ds.items():
+        d["sampler"] = GaussianSampler(d["Z"], mu=d["Z"].mean(axis=0), Sigma=d["Sigma"], S=d["S"])
+        s = np.diag(d["S"])
+        info["datasets"][name] = {"median_zero_mass": d["median_zero_mass"], "mean_s": float(s.mean()),
+                                  "min_s": float(s.min()), "max_s": float(s.max())}
+        print(f"  [{name:11s}] median Pr(X=0)={d['median_zero_mass']:.3f}  mean s={s.mean():.4f}", flush=True)
+    print(f"  n={n} p={p_all} n/p={n/p_all:.1f}  covariance={sec['covariance']}  S={sec['s_method']}  "
+          f"Gaussian control: {note}", flush=True)
+    return ds, info
+
+
+def run_grid_p2048(ds: dict, cfg: dict, sec: dict, device, R: int, amps, forms, ks, arms):
+    """Draw bank: replicate r uses knockoff draw r of its dataset in every cell, so replicates
+    within a cell are independent, and arms on the same dataset share draws and labels (paired).
+    A knockpy draw costs ~20 s at p = 2048, so a fresh draw per cell is not affordable."""
+    qs = sec["nominal_fdr_targets"]
+    lam = sec["lasso"]["lambda"]
+    names = [a[0] for a in arms]
+    dkeys = list(dict.fromkeys(a[1] for a in arms))
+    p = ds[dkeys[0]]["Z"].shape[1]
+    shape = (len(amps), len(forms), len(ks), R)
+    M = {m: {a: np.zeros(shape + (len(qs),), dtype=np.float32) for a in names} for m in METRICS}
+    conv = {a: np.zeros(shape, dtype=bool) for a in names}
+    resid = {a: np.zeros(shape, dtype=np.float32) for a in names}
+    finite = {a: np.ones(shape, dtype=bool) for a in names}
+    draws = {k: {"lambda_max": [], "safe_step": [], "mean_corr_X_Xk": []} for k in dkeys}
+    no_r, no_thr = np.zeros(p), {q: float("inf") for q in qs}
+    t_draw, t_fit = {k: 0.0 for k in dkeys}, {s: [0.0, 0] for s in ("fixed", "v1")}
+    t0 = time.time()
+
+    for rep in range(R):
+        for di, dk in enumerate(dkeys):
+            d = ds[dk]
+            seed = int(cell_rng(cfg, "s3p2048_knockoff", di, rep).integers(2**31))
+            t = time.time()
+            np.random.seed(seed)
+            Zk = d["sampler"].sample_knockoffs()
+            t_draw[dk] += time.time() - t
+            zc, kc = d["Z"] - d["Z"].mean(axis=0), Zk - Zk.mean(axis=0)
+            corr = (zc * kc).sum(0) / np.sqrt((zc ** 2).sum(0) * (kc ** 2).sum(0))
+            Phi = torch.from_numpy(np.hstack([d["Z"], Zk]).astype(np.float32)).to(device)
+            del Zk, zc, kc
+            lmax = lmax_power(Phi)
+            safe = 1.0 / (0.25 * (1.1 * lmax + 1.0))
+            draws[dk]["lambda_max"].append(lmax)
+            draws[dk]["safe_step"].append(safe)
+            draws[dk]["mean_corr_X_Xk"].append(float(np.mean(corr)))
+
+            for ia, amp in enumerate(amps):
+                for jf, form in enumerate(forms):
+                    for kk, k in enumerate(ks):
+                        rng = cell_rng(cfg, "s3p2048_planted", ia, jf, kk, rep)
+                        S_idx = np.sort(rng.choice(p, size=k, replace=False))
+                        true_set = set(S_idx.tolist())
+                        y_np, _ = generate_planted_labels(d["Z"], S_idx, form, amp, rng)
+                        y_t = torch.from_numpy(y_np.astype(np.float32)).to(device)
+                        for name, akey, solver in arms:
+                            if akey != dk:
+                                continue
+                            t = time.time()
+                            if solver == "fixed":
+                                w, cv, rs, _ = fit_lasso_checked(Phi, y_t, lam, sec["lasso"]["max_iter"],
+                                                                 sec["lasso"]["tol"])
+                            elif solver == "v1":
+                                w, b = fit_lasso_v1(Phi, y_t, lam, sec["v1_solver"]["lr"],
+                                                    sec["v1_solver"]["max_iter"])
+                                rs = prox_residual(Phi, y_t, w, b, lam, safe)
+                                cv = rs < sec["lasso"]["tol"]
+                            else:
+                                raise ValueError(f"unknown solver {solver!r}")
+                            w_np = w.cpu().numpy()
+                            if not np.all(np.isfinite(w_np)):
+                                w_np, rs, cv = np.zeros_like(w_np), float("inf"), False
+                                finite[name][ia, jf, kk, rep] = False
+                            t_fit[solver][0] += time.time() - t
+                            t_fit[solver][1] += 1
+                            sc = score_fit(np.abs(w_np[:p]) - np.abs(w_np[p:]), no_r, no_thr, qs, true_set)
+                            for m in METRICS:
+                                M[m][name][ia, jf, kk, rep] = sc[m]
+                            conv[name][ia, jf, kk, rep], resid[name][ia, jf, kk, rep] = cv, rs
+            del Phi
+        el = time.time() - t0
+        print(f"  rep {rep + 1:>2}/{R}  elapsed {el / 60:.1f}m  ETA {el / (rep + 1) * (R - rep - 1) / 60:.1f}m",
+              flush=True)
+
+    n_draws = R
+    timing = {"seconds_per_draw": {k: v / n_draws for k, v in t_draw.items()},
+              "seconds_per_fit": {s: (v[0] / v[1] if v[1] else None) for s, v in t_fit.items()}}
+    return M, conv, resid, finite, draws, timing
+
+
+def load_v1_reference(path: str) -> dict:
+    p = Path(path)
+    if not p.exists():
+        return {}
+    ref = {}
+    for c in json.loads(p.read_text())["conditions"]:
+        ref[(float(c["amplitude"]), c["form"], int(c["signal_size"]), float(c["nominal_q"]))] = {
+            "power": float(c["power_mean"]), "fdr": float(c["realised_fdr_mean"])}
+    return ref
+
+
+def aggregate_p2048(sec, M, conv, resid, finite, amps, forms, ks, arms, v1ref):
+    qs = sec["nominal_fdr_targets"]
+    names = [a[0] for a in arms]
+    conds = []
+    for a in names:
+        for ia, amp in enumerate(amps):
+            for jf, form in enumerate(forms):
+                for kk, k in enumerate(ks):
+                    for iq, q in enumerate(qs):
+                        row = {"arm": a, "amplitude": amp, "form": form, "k": k, "q": q,
+                               "power_capped_k_lt_1_over_q": bool(k < math.ceil(1 / q)),
+                               "fraction_converged": float(conv[a][ia, jf, kk].mean())}
+                        for m in ("ko_fdr", "ko_pow", "ko_nd", "k0_pow"):
+                            mu, se = mean_se(M[m][a][ia, jf, kk, :, iq])
+                            row[m], row[m + "_se"] = mu, se
+                        ref = v1ref.get((float(amp), form, int(k), float(q)))
+                        if a == sec["v1_arm"] and ref is not None:
+                            row["v1_reported_power"], row["v1_reported_fdr"] = ref["power"], ref["fdr"]
+                            row["reproduces_v1"] = bool(abs(row["ko_pow"] - ref["power"])
+                                                        <= max(2 * row["ko_pow_se"], 0.10))
+                        conds.append(row)
+
+    contrasts = []
+    for cname, a, b in sec["contrasts"]:
+        for ia, amp in enumerate(amps):
+            for jf, form in enumerate(forms):
+                for kk, k in enumerate(ks):
+                    for iq, q in enumerate(qs):
+                        row = {"contrast": cname, "a": a, "b": b, "amplitude": amp, "form": form,
+                               "k": k, "q": q}
+                        for m in ("ko_pow", "ko_fdr"):
+                            dif = M[m][a][ia, jf, kk, :, iq] - M[m][b][ia, jf, kk, :, iq]
+                            mu, se = mean_se(dif)
+                            row[m + "_diff"], row[m + "_diff_se"] = mu, se
+                            row[m + "_significant"] = bool(se > 0 and abs(mu) > 1.96 * se)
+                        contrasts.append(row)
+
+    summary = {"contrasts": {}, "arms": {}}
+    for cname, a, b in sec["contrasts"]:
+        cs = [c for c in contrasts if c["contrast"] == cname]
+        summary["contrasts"][cname] = {
+            "a": a, "b": b, "n_cells": len(cs),
+            "mean_power_diff": float(np.mean([c["ko_pow_diff"] for c in cs])),
+            "n_power_diff_significantly_positive": sum(c["ko_pow_significant"] and c["ko_pow_diff"] > 0 for c in cs),
+            "n_power_diff_significantly_negative": sum(c["ko_pow_significant"] and c["ko_pow_diff"] < 0 for c in cs),
+            "mean_fdr_diff": float(np.mean([c["ko_fdr_diff"] for c in cs]))}
+    for a in names:
+        cs = [c for c in conds if c["arm"] == a]
+        summary["arms"][a] = {"mean_power": float(np.mean([c["ko_pow"] for c in cs])),
+                              "mean_fdr": float(np.mean([c["ko_fdr"] for c in cs])),
+                              "n_fdr_inflated": sum(c["ko_fdr"] - 1.96 * c["ko_fdr_se"] > c["q"] for c in cs),
+                              "fraction_converged": float(conv[a].mean()),
+                              "median_residual": float(np.median(resid[a])),
+                              "fraction_nonfinite": float(1 - finite[a].mean())}
+    rep_cells = [c for c in conds if "reproduces_v1" in c]
+    summary["v1_reproduction"] = {
+        "n_cells_compared": len(rep_cells),
+        "n_cells_reproduced": sum(c["reproduces_v1"] for c in rep_cells),
+        "D1_reproduced": bool(rep_cells) and sum(c["reproduces_v1"] for c in rep_cells) >= 0.8 * len(rep_cells)}
+    return conds, contrasts, summary
+
+
+def make_figure_p2048(conds, amps, forms, ks, arms, q_ref, rd):
+    colors = ["#7f7f7f", "#c0392b", "#e07b39", "#3b6ea5", "#8e44ad", "#2e8b57"]
+    fig, axes = plt.subplots(len(forms), len(amps), figsize=(5 * len(amps), 3.8 * len(forms)),
+                             sharey=True, squeeze=False)
+    for i, form in enumerate(forms):
+        for j, amp in enumerate(amps):
+            ax = axes[i, j]
+            for ci, (name, _, _) in enumerate(arms):
+                rows = sorted([c for c in conds if c["arm"] == name and c["form"] == form
+                               and c["amplitude"] == amp and c["q"] == q_ref], key=lambda c: c["k"])
+                ax.errorbar([c["k"] + (ci - 2) * 0.6 for c in rows], [c["ko_pow"] for c in rows],
+                            yerr=[1.96 * c["ko_pow_se"] for c in rows], marker="o", ms=4, capsize=2,
+                            color=colors[ci % len(colors)], label=name)
+                ref = [(c["k"], c["v1_reported_power"]) for c in rows if "v1_reported_power" in c]
+                if ref:
+                    ax.scatter([r[0] for r in ref], [r[1] for r in ref], marker="x", s=60, color="k",
+                               zorder=5, label="v1 reported" if (i, j) == (0, 0) else None)
+            ax.set_title(f"{form}, amplitude {amp}", fontsize=10)
+            ax.set_xticks(ks)
+            ax.set_ylim(-0.03, 1.05)
+            if i == len(forms) - 1:
+                ax.set_xlabel("number of planted latents k")
+            if j == 0:
+                ax.set_ylabel(f"power at q = {q_ref}")
+    axes[0, 0].legend(fontsize=7)
+    fig.suptitle("Stage 3, p = 2048: which change removes v1's power collapse? (95% intervals)", y=1.0)
+    fig.tight_layout()
+    fig.savefig(rd / "fig16_stage3_p2048_power.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
+def main_p2048(args, cfg: dict, d, X_all: np.ndarray, device, rd: Path) -> None:
+    sec = cfg["stage3_p2048"]
+    arms = [tuple(a) for a in sec["arms"]]
+    t0 = time.time()
+    print("\n=== p = 2048 datasets ===")
+    ds, info = build_datasets_p2048(cfg, sec, X_all)
+    del X_all
+    v1ref = load_v1_reference(sec["v1_reference"])
+
+    if args.stage == "diagnose":
+        amp, form, k = sec["diagnose"]["pilot_cell"]
+        R = args.limit_reps or sec["diagnose"]["pilot_replicates"]
+        print(f"\n=== pilot: amplitude {amp}, {form}, k = {k}, {R} replicates, all arms ===")
+        M, conv, resid, finite, draws, timing = run_grid_p2048(ds, cfg, sec, device, R, [amp], [form], [k], arms)
+        iq = sec["nominal_fdr_targets"].index(0.10)
+        pilot = {}
+        for name, dk, solver in arms:
+            pw, fd = M["ko_pow"][name][0, 0, 0, :, iq], M["ko_fdr"][name][0, 0, 0, :, iq]
+            pilot[name] = {"dataset": dk, "solver": solver, "power_q0.10": float(pw.mean()),
+                           "fdr_q0.10": float(fd.mean()), "fraction_converged": float(conv[name].mean()),
+                           "median_residual": float(np.median(resid[name]))}
+            print(f"  {name:13s} ({dk}, {solver:5s}) power {pw.mean():.3f}  FDR {fd.mean():.3f}  "
+                  f"converged {conv[name].mean():.0%}  median residual {np.median(resid[name]):.2e}")
+        ref = v1ref.get((float(amp), form, int(k), 0.10))
+        if ref:
+            print(f"  v1 reported power for this cell: {ref['power']:.3f}")
+        for dk, v in draws.items():
+            print(f"  [{dk:11s}] lambda_max {np.mean(v['lambda_max']):.1f}  safe step {np.mean(v['safe_step']):.4f}"
+                  f"  (v1 step {sec['v1_solver']['lr']} = {sec['v1_solver']['lr'] / np.mean(v['safe_step']):.1f}x)"
+                  f"  mean corr(X_j, Xk_j) {np.mean(v['mean_corr_X_Xk']):.3f}")
+        n_cells = len(sec["signal_amplitudes"]) * len(sec["functional_forms"]) * len(sec["signal_sizes"])
+        n_fixed = sum(1 for a in arms if a[2] == "fixed")
+        n_v1 = len(arms) - n_fixed
+        R_full = sec["replicates"]
+        est = (R_full * sum(timing["seconds_per_draw"].values())
+               + R_full * n_cells * (n_fixed * (timing["seconds_per_fit"]["fixed"] or 0)
+                                     + n_v1 * (timing["seconds_per_fit"]["v1"] or 0))) / 60
+        print(f"  timing: {timing}  ->  projected full run on this machine: ~{est:.0f} min")
+        (rd / "stage3_p2048_diagnose.json").write_text(json.dumps(
+            {"info": info, "pilot": pilot, "draws": draws, "timing": timing,
+             "projected_full_minutes": est, "minutes": (time.time() - t0) / 60}, indent=2, default=float))
+        print(f"\nwrote {rd}/stage3_p2048_diagnose.json ({(time.time() - t0) / 60:.1f} min)")
+        return
+
+    amps, forms, ks = sec["signal_amplitudes"], sec["functional_forms"], sec["signal_sizes"]
+    R = args.limit_reps or sec["replicates"]
+    print(f"\n=== full: {len(arms)} arms x {len(amps)} amplitudes x {len(forms)} forms x {len(ks)} k x {R} reps ===")
+    M, conv, resid, finite, draws, timing = run_grid_p2048(ds, cfg, sec, device, R, amps, forms, ks, arms)
+    conds, contrasts, summary = aggregate_p2048(sec, M, conv, resid, finite, amps, forms, ks, arms, v1ref)
+
+    rp = summary["v1_reproduction"]
+    print(f"\nD1 v1 reproduction: {rp['n_cells_reproduced']}/{rp['n_cells_compared']} cells -> "
+          f"{'REPRODUCED' if rp['D1_reproduced'] else 'NOT REPRODUCED'}")
+    for a, s in summary["arms"].items():
+        print(f"  {a:13s} mean power {s['mean_power']:.3f}  mean FDR {s['mean_fdr']:.3f}  "
+              f"converged {s['fraction_converged']:.0%}  non-finite {s['fraction_nonfinite']:.0%}")
+    for cname, s in summary["contrasts"].items():
+        print(f"  contrast {cname:20s} ({s['a']} - {s['b']}): mean power diff {s['mean_power_diff']:+.3f}, "
+              f"significant +{s['n_power_diff_significantly_positive']} / -{s['n_power_diff_significantly_negative']}"
+              f" of {s['n_cells']}")
+
+    out = {"config_hash": str(d["config_hash"]), "master_seed": cfg["master_seed"], "replicates": R,
+           "amplitudes": amps, "forms": forms, "signal_sizes": ks, "arms": [list(a) for a in arms],
+           "nominal_fdr_targets": sec["nominal_fdr_targets"], "info": info, "draws": draws,
+           "timing": timing, "summary": summary, "conditions": conds, "contrasts": contrasts,
+           "minutes": round((time.time() - t0) / 60, 1)}
+    (rd / "stage3_p2048_fdr.json").write_text(json.dumps(out, indent=2, default=float))
+    np.savez(rd / "stage3_p2048_records.npz",
+             **{f"{m}__{a[0]}": M[m][a[0]] for m in METRICS for a in arms},
+             **{f"converged__{a[0]}": conv[a[0]] for a in arms},
+             **{f"residual__{a[0]}": resid[a[0]] for a in arms})
+    make_figure_p2048(conds, amps, forms, ks, arms, 0.10, rd)
+    print(f"\nwrote {rd}/stage3_p2048_fdr.json, stage3_p2048_records.npz, fig16 ({out['minutes']} min)")
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -375,6 +722,8 @@ def main() -> None:
     ap.add_argument("--device", default=None)
     ap.add_argument("--stage", default="diagnose", choices=["diagnose", "full"])
     ap.add_argument("--limit-reps", type=int, default=None)
+    ap.add_argument("--experiment", default="v2", choices=["v2", "p2048"],
+                    help="v2: the p = 512 benchmark; p2048: the follow-up on v1's power collapse")
     args = ap.parse_args()
 
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
@@ -384,7 +733,10 @@ def main() -> None:
         raise SystemExit(f"Cache not found at {cp}. Run src/cache_activations.py first.")
     d = np.load(cp, allow_pickle=True)
     X_all = d[f"X_{cfg['aggregation']['primary']}"].astype(np.float32, copy=False)
-    print(f"device: {device} | cache {d['config_hash']} | stage: {args.stage}")
+    print(f"device: {device} | cache {d['config_hash']} | stage: {args.stage} | experiment: {args.experiment}")
+    if args.experiment == "p2048":
+        main_p2048(args, cfg, d, X_all, device, rd)
+        return
 
     t0 = time.time()
     print("\n=== datasets and S matrices ===")

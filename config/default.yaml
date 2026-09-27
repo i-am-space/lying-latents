@@ -125,6 +125,42 @@ stage3_v2:
   diagnose:
     pilot_replicates: 10
 
+# Stage 3 p2048 follow-up (config/preregistration.yaml stage3_amendment_2): why did v1 see a
+# power collapse that v2 (p = 512) does not? Changes one thing at a time at v1's p = 2048.
+stage3_p2048:
+  p: 2048
+  n_rows: 20000
+  covariance: ledoit_wolf       # v1's estimator
+  s_method: equicorrelated      # v1's S (MVR does not converge at p = 2048)
+  signal_amplitudes: [0.5, 1.0] # where v1 reported the collapse
+  functional_forms: [linear, interaction]
+  signal_sizes: [10, 20, 30]
+  nominal_fdr_targets: [0.05, 0.10, 0.20]
+  replicates: 30                # replicate r uses knockoff draw r of its dataset in every cell
+  lasso:                        # the fixed solver (v2's): step 1/L, convergence checked
+    lambda: 0.02
+    max_iter: 1000
+    tol: 1.0e-4
+  v1_solver:                    # v1's solver, verbatim: fixed step, fixed iterations, no check
+    lr: 0.1
+    max_iter: 500
+  arms:                         # [name, dataset, solver]
+    - [v1_setup, real_first, v1]
+    - [first_fixed, real_first, fixed]
+    - [random_fixed, real_random, fixed]
+    - [gauss_fixed, gauss, fixed]
+    - [gauss_v1, gauss, v1]
+  contrasts:                    # [name, a, b]: a - b, paired over replicates
+    - [solver, first_fixed, v1_setup]
+    - [rows, random_fixed, first_fixed]
+    - [zero_atom, gauss_fixed, random_fixed]
+    - [solver_without_atom, gauss_fixed, gauss_v1]
+  v1_arm: v1_setup
+  v1_reference: results/stage3_planted_fdr.json
+  diagnose:
+    pilot_replicates: 3
+    pilot_cell: [0.5, linear, 20]
+
 paths:
   cache_dir: data/cache
   results_dir: results

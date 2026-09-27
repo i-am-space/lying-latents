@@ -189,6 +189,52 @@ only where real is significantly below the control); C3 (no tuning). Runtime: 76
 - The mechanism behind the rising FDR.
 - Amplitudes above 8.
 
+## 4b. Stage 3 — follow-up at p = 2,048 (built, not yet run on real data)
+
+**Why.** v2 at 512 latents did not reproduce v1's power collapse. At q = 0.10, v1 had linear
+power 0.633 / 0.178 / 0.038 at amplitude 0.5 for k = 10 / 20 / 30; v2 had 0.900 / 0.820 / 0.503.
+The two runs differ in four ways at once:
+- the number of latents (2,048 vs 512);
+- the solver;
+- the rows used;
+- the S matrix.
+
+**A lead found while designing it.** On the real data at 2,048 latents, a safe lasso step is
+about 0.033. v1 used a fixed step of 0.1, three times that, for 500 iterations, and never
+checked convergence.
+
+**What it runs.** `planted_fdr_controls.py --experiment p2048`, designed in
+`stage3_amendment_2`. Everything stays at v1's settings (2,048 latents, Ledoit–Wolf covariance,
+equicorrelated S), and five arms change one thing at a time:
+
+| arm | rows | solver | purpose |
+|---|---|---|---|
+| `v1_setup` | first 20,000 | v1's, verbatim | should reproduce v1 (rule D1) |
+| `first_fixed` | first 20,000 | fixed | effect of the solver |
+| `random_fixed` | random 20,000 | fixed | effect of the rows |
+| `gauss_fixed` | Gaussian control | fixed | effect of the zero atom at 2,048 |
+| `gauss_v1` | Gaussian control | v1's | solver effect without the atom |
+
+It covers the conditions where v1 reported the collapse: amplitudes 0.5 and 1, both forms,
+k = 10/20/30, and 30 replicates.
+- **Draws.** One knockoff draw takes about 21 s at this size, so each dataset gets a bank of 30
+  draws and replicate *r* uses draw *r* in every condition. Replicates within a condition stay
+  independent.
+- **Pairing.** Arms on the same dataset share draws and labels, so their comparisons are paired.
+- **Testing so far.** Smoke-tested on synthetic data only. Peak memory was 0.3 GB GPU and
+  5.6 GB host RAM.
+- **Not separable here.** Whatever gap remains between 2,048 and 512 latents is blamed jointly
+  on the number of latents and the near-copy S matrix (rule D3).
+
+**To run it** (on a GPU machine with the activation cache and `knockpy==1.3.5`):
+```bash
+git fetch && git switch stage1-power-fix
+python src/planted_fdr_controls.py --config config/default.yaml --device cuda --experiment p2048 --stage diagnose  # ~5 min, prints projected runtime
+python src/planted_fdr_controls.py --config config/default.yaml --device cuda --experiment p2048 --stage full      # est. ~1-1.5 h on a data-centre GPU
+```
+Send back `results/stage3_p2048_diagnose.json`, `results/stage3_p2048_fdr.json`,
+`results/stage3_p2048_records.npz` and `results/fig16_stage3_p2048_power.png`.
+
 ## 5. Other files
 
 - `config/default.yaml`: new `stage1` keys, plus `stage1_validate` and `stage3_v2` blocks.
@@ -224,8 +270,8 @@ for Stage 1. They need the activation cache `data/cache/d33d210c5acb.npz`.
 
 ## Note on history
 
-The three earlier commits on this branch were reworded to one-line messages and their
-trailers removed, before anything was pushed. Their content is byte-identical to the
-originals, and the author timestamps (02:16, 02:40, 03:42) were kept. Those timestamps are
-what show each design commit preceding its results (02:45 for Stage 1, 04:58 for Stage 3).
-The committer timestamps now show the rewrite time.
+The first three commits on this branch were reworded to one-line messages and their
+trailers removed. Their content is byte-identical to the originals. Both their author and
+committer timestamps were restored to the original times (02:16, 02:40, 03:42), which show
+each design commit preceding its results (02:45 for Stage 1, 04:58 for Stage 3). The branch
+was force-pushed once to apply this, shortly after it was first pushed.
