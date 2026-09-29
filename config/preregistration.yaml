@@ -729,3 +729,185 @@ stage3_amendment_2:
   interpretation_constraints:
     - "This explains a discrepancy between two runs; it is not a new estimate of knockoff FDR."
     - "Same dataset and cache as all other stages; planted labels are a semi-synthetic stand-in."
+
+# ===========================================================================
+# AMENDMENT 1 - Stage 4 hurdle knockoffs (written BEFORE any real-data run of it)
+# ===========================================================================
+# Appended; no earlier line is altered. meta.scope at the top of this file placed Stage 4 out
+# of scope; this amendment brings the hurdle repair into scope. Stage 4's other two repairs
+# (binarised knockoffs, e-value sample splitting) remain out of scope.
+
+stage4_amendment_1:
+  meta:
+    date_written: "2026-09-29"
+    status: written_before_run
+    ordering_note: >
+      Written before any real-data run of src/stage4_benchmark.py. At the user's instruction nothing
+      is committed until they say so, so if this is committed together with the results, git does
+      not show the ordering; it then rests on file timestamps and this statement.
+    trigger: >
+      Stage 3 found that Gaussian knockoffs keep FDR at or below q but lose power at p = 2048, and
+      that part of that loss is due to the zero atom (Gaussian control above real latents in 11 of
+      36 cells, mean +0.073; stage3_findings.md Sec. 9). Stage 4 asks whether a distribution-aware
+      construction recovers that part without inflating FDR.
+    deviation_from_proposal: >
+      The proposal specifies hurdle knockoffs as a logistic model for Pr(X_j > 0 | X_-j) with a
+      log-normal or Gamma positive part, sampled by sequential conditional independent pairs. The
+      code (src/hurdle_sampler.py, by a teammate) is instead a Gaussian-copula hurdle: a randomised
+      probability-integral transform maps each latent to a Gaussian, second-order knockoffs are drawn
+      there, and each knockoff is mapped back through a threshold at Pr(X_j = 0) and the empirical
+      positive quantiles. It is cheaper and scales to p = 2048; it is not the proposal's construction.
+    code_fixes_before_run:
+      - "Swap test: gradient-boosted classifier (Stage 2's) instead of a linear one, which returned AUC 0.44-0.47 on Gaussian knockoffs known to be non-exchangeable."
+      - "Per-condition seeds: SeedSequence streams instead of an additive formula that gave 240 condition-replicate pairs only 120 distinct seeds."
+      - "Standard errors with ddof = 1; lasso with step 1/L and a convergence check; S computed by knockpy for every method."
+
+  design:
+    setting: >
+      The Stage 3 p2048 setting: the same seeded random 20000 rows (stream s3p2048_data), p = 2048,
+      Ledoit-Wolf covariance, equicorrelated S, lambda 0.02. Amplitudes 0.5 and 1.0 (where the atom
+      costs power) and 3.0 (to stress FDR); linear and interaction forms; k in {10, 20, 30};
+      q in {0.05, 0.10, 0.20}; 30 replicates per cell.
+    arms:
+      gauss_real: "real latents, Gaussian second-order knockoffs (baseline; replicates the Stage 3 random_fixed arm)"
+      hurdle_real: "real latents, Gaussian-copula hurdle knockoffs, equicorrelated S in latent space"
+      gauss_ceiling: "Gaussian data with the real covariance, Gaussian knockoffs: the no-atom ceiling"
+    pairing: >
+      Each arm has a bank of 30 knockoff draws; replicate r uses draw r in every cell. gauss_real and
+      hurdle_real share data and labels, so their contrast is paired; only the knockoffs differ.
+    exchangeability: >
+      Swap two-sample tests of Stage 2 (gradient-boosted classifier AUC and MMD permutation p-value)
+      at |S| in {0, 50, all} for each arm, plus the zero-indicator accuracy. The zero-indicator is
+      about 0.5 for the hurdle arm by construction and is not evidence of exchangeability.
+
+  decision_rules:
+    - id: E0
+      rule: >
+        Diagnostic validity. The full-swap AUC must be at least 0.90 for gauss_real (a known
+        violation; Stage 2 measured 0.996) and within 0.45-0.55 for gauss_ceiling (a valid
+        construction). Otherwise the swap test is not trusted and the hurdle's readout is not interpreted.
+    - id: E1
+      rule: >
+        Hurdle exchangeability is "not detected as violated" if its full-swap AUC is at most 0.55 and
+        its MMD p-value at least 0.05; otherwise it is reported as violated, and its FDR results are
+        read with that in mind.
+    - id: E2
+      rule: >
+        Validity first. The hurdle counts as a valid repair only if no cell has mean FDR - 1.96 SE > q.
+        A power gain does not compensate for an FDR violation.
+    - id: E3
+      rule: >
+        Power. A gain is claimed only in cells where the paired contrast hurdle_real - gauss_real
+        exceeds 1.96 SE. Counts over all cells are reported, and the share of the no-atom gap
+        (gauss_ceiling - gauss_real) that the hurdle closes is reported descriptively.
+    - id: E4
+      rule: >
+        S confound. The hurdle's latent covariance differs from the observed one, so its equicorrelated
+        S, and hence how close each knockoff is to its latent, can differ. Mean corr(X_j, X~_j) is
+        reported per arm; a power gain that comes with less near-copy knockoffs is attributed jointly to
+        the atom handling and the S matrix.
+    - id: E5
+      rule: "No tuning of any setting after seeing results; redesign needs a further amendment."
+
+  interpretation_constraints:
+    - "Planted labels are a semi-synthetic stand-in; results are for this dataset, setting and statistic."
+    - "Exchangeability is only tested through necessary conditions (swap tests), never confirmed."
+    - "p = 512 with MVR is not run here; there the atom cost almost no power in Stage 3, so little gain is possible."
+
+# ===========================================================================
+# AMENDMENT 2 - Stage 4 as specified in the proposal (written BEFORE any real-data run)
+# ===========================================================================
+# Appended; no earlier line is altered. stage4_amendment_1 tested a teammate's Gaussian-copula
+# hurdle, which is not the proposal's construction; its knockoffs failed the swap test (full-swap
+# AUC 0.999). This amendment builds and tests the three repairs the proposal names (Sec. 6).
+
+stage4_amendment_2:
+  meta:
+    date_written: "2026-09-29"
+    status: written_before_run
+    ordering_note: >
+      To be committed before any real-data run, at the user's instruction, so git history shows the
+      design preceding its results. The run is intended for an L40S server.
+    trigger: >
+      Stage 3 found Gaussian knockoffs keep FDR at or below q at p = 2048 but lose power, partly
+      because of the zero atom. stage4_amendment_1's copula hurdle matched zero mass per latent but
+      not the joint structure. The proposal's hurdle models each latent conditionally on all the
+      others, which targets exactly that structure.
+
+  design:
+    setting: >
+      The Stage 3 p2048 setting: the same 20000 rows (stream s3p2048_data), all 2048 retained latents,
+      Ledoit-Wolf covariance; a smaller p takes a seeded random latent subset (for local testing only).
+      Amplitudes 0.5, 1.0, 3.0; linear and interaction forms; k in {10, 20, 30}; q in {0.05, 0.10,
+      0.20}; 30 replicates; lasso lambda 0.02 with step 1/L and a convergence check, as in Stage 3.
+    arms:
+      gauss_real: "real latents, second-order Gaussian knockoffs, equicorrelated S (the Stage 3 baseline)"
+      hurdle: >
+        Proposal's primary repair. Knockoffs by sequential conditional independent pairs (Candes et al.
+        2018): for j in index order, Pr(X_j > 0 | X_-j, X~_1..j-1) by ridge logistic regression and
+        log X_j given X_j > 0 by ridge linear regression (log-normal positive part), both on
+        log1p-standardised covariates; X~_j is drawn from that fitted hurdle, fresh for every replicate.
+      binarised: >
+        Knockoffs for Z_j = 1[X_j > 0] by the same SCIP scheme with the logistic part only; the knockoff
+        filter then runs on [Z, Z~]. Avoids the atom by construction, at a cost in power.
+      evalue: >
+        Sample splitting with e-values (Wang and Ramdas 2022). Half A: lasso selects candidates (at most
+        500). Half B: logistic regression on the selected latents gives Wald p-values, calibrated to
+        e-values e = 0.5 * p^(-1/2); e-BH at level q over all p latents (unselected get e = 0).
+      gauss_ceiling: "Gaussian data with the real covariance and Gaussian knockoffs: the no-atom ceiling"
+    pairing: >
+      All real-data arms use identical labels in each cell and replicate, so their contrasts with
+      gauss_real are paired. Knockoff arms use one draw per replicate, shared across cells.
+    exchangeability: >
+      Stage 2's swap tests (gradient-boosted classifier AUC and MMD) at |S| in {0, 50, all} for every
+      knockoff arm, with gauss_real as the known-violation control and gauss_ceiling as the valid control.
+
+  deviations_from_proposal:
+    - "SCIP uses fitted conditional models (ridge logistic and ridge log-normal regression), so it is exact only if those models are correct; its validity is checked by the swap tests, not assumed."
+    - "The positive part is log-normal (the proposal allows log-normal or Gamma)."
+    - "Sampled log activations are clipped to the observed range of log x_j +- 1, so extrapolated fits cannot produce activations far outside the data."
+    - >
+      Speed and checkpointing: each Newton fit is warm-started from the previous replicate's solution for
+      the same latent (the problem is convex, so the solution is the same to within the convergence
+      tolerance). The full run saves results and the warm-start state after every replicate and can
+      resume; a resumed run was checked to give identical numbers to an uninterrupted one.
+    - >
+      The e-value arm's validity rests on the half-B logistic model being correctly specified for the
+      selected latents; it is not free of distributional assumptions as the proposal states. It can fail
+      when a true signal is not selected or the signal is non-linear (the interaction form).
+    - "The run is at p = 2048 on a server; SCIP cost grows roughly with p cubed."
+
+  barber_kl_bound: >
+    The proposal says a hurdle working model makes the Barber et al. (2020) KL bound numerically
+    estimable. It is not estimated here: the bound needs the KL divergence between the TRUE conditional
+    law of each latent and the working model, and the true law is unknown. Having an atom in the working
+    model makes that divergence finite, which is what the proposal's argument needs, but finite is not
+    the same as known. This is stated in the write-up instead.
+
+  decision_rules:
+    - id: F0
+      rule: >
+        Diagnostic validity: full-swap AUC at least 0.90 for gauss_real and within 0.45-0.55 for
+        gauss_ceiling; otherwise the exchangeability readouts are not interpreted.
+    - id: F1
+      rule: >
+        For hurdle and binarised, exchangeability is "not detected as violated" if the full-swap AUC is at
+        most 0.55 and the MMD p-value at least 0.05; otherwise it is reported as violated.
+    - id: F2
+      rule: >
+        Validity first. A repair counts as FDR-valid only if no cell has mean FDR - 1.96 SE > q. A power
+        gain does not compensate for an FDR violation.
+    - id: F3
+      rule: >
+        Power. A gain over gauss_real is claimed only in cells where the paired contrast exceeds 1.96 SE;
+        counts over all cells are reported, with the share of the no-atom gap closed, descriptively.
+    - id: F4
+      rule: >
+        Mean corr(X_j, X~_j) is reported per knockoff arm. A power gain that comes with less near-copy
+        knockoffs is attributed jointly to the construction and to that similarity, not to the atom alone.
+    - id: F5
+      rule: "No tuning of any setting after seeing results; redesign needs a further amendment."
+
+  interpretation_constraints:
+    - "Planted labels are a semi-synthetic stand-in; results are for this dataset, setting and statistic."
+    - "Exchangeability is tested only through necessary conditions (swap tests), never confirmed."

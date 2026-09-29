@@ -161,6 +161,86 @@ stage3_p2048:
     pilot_replicates: 3
     pilot_cell: [0.5, linear, 20]
 
+# Stage 4 (config/preregistration.yaml stage4_amendment_1): hurdle vs Gaussian knockoffs,
+# paired on identical data, draws and labels, in the Stage 3 p2048 setting where the zero atom
+# costs power (rows, p, covariance and S method are taken from the stage3_p2048 block).
+stage4:
+  base: stage3_p2048
+  signal_amplitudes: [0.5, 1.0, 3.0]   # 0.5/1.0: where the atom costs power; 3.0: FDR stress
+  functional_forms: [linear, interaction]
+  signal_sizes: [10, 20, 30]
+  nominal_fdr_targets: [0.05, 0.10, 0.20]
+  replicates: 30                       # replicate r uses knockoff draw r of its arm in every cell
+  lasso:
+    lambda: 0.02
+    max_iter: 1000
+    tol: 1.0e-4
+  hurdle:
+    s_method: equicorrelated           # same S method as the Gaussian arm (MVR does not converge at p = 2048)
+    covariance: ledoit_wolf
+    positive_tail: empirical
+  arms:                                # [name, data, knockoffs]
+    - [gauss_real, real_random, gaussian]
+    - [hurdle_real, real_random, hurdle]
+    - [gauss_ceiling, gauss, gaussian]
+  contrasts:                           # [name, a, b]: a - b, paired over replicates
+    - [hurdle_gain, hurdle_real, gauss_real]
+    - [atom_gap, gauss_ceiling, gauss_real]
+  exchangeability:
+    swap_sizes: [0, 50, all]
+    swap_replicates: 1
+  diagnose:
+    pilot_replicates: 2
+    pilot_cell: [0.5, linear, 20]
+
+# Stage 4 as specified in the proposal (config/preregistration.yaml stage4_amendment_2): hurdle
+# knockoffs by sequential conditional independent pairs (SCIP), binarised knockoffs, and e-value
+# sample splitting, against the Gaussian baseline and the no-atom Gaussian control.
+stage4_repairs:
+  p: 2048                       # all retained latents (the server run); p < 2048 = seeded random subset
+  n_rows: 20000                 # the Stage 3 p2048 rows (stream s3p2048_data)
+  covariance: ledoit_wolf
+  s_method: equicorrelated      # Gaussian baseline S (MVR does not converge at p = 2048)
+  signal_amplitudes: [0.5, 1.0, 3.0]
+  functional_forms: [linear, interaction]
+  signal_sizes: [10, 20, 30]
+  nominal_fdr_targets: [0.05, 0.10, 0.20]
+  replicates: 30
+  lasso:
+    lambda: 0.02
+    max_iter: 1000
+    tol: 1.0e-4
+  scip:
+    order: natural              # latents are sampled in index order
+    covariates: log1p_standardised   # log1p(x) standardised with the real data's moments, for x and x~ alike
+    logistic_ridge: 1.0e-3      # on the mean log-loss
+    positive_ridge: 1.0e-1      # on the mean squared error of log x
+    newton_max_iter: 25
+    newton_tol: 1.0e-6
+  evalue:
+    split_fraction: 0.5
+    selection_lambda: 0.02
+    max_selected: 500
+    refit_ridge: 1.0e-6
+    calibrator_kappa: 0.5       # e = kappa * p^(kappa - 1)
+  arms:                         # [name, method]
+    - [gauss_real, gaussian]
+    - [hurdle, hurdle_scip]
+    - [binarised, binary_scip]
+    - [evalue, evalue_split]
+    - [gauss_ceiling, gaussian_control]
+  contrasts:                    # [name, a, b]: a - b, paired over replicates
+    - [hurdle_gain, hurdle, gauss_real]
+    - [binarised_gain, binarised, gauss_real]
+    - [evalue_gain, evalue, gauss_real]
+    - [atom_gap, gauss_ceiling, gauss_real]
+  exchangeability:
+    swap_sizes: [0, 50, all]
+    swap_replicates: 1
+  diagnose:
+    pilot_replicates: 1
+    pilot_cell: [1.0, linear, 20]
+
 paths:
   cache_dir: data/cache
   results_dir: results

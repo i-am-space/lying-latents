@@ -22,8 +22,6 @@ from __future__ import annotations
 import numpy as np
 from scipy import stats
 from sklearn.covariance import LedoitWolf
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
 import torch
 
 
@@ -53,6 +51,8 @@ class GaussianCopulaHurdleSampler:
         self.lognormal_params: list[tuple[float, float]] | None = None
         self.Sigma: np.ndarray | None = None  # Latent Gaussian correlation matrix
         self.S: np.ndarray | None = None  # Diagonal knockoff S-matrix
+        self.C: np.ndarray | None = None  # Knockoff mean map I - Sigma^{-1} S
+        self.L: np.ndarray | None = None  # Square root of the knockoff conditional covariance
         self.Z_latent: np.ndarray | None = None  # Latent Gaussian representations of X
         self.p: int = 0
         self.n: int = 0
@@ -141,24 +141,12 @@ class GaussianCopulaHurdleSampler:
 
         self.Sigma = Sigma
 
-        # Compute knockoff S-matrix in latent Gaussian space
-        if self.s_method == "equicorrelated":
-            # Exact closed-form equicorrelated construction: S = s * I
-            ev = np.linalg.eigvalsh(self.Sigma)
-            min_eig = max(float(ev[0]), 1e-4)
-            s_val = min(2.0 * min_eig, 0.99)
-            S_raw = np.diag(np.full(self.p, s_val))
-        elif self.s_method in ("mvr", "sdp"):
-            try:
-                import knockpy.smatrix
-                S_raw = np.asarray(knockpy.smatrix.compute_smatrix(self.Sigma, method=self.s_method))
-            except ImportError as e:
-                raise RuntimeError(
-                    f"The '{self.s_method}' construction requires knockpy. "
-                    "Install knockpy or use s_method='equicorrelated'."
-                ) from e
-        else:
+        # Compute knockoff S-matrix in latent Gaussian space. All methods go through knockpy,
+        # the same library the Gaussian baseline uses, so both arms share one convention.
+        if self.s_method not in ("mvr", "equicorrelated", "sdp"):
             raise ValueError(f"Unknown s_method: {self.s_method!r}. Choose 'mvr', 'equicorrelated', or 'sdp'.")
+        import knockpy.smatrix
+        S_raw = np.asarray(knockpy.smatrix.compute_smatrix(self.Sigma, method=self.s_method))
 
         self.S = S_raw
 
@@ -255,8 +243,9 @@ def evaluate_swap_exchangeability(
     rng: np.random.Generator | None = None,
     swap_fraction: float = 0.5,
     holdout: float = 0.3,
+    max_iter: int = 100,
 ) -> dict:
-    """Empirical Model-X exchangeability swap two-sample test.
+    r"""Empirical Model-X exchangeability swap two-sample test.
 
     Under exact Model-X exchangeability, for any coordinate subset S:
         (X, X_tilde)_swap(S) \stackrel{d}{=} (X, X_tilde)
@@ -268,7 +257,13 @@ def evaluate_swap_exchangeability(
     A classifier is trained to separate Group 0 vs Group 1 on a training split,
     and evaluated on a held-out test split. Under exchangeability, the held-out
     ROC-AUC should be approximately 0.50 (chance).
+
+    The classifier is Stage 2's gradient-boosted one (knockoff_audit.classifier_auc). A linear
+    classifier cannot see the zero-atom mismatch: on Gaussian knockoffs of zero-inflated data,
+    which are known not to be exchangeable, it returned AUC 0.44-0.47, while this one returns 1.0.
     """
+    from knockoff_audit import classifier_auc
+
     if rng is None:
         rng = np.random.default_rng(20260904)
 
@@ -293,19 +288,7 @@ def evaluate_swap_exchangeability(
         if len(S_idx) > 0:
             X1[:, S_idx], Xt1[:, S_idx] = Xt1[:, S_idx], X1[:, S_idx]
         Z1 = np.hstack([X1, Xt1])
-
-        # Combine into labeled dataset
-        Z_all = np.vstack([Z0, Z1]).astype(np.float32)
-        y_all = np.concatenate([np.zeros(len(Z0)), np.ones(len(Z1))])
-
-        perm_sub = rng.permutation(len(y_all))
-        Z_all, y_all = Z_all[perm_sub], y_all[perm_sub]
-
-        n_train = int(len(y_all) * (1.0 - holdout))
-        clf = LogisticRegression(max_iter=500, C=1.0, random_state=int(rng.integers(2**31)))
-        clf.fit(Z_all[:n_train], y_all[:n_train])
-        probs = clf.predict_proba(Z_all[n_train:])[:, 1]
-        return float(roc_auc_score(y_all[n_train:], probs))
+        return classifier_auc(Z0, Z1, rng, max_iter, holdout)
 
     # 1. Null control: |S| = 0 (no swap; should be ~0.50)
     auc_null = _test_swap(np.array([], dtype=int))
@@ -341,9 +324,9 @@ def run_hurdle_trial(
     from planted_fdr import (
         compute_knockoff_plus_threshold,
         evaluate_discoveries,
-        fit_lasso,
         generate_planted_labels,
     )
+    from planted_fdr_controls import fit_lasso_checked
 
     n, p = X.shape
     # Standardize X for signal generation so all k planted latents have unit variance
@@ -361,10 +344,10 @@ def run_hurdle_trial(
     X_tilde_std = (X_tilde - mu_X) / sd_X
     Z_std = np.hstack([X_std, X_tilde_std])
 
-    # Fit L1-logistic Lasso via FISTA
+    # Fit L1-logistic Lasso via FISTA (step 1/L, convergence checked, as in Stage 3 v2)
     Z_t = torch.tensor(Z_std, dtype=torch.float32, device=device)
     y_t = torch.tensor(y_np, dtype=torch.float32, device=device)
-    w = fit_lasso(Z_t, y_t, lam=lam, lr=0.033, max_iter=800)
+    w, _, _, _ = fit_lasso_checked(Z_t, y_t, lam, 1000, 1e-4)
     w_cpu = w.detach().cpu().numpy()
 
     # Contrast statistic W_j = |w_j| - |w_{j+p}|
@@ -391,7 +374,11 @@ def run_stage4_hurdle_benchmark(
     device: str = "cpu",
     output_path: str | None = None,
 ) -> dict:
-    """Run the Stage 4 benchmark across conditions using the Hurdle knockoff sampler."""
+    """Standalone Stage 4 benchmark with the Hurdle knockoff sampler only.
+
+    It has no Gaussian baseline, so it cannot show an improvement by itself; the paired
+    comparison against Gaussian knockoffs on identical draws is src/stage4_benchmark.py.
+    """
     if signal_sizes is None:
         signal_sizes = [10, 20]
     if amplitudes is None:
@@ -414,14 +401,15 @@ def run_stage4_hurdle_benchmark(
     results_grid = []
 
     for form_idx, form in enumerate(forms):
-        for k in signal_sizes:
-            for amp in amplitudes:
-                for q in fdr_targets:
+        for k_idx, k in enumerate(signal_sizes):
+            for amp_idx, amp in enumerate(amplitudes):
+                for q_idx, q in enumerate(fdr_targets):
                     fdrs, powers, n_discs = [], [], []
                     for rep in range(replicates):
-                        # Explicit disjoint seed per condition to avoid cross-cell RNG coupling
-                        cell_seed = int(20260904 + form_idx * 100000 + k * 10000 + int(amp * 100) + rep * 10 + int(q * 1000))
-                        rep_rng = np.random.default_rng(cell_seed)
+                        # One independent stream per (condition, replicate). The previous
+                        # additive formula gave 240 pairs only 120 distinct seeds.
+                        rep_rng = np.random.default_rng(np.random.SeedSequence(
+                            [20260904, form_idx, k_idx, amp_idx, q_idx, rep]))
                         S_idx = np.sort(rep_rng.choice(p, size=k, replace=False))
                         fdr, power, nd = run_hurdle_trial(
                             X=X,
@@ -443,9 +431,9 @@ def run_stage4_hurdle_benchmark(
                         "amplitude": amp,
                         "q": q,
                         "fdr_mean": float(np.mean(fdrs)),
-                        "fdr_se": float(np.std(fdrs) / np.sqrt(replicates)),
+                        "fdr_se": float(np.std(fdrs, ddof=1) / np.sqrt(replicates)) if replicates > 1 else 0.0,
                         "power_mean": float(np.mean(powers)),
-                        "power_se": float(np.std(powers) / np.sqrt(replicates)),
+                        "power_se": float(np.std(powers, ddof=1) / np.sqrt(replicates)) if replicates > 1 else 0.0,
                         "mean_discoveries": float(np.mean(n_discs)),
                     }
                     results_grid.append(res)

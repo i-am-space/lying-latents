@@ -29,6 +29,15 @@ STREAMS = [
     "s3p2048_data",          # Stage 3 p2048: row subset and the Gaussian control data
     "s3p2048_planted",       # Stage 3 p2048: planted signals and labels (per-cell streams)
     "s3p2048_knockoff",      # Stage 3 p2048: knockoff draw bank (per dataset and replicate)
+    "s4_hurdle_fit",         # Stage 4: randomised probability-integral transform of the zero atom
+    "s4_planted",            # Stage 4: planted signals and labels (per-cell streams)
+    "s4_knockoff",           # Stage 4: knockoff draw bank (per arm and replicate)
+    "s4_diagnostics",        # Stage 4: exchangeability swap tests
+    "s4r_data",              # Stage 4 repairs: latent subset and the Gaussian control data
+    "s4r_planted",           # Stage 4 repairs: planted signals and labels (per-cell streams)
+    "s4r_knockoff",          # Stage 4 repairs: knockoff draw seeds (per arm and replicate)
+    "s4r_split",             # Stage 4 repairs: e-value sample splits (per replicate)
+    "s4r_diagnostics",       # Stage 4 repairs: exchangeability swap tests
 ]
 
 
