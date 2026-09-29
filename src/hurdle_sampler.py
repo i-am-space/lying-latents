@@ -471,27 +471,50 @@ def run_stage4_hurdle_benchmark(
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Stage 4 Hurdle Sampler & Benchmark")
+    parser.add_argument("--config", type=str, default="config/default.yaml", help="Path to experiment config YAML")
+    parser.add_argument("--cache", type=str, default=None, help="Path to precomputed activations .npz/.pt")
+    parser.add_argument("--device", type=str, default=None, help="Compute device ('cuda' or 'cpu')")
     parser.add_argument("--s_method", type=str, default="mvr", choices=["mvr", "equicorrelated", "sdp"], help="Knockoff construction method")
-    parser.add_argument("--reps", type=int, default=3, help="Replicates per cell for quick check")
+    parser.add_argument("--reps", type=int, default=5, help="Replicates per grid condition")
+    parser.add_argument("--synthetic", action="store_true", help="Force synthetic smoke test")
+    parser.add_argument("--output", type=str, default="results/stage4_hurdle_results.json", help="Path to save benchmark JSON")
     args = parser.parse_args()
 
-    print("=== Stage 4: Gaussian Copula Hurdle Sampler & Benchmark ===")
+    device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"=== Stage 4: Gaussian Copula Hurdle Benchmark (device: {device}) ===")
     rng = np.random.default_rng(20260904)
-    
-    # Smoke test on synthetic zero-inflated data (89% zero mass, p=50, n=2000)
-    # NOTE: This validates sampler numerical mechanics and pipeline flow.
-    # Production Stage 4 runs should pass the full 67,349 x 2,048 SAE activation matrix.
-    n_test, p_test = 2000, 50
-    raw_latent = rng.standard_normal((n_test, p_test))
-    X_synthetic = np.where(raw_latent > 1.23, raw_latent - 1.23, 0.0)
-    
-    print(f"\n1. Testing Copula Fit & Knockoff Generation (smoke test: n={n_test}, p={p_test})...")
+
+    X_data = None
+    if not args.synthetic:
+        from pathlib import Path
+        try:
+            from common import cache_path, load_config
+            cfg = load_config(args.config)
+            cp = Path(args.cache) if args.cache else cache_path(cfg)
+            if cp.exists():
+                print(f"Loading SAE activation cache from {cp}...")
+                d = np.load(cp, allow_pickle=True)
+                key = f"X_{cfg['aggregation']['primary']}"
+                X_data = d[key].astype(np.float32, copy=False)
+                print(f"Successfully loaded SAE activations: shape {X_data.shape}")
+            else:
+                print(f"Cache not found at {cp}. Falling back to synthetic test.")
+        except Exception as e:
+            print(f"Note: Activation cache not loaded ({e}). Using synthetic test.")
+
+    if X_data is None:
+        n_test, p_test = 2000, 50
+        print(f"Generating synthetic zero-inflated activations (89% zero mass, n={n_test}, p={p_test})...")
+        raw_latent = rng.standard_normal((n_test, p_test))
+        X_data = np.where(raw_latent > 1.23, raw_latent - 1.23, 0.0)
+
+    print(f"\n1. Fitting Hurdle Copula Sampler on shape {X_data.shape} (s_method={args.s_method})...")
     sampler = GaussianCopulaHurdleSampler(s_method=args.s_method)
-    sampler.fit(X_synthetic, rng=rng)
+    sampler.fit(X_data, rng=rng)
     X_tilde = sampler.sample_knockoffs(rng=rng)
 
-    diag = evaluate_hurdle_diagnostics(X_synthetic, X_tilde)
-    swap_diag = evaluate_swap_exchangeability(X_synthetic, X_tilde, rng=rng)
+    diag = evaluate_hurdle_diagnostics(X_data, X_tilde)
+    swap_diag = evaluate_swap_exchangeability(X_data, X_tilde, rng=rng)
     print("   Diagnostics:")
     print(f"   - Median Real Zero Fraction:     {diag['median_p_zero_real']:.4f}")
     print(f"   - Median Knockoff Zero Fraction: {diag['median_p_zero_knockoff']:.4f}")
@@ -501,14 +524,18 @@ if __name__ == "__main__":
     print(f"   - Swap Test AUC (50% subset):    {swap_diag['auc_subset_swap']:.4f} (Exchangeable ~0.50)")
     print(f"   - Swap Test AUC (full swap):     {swap_diag['auc_full_swap']:.4f} (Exchangeable ~0.50)")
 
-    print("\n2. Executing Stage 4 Mini-Benchmark across Linear and Interaction signals...")
+    print(f"\n2. Executing Stage 4 Benchmark across Linear & Interaction variations...")
+    from pathlib import Path
+    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     run_stage4_hurdle_benchmark(
-        X=X_synthetic,
-        signal_sizes=[10],
-        amplitudes=[0.5, 2.0],
+        X=X_data,
+        signal_sizes=[10, 20],
+        amplitudes=[0.5, 1.0, 2.0, 3.0],
         forms=["linear", "interaction"],
-        fdr_targets=[0.10],
+        fdr_targets=[0.05, 0.10, 0.20],
         replicates=args.reps,
         s_method=args.s_method,
+        device=device,
+        output_path=args.output,
     )
-    print("\n=== Stage 4 Verification Complete ===")
+    print(f"\n=== Stage 4 Benchmark Complete -> Saved to {args.output} ===")
