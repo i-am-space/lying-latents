@@ -24,8 +24,15 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import time
 from pathlib import Path
+
+# The SCIP loop allocates a slightly larger feature matrix for each of the p latents. With the
+# default CUDA caching allocator those differently sized blocks fragment the cache, which then
+# grows until the GPU is full (seen on an 8 GB and a 32 GB card). Expandable segments let cached
+# blocks grow in place. Memory layout only; no effect on any number.
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 import matplotlib
 matplotlib.use("Agg")
