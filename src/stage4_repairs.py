@@ -54,11 +54,23 @@ KNOCKOFF_METHODS = ("gaussian", "hurdle_scip", "binary_scip", "gaussian_control"
 # GPU solvers
 # ---------------------------------------------------------------------------
 
+def _penalised_logloss(F: torch.Tensor, y: torch.Tensor, beta: torch.Tensor, b: torch.Tensor,
+                       ridge: float) -> float:
+    eta = (F @ beta.float() + b.float()).double()
+    return float((torch.nn.functional.softplus(eta) - y.double() * eta).mean() + 0.5 * ridge * (beta ** 2).sum())
+
+
 def newton_logistic(F: torch.Tensor, y: torch.Tensor, ridge: float, max_iter: int, tol: float,
                     beta0: torch.Tensor | None = None, b0: float | None = None):
     """Ridge logistic regression (mean log-loss + ridge/2 * |beta|^2, intercept unpenalised) by
-    Newton's method. Matrix products in float32, the linear solve in float64. Returns
-    (beta, intercept, converged, iterations, augmented Hessian at the solution)."""
+    Newton's method with a backtracking (Armijo) line search. Matrix products in float32, the
+    linear solve and the loss in float64. Converged when half the squared Newton decrement,
+    g' H^-1 g / 2 (the predicted loss gap to the optimum), is below tol.
+
+    The line search is required, not optional: on the real SCIP loop, full Newton steps diverged
+    in most fits (loss rising, steps of ~1e9, fitted firing probability collapsing to 0), because
+    once predictions saturate the intercept's curvature falls to ~1e-10.
+    Returns (beta, intercept, converged, iterations, augmented Hessian at the last iterate)."""
     n, d = F.shape
     dev = F.device
     beta = beta0.clone() if beta0 is not None else torch.zeros(d, dtype=torch.float64, device=dev)
@@ -67,6 +79,7 @@ def newton_logistic(F: torch.Tensor, y: torch.Tensor, ridge: float, max_iter: in
         b0 = math.log(ybar / (1 - ybar))
     b = torch.tensor([b0], dtype=torch.float64, device=dev)
     eye = torch.eye(d, dtype=torch.float64, device=dev)
+    f = _penalised_logloss(F, y, beta, b, ridge)
     converged, it, Ha = False, 0, None
     for it in range(1, max_iter + 1):
         p = torch.sigmoid(F @ beta.float() + b.float())
@@ -75,17 +88,27 @@ def newton_logistic(F: torch.Tensor, y: torch.Tensor, ridge: float, max_iter: in
         Fw = F * w.unsqueeze(1)
         H = (F.t() @ Fw).double() / n + ridge * eye
         hb = Fw.sum(0).double() / n
+        del Fw
         Ha = torch.empty((d + 1, d + 1), dtype=torch.float64, device=dev)
         Ha[:d, :d], Ha[:d, d], Ha[d, :d], Ha[d, d] = H, hb, hb, w.double().mean()
         g = torch.cat([(F.t() @ r).double() / n + ridge * beta, r.double().mean().reshape(1)])
-        del Fw
         step = torch.linalg.solve(Ha, g)
         if not torch.isfinite(step).all():
             break
-        beta = beta - step[:d]
-        b = b - step[d:]
-        if float(step.abs().max()) < tol:
+        dec = float(g @ step)                          # squared Newton decrement (> 0: Ha is PD)
+        if dec / 2 < tol:
             converged = True
+            break
+        t, accepted = 1.0, False
+        while t >= 1e-8:
+            beta_c, b_c = beta - t * step[:d], b - t * step[d:]
+            f_c = _penalised_logloss(F, y, beta_c, b_c, ridge)
+            if f_c <= f - 1e-4 * t * dec:
+                beta, b, f, accepted = beta_c, b_c, f_c, True
+                break
+            t *= 0.5
+        if not accepted:                               # no decrease possible at float32 precision
+            converged = dec / 2 < 1e-6
             break
     return beta, float(b), converged, it, Ha
 
@@ -203,7 +226,10 @@ def evalue_discoveries(Z: torch.Tensor, y: torch.Tensor, split: np.ndarray, ev: 
     if sel.numel() == 0:
         return {q: set() for q in qs}
     beta, _, _, _, Ha = newton_logistic(Z[B][:, sel], y[B], ev["refit_ridge"], 50, 1e-8)
-    cov = torch.linalg.inv(Ha) / B.numel()
+    try:
+        cov = torch.linalg.inv(Ha) / B.numel()
+    except torch.linalg.LinAlgError:              # singular (collinear selected latents): pseudo-inverse
+        cov = torch.linalg.pinv(Ha) / B.numel()
     z = beta / torch.sqrt(torch.diag(cov)[: sel.numel()].clamp(min=1e-300))
     pval = torch.special.erfc(z.abs() / math.sqrt(2.0)).clamp(min=1e-300)   # two-sided
     kap = ev["calibrator_kappa"]

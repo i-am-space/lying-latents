@@ -36,6 +36,7 @@ from knockoff_audit import standardise, swap_sweep
 from planted_fdr import generate_planted_labels
 from planted_fdr_controls import (METRICS, build_datasets_p2048, cell_rng, fit_lasso_checked,
                                   mean_se, score_fit)
+from stage4_repairs import mean_corr          # zero-variance-safe mean corr(X_j, X~_j)
 
 ARM_COLOR = {"gauss_real": "#c0392b", "hurdle_real": "#2e8b57", "gauss_ceiling": "#3b6ea5"}
 
@@ -102,8 +103,7 @@ def exchangeability(cfg: dict, ds: dict, hur: dict, arms) -> dict:
         print(f"  [{name}]", flush=True)
         rows = swap_sweep(Z, Zk, cfg, rng, ex["swap_sizes"], ex["swap_replicates"])
         res = {"swap": rows}
-        zc, kc = Z - Z.mean(0), Zk - Zk.mean(0)
-        res["mean_corr_X_Xk"] = float(np.mean((zc * kc).sum(0) / np.sqrt((zc ** 2).sum(0) * (kc ** 2).sum(0))))
+        res["mean_corr_X_Xk"] = mean_corr(Z, Zk)
         if dkey == "real_random":
             res["zero_mass"] = evaluate_hurdle_diagnostics(hur["X"], Xk_raw)
         out[name] = res
@@ -140,10 +140,9 @@ def run_grid(cfg: dict, ds: dict, hur: dict, device, R: int, amps, forms, ks, ar
             t = time.time()
             Zk = draw(kind, dkey, ds, hur, seed)
             t_draw[name] += time.time() - t
-            zc, kc = Z - Z.mean(0), Zk - Zk.mean(0)
-            corr[name].append(float(np.mean((zc * kc).sum(0) / np.sqrt((zc ** 2).sum(0) * (kc ** 2).sum(0)))))
+            corr[name].append(mean_corr(Z, Zk))
             Phi = torch.from_numpy(np.hstack([Z, Zk]).astype(np.float32)).to(device)
-            del Zk, zc, kc
+            del Zk
             for ia, amp in enumerate(amps):
                 for jf, form in enumerate(forms):
                     for kk, k in enumerate(ks):

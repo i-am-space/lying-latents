@@ -877,6 +877,18 @@ stage4_amendment_2:
       when a true signal is not selected or the signal is non-linear (the interaction form).
     - "The run is at p = 2048 on a server; SCIP cost grows roughly with p cubed."
 
+  solver_fix_after_first_runs: >
+    Recorded 2026-09-30, after the first diagnose runs (pkgpu and local) and before any valid result.
+    Those runs used plain Newton steps for the SCIP logistic fits. On the real loop most fits diverged
+    (loss rising, steps of about 1e9, fitted firing probability collapsing to 0 because the unpenalised
+    intercept's curvature falls to about 1e-10 once predictions saturate): only 20-28% converged, the
+    decoys' zero mass was off by up to 0.94, and their swap tests and one-replicate pilot power/FDR were
+    seen. All of those results are discarded. The fix makes the solver compute the pre-registered
+    estimator: Newton with a backtracking (Armijo) line search, stopping when half the squared Newton
+    decrement is below newton_tol. On the first 120 latents of the real loop it then converges in 100% of
+    fits (about 8 steps) and zero mass matches to within 0.004. The models, ridge penalties, grid, arms,
+    seeds and decision rules are unchanged; the e-value refit's covariance inverse falls back to a
+    pseudo-inverse if the Hessian is singular.
   barber_kl_bound: >
     The proposal says a hurdle working model makes the Barber et al. (2020) KL bound numerically
     estimable. It is not estimated here: the bound needs the KL divergence between the TRUE conditional

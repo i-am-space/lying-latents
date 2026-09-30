@@ -244,6 +244,7 @@ def evaluate_swap_exchangeability(
     swap_fraction: float = 0.5,
     holdout: float = 0.3,
     max_iter: int = 100,
+    n_rows: int = 20000,
 ) -> dict:
     r"""Empirical Model-X exchangeability swap two-sample test.
 
@@ -270,7 +271,10 @@ def evaluate_swap_exchangeability(
     n, p = X.shape
     perm = rng.permutation(n)
     n_A = n // 2
-    idx_A, idx_B = perm[:n_A], perm[n_A:]
+    # at most n_rows // 2 rows per group, as in knockoff_audit.swap_sweep (n_clf_rows): gradient
+    # boosting on all 67k rows x 2p columns would take hours and a lot of memory
+    m = min(n_rows // 2, n_A, n - n_A)
+    idx_A, idx_B = perm[:n_A][:m], perm[n_A:][:m]
 
     # Paired standardization to avoid trivial scale artifacts
     mu_X = X.mean(axis=0)
@@ -314,13 +318,15 @@ def run_hurdle_trial(
     S_idx: np.ndarray,
     form: str,
     amplitude: float,
-    q: float,
+    qs: list[float],
     sampler: GaussianCopulaHurdleSampler,
     rng: np.random.Generator,
     lam: float = 0.02,
     device: str = "cpu",
-) -> tuple[float, float, int]:
-    """Run a single planted-signal trial with Hurdle knockoffs."""
+) -> dict:
+    """Run a single planted-signal trial with Hurdle knockoffs. The lasso fit does not depend on
+    q, so it is fitted once and the Knockoff+ threshold is applied at every q in qs, on the same
+    labels and knockoffs. Returns {q: (fdr, power, n_discoveries)}."""
     from planted_fdr import (
         compute_knockoff_plus_threshold,
         evaluate_discoveries,
@@ -352,15 +358,13 @@ def run_hurdle_trial(
 
     # Contrast statistic W_j = |w_j| - |w_{j+p}|
     W = np.abs(w_cpu[:p]) - np.abs(w_cpu[p:])
-    tau = compute_knockoff_plus_threshold(W, q)
-
-    if np.isinf(tau):
-        discovered = set()
-    else:
-        discovered = set(np.where(W >= tau)[0].tolist())
-
-    fdr, power = evaluate_discoveries(discovered, set(S_idx.tolist()))
-    return fdr, power, len(discovered)
+    out = {}
+    for q in qs:
+        tau = compute_knockoff_plus_threshold(W, q)
+        discovered = set() if np.isinf(tau) else set(np.where(W >= tau)[0].tolist())
+        fdr, power = evaluate_discoveries(discovered, set(S_idx.tolist()))
+        out[q] = (fdr, power, len(discovered))
+    return out
 
 
 def run_stage4_hurdle_benchmark(
@@ -370,7 +374,7 @@ def run_stage4_hurdle_benchmark(
     forms: list[str] | None = None,
     fdr_targets: list[float] | None = None,
     replicates: int = 5,
-    s_method: str = "mvr",
+    s_method: str = "equicorrelated",
     device: str = "cpu",
     output_path: str | None = None,
 ) -> dict:
@@ -403,28 +407,31 @@ def run_stage4_hurdle_benchmark(
     for form_idx, form in enumerate(forms):
         for k_idx, k in enumerate(signal_sizes):
             for amp_idx, amp in enumerate(amplitudes):
-                for q_idx, q in enumerate(fdr_targets):
-                    fdrs, powers, n_discs = [], [], []
-                    for rep in range(replicates):
-                        # One independent stream per (condition, replicate). The previous
-                        # additive formula gave 240 pairs only 120 distinct seeds.
-                        rep_rng = np.random.default_rng(np.random.SeedSequence(
-                            [20260904, form_idx, k_idx, amp_idx, q_idx, rep]))
-                        S_idx = np.sort(rep_rng.choice(p, size=k, replace=False))
-                        fdr, power, nd = run_hurdle_trial(
-                            X=X,
-                            S_idx=S_idx,
-                            form=form,
-                            amplitude=amp,
-                            q=q,
-                            sampler=sampler,
-                            rng=rep_rng,
-                            device=device,
-                        )
-                        fdrs.append(fdr)
-                        powers.append(power)
-                        n_discs.append(nd)
+                per_q = {q: ([], [], []) for q in fdr_targets}
+                for rep in range(replicates):
+                    # One independent stream per (condition, replicate), shared by every q, so
+                    # the nominal targets are compared on the same planted set, labels and
+                    # knockoffs (as in planted_fdr_controls). The original additive formula gave
+                    # 240 condition-replicate pairs only 120 distinct seeds.
+                    rep_rng = np.random.default_rng(np.random.SeedSequence(
+                        [20260904, form_idx, k_idx, amp_idx, rep]))
+                    S_idx = np.sort(rep_rng.choice(p, size=k, replace=False))
+                    trial = run_hurdle_trial(
+                        X=X,
+                        S_idx=S_idx,
+                        form=form,
+                        amplitude=amp,
+                        qs=fdr_targets,
+                        sampler=sampler,
+                        rng=rep_rng,
+                        device=device,
+                    )
+                    for q, (fdr, power, nd) in trial.items():
+                        per_q[q][0].append(fdr)
+                        per_q[q][1].append(power)
+                        per_q[q][2].append(nd)
 
+                for q, (fdrs, powers, n_discs) in per_q.items():
                     res = {
                         "form": form,
                         "k": k,
@@ -462,7 +469,9 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=str, default="config/default.yaml", help="Path to experiment config YAML")
     parser.add_argument("--cache", type=str, default=None, help="Path to precomputed activations .npz/.pt")
     parser.add_argument("--device", type=str, default=None, help="Compute device ('cuda' or 'cpu')")
-    parser.add_argument("--s_method", type=str, default="mvr", choices=["mvr", "equicorrelated", "sdp"], help="Knockoff construction method")
+    parser.add_argument("--s_method", type=str, default="equicorrelated", choices=["mvr", "equicorrelated", "sdp"],
+                        help="Knockoff construction method. MVR/SDP only for p <= 512: at p = 2048 (the full "
+                             "cache) MVR does not converge in reasonable time (Stage 2).")
     parser.add_argument("--reps", type=int, default=5, help="Replicates per grid condition")
     parser.add_argument("--synthetic", action="store_true", help="Force synthetic smoke test")
     parser.add_argument("--output", type=str, default="results/stage4_hurdle_results.json", help="Path to save benchmark JSON")
