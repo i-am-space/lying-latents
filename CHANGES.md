@@ -1,8 +1,9 @@
-# Changes on branch `stage1-power-fix`
+# Changes on branch `stage1-power-fix` (now merged into `main`)
 
-This branch reviews and repairs the teammates' Stage 1 and Stage 3 work on `main`
-(commits `e378e1c`…`23e3500`). Commit messages are kept to one line; this file records
-what each change did, why, and what came out of it. Stage 2 is untouched.
+This branch reviewed and repaired the teammates' Stage 1 and Stage 3 work on `main`
+(commits `e378e1c`…`23e3500`), and has since been merged into `main`. Commit messages are
+kept to one line; this file records what each change did, why, and what came out of it.
+Stage 2 is untouched.
 
 All numbers below come from the committed result files and can be re-derived from them.
 
@@ -10,11 +11,16 @@ All numbers below come from the committed result files and can be re-derived fro
 
 | Commit | What |
 |---|---|
-| `15f44eb` | Stage 1: extend the calibration script; show the v1 certification step has no power |
-| `9622b80` | Stage 1: pre-register (Amendment 2) and add a validate step with a power gate |
-| `70d0a11` | Stage 3: pre-register (Amendment 1) and add a controlled realised-FDR benchmark |
-| `aaef35d` | Stage 1: validate-step results |
-| `8eb134d` | Stage 3: controlled-benchmark results and rewritten findings |
+| `122b2ea` | Stage 1: extend the calibration script; show the v1 certification step has no power |
+| `cd0a128` | Stage 1: pre-register (Amendment 2) and add a validate step with a power gate |
+| `13c81c5` | Stage 3: pre-register (Amendment 1) and add a controlled realised-FDR benchmark |
+| `dd0eb30` | Stage 1: validate-step results |
+| `595a152` | Stage 3: controlled-benchmark results and rewritten findings |
+| `eddaec1` | this file |
+| `01f1a4a` | Stage 3: pre-register (Amendment 2) and add the p = 2,048 follow-up |
+| `fd6b528`, `5e7b0cb` | Stage 3: p = 2,048 results (committed by a teammate who ran it) |
+| `0a58f29` | Stage 3: pre-register (Amendment 3) and add the mechanism, boundary and p = 2,048 factorial follow-ups |
+| next commit | Stage 3: follow-up results and findings §10–§12 |
 
 **Headline results**
 
@@ -26,7 +32,14 @@ All numbers below come from the committed result files and can be re-derived fro
   false-certification rate exists yet.
 - **Stage 3:** with a proper control, Gaussian knockoffs showed no FDR inflation beyond q in
   any of 108 cells. But their safety margin erodes as signal grows, reaching nominal in the
-  highest-signal cells. v1's "power collapse" is not caused by the zero atom.
+  highest-signal cells. v1's "power collapse" is real at p = 2,048, but it comes mostly from
+  the high-dimensional setting (n/p ≈ 10 with near-copy knockoffs), not the zero atom. The
+  atom adds a smaller loss there, and none at p = 512.
+- **Stage 3 follow-ups:** extended to amplitude 20, FDR does exceed q (2 cells at q = 0.05).
+  The rise comes from null latents that co-vary with the signal beating their Gaussian
+  knockoffs ~75% of the time; hurdle knockoffs cut it by 30–45% but overshoot. At p = 2,048
+  the power collapse is mainly the near-copy S matrix: block-diagonal MVR plus all rows lifts
+  power from 0.45 to 0.69.
 
 ## 1. Review of the teammates' work (why this branch exists)
 
@@ -64,7 +77,7 @@ hold up.
 - The pre-registered Westfall–Young baseline was never implemented, and the design changed
   after the first result without an amendment.
 
-## 2. Stage 1 — search step and power check (`15f44eb`)
+## 2. Stage 1 — search step and power check (`122b2ea`)
 
 `src/calibrate_pipeline.py` keeps the v1 computation and RNG order untouched, so v1 is a
 built-in regression check. The re-run reproduced all v1 numbers exactly on different
@@ -98,7 +111,7 @@ tuning to pass).
 - Under rule A1, v1's FWER is reported as uninformative and "the pipeline does not inflate
   FWER" is withdrawn.
 
-## 3. Stage 1 — a validate step that can detect effects (`9622b80`, `aaef35d`)
+## 3. Stage 1 — a validate step that can detect effects (`cd0a128`, `dd0eb30`)
 
 `src/calibrate_validation.py` (new). The search step is unchanged: top-10 by score.
 
@@ -140,7 +153,7 @@ first.
 - A plotting bug crashed the last step after the results were saved. It was fixed and fig12
   was regenerated from the saved JSON, with no recomputation.
 
-## 4. Stage 3 — controlled benchmark (`70d0a11`, `8eb134d`)
+## 4. Stage 3 — controlled benchmark (`13c81c5`, `595a152`)
 
 `src/planted_fdr_controls.py` (new). The same planted-signal benchmark is run on three
 datasets with identical draws:
@@ -172,24 +185,23 @@ only where real is significantly below the control); C3 (no tuning). Runtime: 76
   FDR rises from 0.007 to 0.060 as amplitude goes from 0.5 to 8. It is significantly above
   the control in 48 of 108 cells, and reaches nominal in the highest-signal small-k cells
   (k = 10, amplitude 8: 0.099 ± 0.023 at q = 0.10).
-- **The "power collapse" is not the zero atom.**
+- **At p = 512, v1's "power collapse" does not appear, and the zero atom costs little power.**
   - Linear-signal power is within a few points of the control.
   - 11 of 108 cells are significantly lower and none higher (mean −0.015).
   - The atom does cost power for weak interaction signals (amplitude 0.5, k = 10: 0.23 vs
     0.50) and at a stronger penalty (λ = 0.05).
   - The equicorrelated S made almost no difference at p = 512.
+  - At v1's p = 2,048 the collapse is real; see §4b for its causes.
 - **The Knockoff+ floor:** k = 10, q = 0.05 has power 0.000, versus 0.985 with offset 0.
 - **Marginal vs conditional:** the Westfall–Young marginal scan finds 150–210 latents with
   FDR 0.78–0.93 against the planted conditional truth. Knockoffs find about k with FDR
   0.02–0.04.
 
 **Not tested:**
-- p = 2,048 with the control, so what caused v1's power collapse (dimension, v1's
-  never-checked solver, or its first-20,000-row subsample) is open.
 - The mechanism behind the rising FDR.
 - Amplitudes above 8.
 
-## 4b. Stage 3 — follow-up at p = 2,048 (built, not yet run on real data)
+## 4b. Stage 3 — follow-up at p = 2,048 (`01f1a4a`; results `fd6b528`, `5e7b0cb`)
 
 **Why.** v2 at 512 latents did not reproduce v1's power collapse. At q = 0.10, v1 had linear
 power 0.633 / 0.178 / 0.038 at amplitude 0.5 for k = 10 / 20 / 30; v2 had 0.900 / 0.820 / 0.503.
@@ -199,9 +211,11 @@ The two runs differ in four ways at once:
 - the rows used;
 - the S matrix.
 
-**A lead found while designing it.** On the real data at 2,048 latents, a safe lasso step is
-about 0.033. v1 used a fixed step of 0.1, three times that, for 500 iterations, and never
-checked convergence.
+**A lead that turned out to be wrong.** While designing it I found that at 2,048 latents a
+safe lasso step is about 0.033, while v1 used a fixed step of 0.1 (three times that) for 500
+iterations and never checked convergence, and I suspected this caused the collapse. The run
+showed it made no difference: v1's solver converged anyway, because the "safe" step is a
+worst-case bound that isn't reached near the solution.
 
 **What it runs.** `planted_fdr_controls.py --experiment p2048`, designed in
 `stage3_amendment_2`. Everything stays at v1's settings (2,048 latents, Ledoit–Wolf covariance,
@@ -217,29 +231,82 @@ equicorrelated S), and five arms change one thing at a time:
 
 It covers the conditions where v1 reported the collapse: amplitudes 0.5 and 1, both forms,
 k = 10/20/30, and 30 replicates.
-- **Draws.** One knockoff draw takes about 21 s at this size, so each dataset gets a bank of 30
+- **Draws.** One knockoff draw takes 20–35 s at this size, so each dataset gets a bank of 30
   draws and replicate *r* uses draw *r* in every condition. Replicates within a condition stay
   independent.
 - **Pairing.** Arms on the same dataset share draws and labels, so their comparisons are paired.
-- **Testing so far.** Smoke-tested on synthetic data only. Peak memory was 0.3 GB GPU and
-  5.6 GB host RAM.
 - **Not separable here.** Whatever gap remains between 2,048 and 512 latents is blamed jointly
   on the number of latents and the near-copy S matrix (rule D3).
 
-**To run it** (on a GPU machine with the activation cache and `knockpy==1.3.5`):
+**Results.** A teammate ran it (68 min). Its design commit (08:20 UTC, 27 Sep) precedes the
+result commits (08:40 and 10:57 UTC). Full write-up: `results/stage3_findings.md` §9.
+- **v1 reproduced** in 36 of 36 conditions (rule D1): the collapse is real at p = 2,048.
+- **Solver:** no effect (largest power difference 0.014, none significant).
+- **Rows:** no effect (1 of 36 significant, about what chance gives).
+- **Zero atom:** it costs some power here. The Gaussian control beats the real latents in
+  11 of 36 conditions (mean +0.073, largest +0.30).
+- **Main cause:** the setting itself. Even the control collapses. For example, at a weak
+  linear signal with 30 planted latents, power is 0.55 at 512 latents versus 0.20 at 2,048 on
+  the control, and 0.03 on real latents. The drop from 512 to 2,048 mixes fewer rows per
+  latent (39 → 9.8) with near-copy knockoffs (correlation 0.50 → 0.946), which can't be
+  separated here.
+- **FDR:** controlled in every condition (maximum 0.033).
+
+**To reproduce** (GPU machine with the activation cache and `knockpy==1.3.5`):
 ```bash
-git fetch && git switch stage1-power-fix
-python src/planted_fdr_controls.py --config config/default.yaml --device cuda --experiment p2048 --stage diagnose  # ~5 min, prints projected runtime
-python src/planted_fdr_controls.py --config config/default.yaml --device cuda --experiment p2048 --stage full      # est. ~1-1.5 h on a data-centre GPU
+python src/planted_fdr_controls.py --config config/default.yaml --device cuda --experiment p2048 --stage diagnose  # ~7 min
+python src/planted_fdr_controls.py --config config/default.yaml --device cuda --experiment p2048 --stage full      # ~68 min
 ```
-Send back `results/stage3_p2048_diagnose.json`, `results/stage3_p2048_fdr.json`,
-`results/stage3_p2048_records.npz` and `results/fig16_stage3_p2048_power.png`.
+
+## 4c. Stage 3 — mechanism, boundary and power-collapse factorial (`0a58f29`)
+
+**Why.** v2 and §4b left three questions: does FDR ever cross q above amplitude 8; why does it
+rise with amplitude; and at p = 2,048, is the power loss from fewer rows per latent or from
+near-copy knockoffs. Design and rules R0–R6 are in `stage3_amendment_3`, committed before any
+real-data run. `src/stage3_followups.py` runs two experiments:
+
+- **`stress`** (p = 512, the v2 data): amplitudes 1–20. It reuses v2's seeds, so amplitudes 1–8
+  reproduce v2 exactly (R0, verified). It adds hurdle knockoffs (Stage 4's SCIP sampler) on the
+  same labels. Every fit records, per null latent, whether it beat its knockoff, grouped by its
+  max |corr| with the planted set.
+- **`dims`** (2 × 2 × 2 × 2): latents (512, 2,048) × rows per latent (9.8, 32.9; up to all
+  67,349 rows) × S (equicorrelated, block-diagonal MVR) × real / Gaussian data. Knockoffs come
+  from a GPU sampler with knockpy's law, checked against knockpy before the run.
+
+**Changes found during smoke tests, before the commit:**
+- At λ = 0.02 most null W are exactly 0, so a dense marginal-correlation statistic was added as
+  a secondary measure.
+- With more rows Ledoit–Wolf shrinks less, so equicorrelated knockoffs get closer to copies.
+  The amendment records both.
+
+**Results** (`results/stage3_findings.md` §10–§12; stress ran locally in 96 min, dims on pkgpu
+in 100 min):
+
+- **R4, boundary.** With MVR knockoffs FDR crosses q at amplitude 20: 0.083 ± 0.016 and
+  0.076 ± 0.011 at q = 0.05. Mean FDR at q = 0.10 rises 0.012 → 0.086; the control stays ≤ 0.008.
+- **R2, mechanism.**
+  - Real null latents beat their Gaussian knockoffs 73% of the time at amplitude ≥ 5, 20 points
+    more than control nulls with the same correlations. Only nulls linked to the signal ever
+    become false discoveries.
+  - The pre-registered rule is formally *not supported*: one of its checks compares against
+    nulls with link < 0.05, and those never had a nonzero lasso W, so that check is undefined.
+  - On the dense marginal statistic all three checks hold.
+- **R3, zero atom.** Supported. Hurdle knockoffs lower FDR in 40 of 72 cells at amplitude ≥ 5,
+  never raise it, and leave power unchanged. But they overshoot, and swap tests detect them
+  (AUC 0.86 at p = 512).
+- **R5, power collapse.** The S matrix is the main driver.
+  - MVR instead of equicorrelated: +0.117 power, significant in 39 of 72 cells. More rows:
+    +0.061 (16 cells).
+  - The zero atom costs 0.11–0.14 with equicorrelated knockoffs, but 0.05–0.06 with MVR.
+  - No dims cell is FDR-inflated.
 
 ## 5. Other files
 
 - `config/default.yaml`: new `stage1` keys, plus `stage1_validate` and `stage3_v2` blocks.
-- `src/common.py`: RNG streams 9–13 appended (`validate_permutation`, `validate_planted`,
-  `s3v2_data`, `s3v2_planted`, `s3v2_knockoff`). Earlier streams are untouched, so earlier
+- `src/common.py`: RNG streams 9–16 appended (`validate_permutation`, `validate_planted`,
+  `s3v2_data`, `s3v2_planted`, `s3v2_knockoff`, `s3p2048_data`, `s3p2048_planted`,
+  `s3p2048_knockoff`), later the Stage 4 streams, and then `s3s_hurdle`, `s3s_diagnostics`,
+  `s3d_data`, `s3d_planted`, `s3d_knockoff` for §4c. Earlier streams are untouched, so earlier
   results stay reproducible.
 - `results/stage1_findings.md` and `results/stage3_findings.md` were rewritten from the
   actual numbers, with sections listing the corrections to v1.
@@ -261,12 +328,11 @@ for Stage 1. They need the activation cache `data/cache/d33d210c5acb.npz`.
 
 1. Stage 1: add a null-intervention reference (matched random latents) to get a calibrated
    false-certification rate. This needs Amendment 3.
-2. Stage 3: rerun v1's setting (p = 2,048, its solver and its row subsample) against the
-   control, to explain v1's power collapse. Consider amplitudes above 8.
+2. Stage 3: done in §4c. Still open: FDR at p = 2,048 above amplitude 1, and which
+   non-Gaussian feature (atom, co-firing, tails) carries the bias.
 3. Paper: a "deviations from the proposal" section. Ablation is on a probe, not the model;
    the scope is SST-2 / Gemma only; thresholds were fixed through post-hoc amendments; and
    the Stage 1 false-certification rate is incomplete.
-4. Merge into `main` (via a PR) so the corrected findings replace the v1 claims there.
 
 ## Note on history
 

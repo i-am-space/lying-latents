@@ -142,7 +142,7 @@ held-out split, real-label value vs the permutation null (WY-style p = (1 + #{nu
 
 ## 6. The validate step (Amendment 2 — pre-registered before the run)
 
-Design fixed in `stage1_amendment_2` and committed (`a17be07`) before this script ran on
+Design fixed in `stage1_amendment_2` and committed (`cd0a128`) before this script ran on
 real data. Search is unchanged (top-10 by score). Validate: one-sided paired test that
 ablating the candidates raises the probe's log-loss, certify at p ≤ 0.05. Primary variant:
 all ten ablated jointly. Two regimes: **same-data** (validate on the rows the probe was fit
