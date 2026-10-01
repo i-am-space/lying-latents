@@ -923,3 +923,125 @@ stage4_amendment_2:
   interpretation_constraints:
     - "Planted labels are a semi-synthetic stand-in; results are for this dataset, setting and statistic."
     - "Exchangeability is tested only through necessary conditions (swap tests), never confirmed."
+
+# ===========================================================================
+# AMENDMENT 3 - Stage 3 follow-ups (written BEFORE either experiment ran)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+stage3_amendment_3:
+  meta:
+    date_written: "2026-10-01"
+    status: written_before_run
+    ordering_note: >
+      Committed and pushed before either experiment runs on real data, so git history shows this
+      design preceding its results. Only local smoke tests (1 replicate, diagnose stage) precede it.
+    trigger: >
+      stage3_findings.md leaves three questions open. (1) Real-data FDR rises with amplitude (q = 0.10:
+      0.007 at amplitude 0.5 to 0.060 at 8) while the Gaussian control stays near 0.004; the proposed
+      mechanism (null latents depend on signal latents in ways Gaussian knockoffs cannot copy) is
+      untested. (2) The sweep stopped at amplitude 8 with the worst cells at the nominal level, so
+      whether FDR ever exceeds q is unknown. (3) At p = 2048 the power loss could not be split between
+      fewer rows per latent (n/p 39 -> 9.8) and near-copy knockoffs (corr 0.50 -> 0.946), because no
+      MVR S was computed at p = 2048.
+
+  design:
+    stress:
+      purpose: "questions (1) and (2)"
+      data: >
+        The stage3_v2 latents (512), rows (20000) and Gaussian control, built by the v2 code, so the
+        Gaussian arms at amplitudes 1-8 reuse v2's seeds and reproduce v2 (rule R0).
+      arms:
+        real_mvr: "real latents, MVR Gaussian knockoffs (v2 primary); fresh knockpy draw per fit"
+        real_equi: "real latents, equicorrelated Gaussian knockoffs; fresh draw per fit"
+        gauss_mvr: "Gaussian control with the real covariance, MVR knockoffs; fresh draw per fit"
+        real_hurdle: >
+          real latents, SCIP hurdle knockoffs with the stage4_repairs settings unchanged; a bank of 30
+          draws, replicate r uses draw r in every cell (one SCIP draw takes tens of seconds). Same
+          labels as real_mvr and real_equi, so contrasts with them are paired.
+      grid: "amplitudes 1, 2, 3, 5, 8, 12, 20 x linear/interaction x k 10/20/30 x q .05/.10/.20, 30 replicates, lambda 0.02"
+      mechanism_measurement: >
+        For every fit, each null latent's link to the planted set is its max |corr| with the signal
+        latents (the dataset's own sample correlation). Per link bin [0, .05, .1, .2, .3, .5, 1] the run
+        records the number of nulls, of nonzero W, of positive W, the sum of W, and Knockoff+ false
+        discoveries at each q. Valid knockoffs give P(W > 0 | null, W != 0) = 0.5 in every bin (the
+        flip-sign property). Real vs control in the same bin isolates dependence beyond linear
+        correlation, which Gaussian knockoffs copy exactly.
+      secondary_statistic: >
+        At lambda = 0.02 most null latents have W = 0 (neither they nor their knockoffs enter the lasso),
+        so the lasso coin is measured on few nulls per fit (seen in the 1-replicate smoke test). Each fit
+        therefore also records the marginal statistic |corr(y, X_j)| - |corr(y, X~_j)|, which is
+        antisymmetric under swapping X_j and X~_j and so is a fair coin for every null under valid
+        knockoffs. R1-R3 are evaluated on the lasso W (primary) and repeated on the marginal W (secondary,
+        reported as R1_marginal etc.); conclusions rest on the primary, the secondary shows whether the
+        same bias is visible in a statistic every null contributes to.
+      swap_tests: "Stage 2 swap tests at |S| = 0, 50, all for all four arms at p = 512, one draw each."
+    dims:
+      purpose: "question (3)"
+      factorial: >
+        p in {512 (the v2 latents), 2048 (all retained)} x n/p in {9.77, 32.88} (p = 512: n = 5000,
+        16837; p = 2048: n = 20000 = the stage3_p2048 random rows, 67349 = every cached row) x S in
+        {equicorrelated, MVR} x data in {real, Gaussian control with the matching real covariance and
+        the same n}. MVR at p = 2048 uses knockpy's block-diagonal approximation (blocks of at most
+        512, with knockpy's line search so 2 Sigma - S stays PSD). Covariance: v2 rule at 512,
+        Ledoit-Wolf at 2048. S is computed on each dataset's own covariance.
+      sampler: >
+        Second-order Gaussian knockoffs drawn on the GPU from the same law as knockpy's
+        GaussianSampler: Xk = X - (X - mu) Sigma^-1 S + E V^(1/2), V = 2S - S Sigma^-1 S. A knockpy draw
+        at p = 2048 takes about 35 s, so a fresh draw per fit is unaffordable with knockpy. The
+        diagnose stage compares the two samplers' knockoff-variable correlation and cross-covariance
+        error before the run.
+      grid: "amplitudes 0.5, 1 x linear/interaction x k 10/20/30 x q .05/.10/.20, 30 replicates, fresh draw per fit, lambda 0.02"
+      pairing: >
+        Signal sets and label noise come from per-cell streams that do not depend on n, S or data,
+        so at a given p the S contrast is paired (same data and labels); n and data contrasts are not.
+    replicate_count_note: >
+      30 replicates per experiment. If the diagnose-stage projection shows a full run cannot finish
+      in time for the course deadline, the count may be lowered before the full run starts, from
+      timing alone; the count used is recorded in the results.
+
+  decision_rules:
+    - id: R0
+      rule: >
+        Reproduction. For the three Gaussian stress arms at amplitudes 1-8, cell means are compared
+        with stage3_v2_records.npz; the maximum absolute difference and the share of identical
+        replicate values are reported. Differences beyond GPU floating-point noise are investigated
+        before interpretation.
+    - id: R1
+      rule: >
+        Diagnostic validity. On gauss_mvr, pooled null P(W > 0 | W != 0) must not exceed 0.5 by more
+        than 1.96 SE, and no cell may be FDR-inflated. Otherwise the mechanism diagnostic is invalid.
+    - id: R2
+      rule: >
+        Mechanism supported only if, for real_mvr at amplitudes >= 5: pooled null P(W > 0) exceeds 0.5
+        by more than 1.96 SE; it is larger in the high-link bins (link >= 0.3) than in the lowest bin
+        (link < 0.05) by more than 1.96 SE; and it exceeds gauss_mvr's in the high-link bins by more
+        than 1.96 SE. Otherwise reported as not supported.
+    - id: R3
+      rule: >
+        The zero atom is named as a cause only if real_hurdle FDR at amplitudes >= 5 is significantly
+        below real_equi's (paired, 1.96 SE) in more than half of those cells, and its pooled null
+        P(W > 0) is closer to 0.5 than real_equi's. Hurdle knockoffs are not exactly exchangeable at
+        p = 2048 (Stage 4); this is stated whatever the outcome.
+    - id: R4
+      rule: >
+        Boundary. Per arm, the smallest amplitude with any inflated cell (mean - 1.96 SE > q) is
+        reported; if there is none, "no violation up to amplitude 20".
+    - id: R5
+      rule: >
+        Dims attribution, at p = 2048 on Gaussian data: rows effect = power(n/p 32.88) - power(n/p 9.77)
+        at fixed S; S effect = power(MVR) - power(equicorrelated) at fixed n. The effect significant
+        (1.96 SE) in more cells, with the larger mean, is named the main driver; otherwise both are.
+        The same is reported for real data, with the atom gap (Gaussian - real) at each setting.
+    - id: R6
+      rule: "No tuning of lambda, amplitudes, bins, S settings or cells after seeing results."
+
+  interpretation_constraints:
+    - "Planted labels are a semi-synthetic stand-in; same dataset and cache as all other stages."
+    - "The link measure is linear correlation; a positive result locates the bias, it does not identify which non-Gaussian feature causes it."
+    - "Block-diagonal MVR is an approximation to MVR at p = 2048; its corr(X_j, X~_j) is reported."
+    - >
+      The dims factorial holds the S method fixed, not the knockoff correlation: Ledoit-Wolf shrinks less
+      with more rows, so equicorrelated knockoffs become more of a near-copy as n grows (smoke test at
+      p = 2048: corr 0.946 at n = 20000, 0.977 at n = 67349). The rows effect is therefore reported with
+      each setting's measured corr(X_j, X~_j).

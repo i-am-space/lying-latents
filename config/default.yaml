@@ -241,6 +241,58 @@ stage4_repairs:
     pilot_replicates: 1
     pilot_cell: [1.0, linear, 20]
 
+# Stage 3 follow-up A (config/preregistration.yaml stage3_amendment_3): mechanism of the FDR rise
+# and the failure boundary, on the Stage 3 v2 data (latents, rows, Gaussian control, S matrices,
+# lasso and WY settings are taken from the stage3_v2 block, so amplitudes 1-8 reproduce v2).
+stage3_stress:
+  base: stage3_v2
+  signal_amplitudes: [1.0, 2.0, 3.0, 5.0, 8.0, 12.0, 20.0]   # 12 and 20 extend v2's sweep
+  functional_forms: [linear, interaction]
+  signal_sizes: [10, 20, 30]
+  nominal_fdr_targets: [0.05, 0.10, 0.20]
+  replicates: 30
+  arms: [real_mvr, real_equi, gauss_mvr, real_hurdle]
+  scip:                         # hurdle knockoffs: the stage4_repairs settings, unchanged
+    order: natural
+    covariates: log1p_standardised
+    logistic_ridge: 1.0e-3
+    positive_ridge: 1.0e-1
+    newton_max_iter: 25
+    newton_tol: 1.0e-6
+  link_bins: [0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 1.0]   # max |corr| of a null latent with the planted set
+  exchangeability:
+    swap_sizes: [0, 50, all]
+    swap_replicates: 1
+  diagnose:
+    pilot_replicates: 3
+    pilot_cell: [8.0, linear, 10]
+
+# Stage 3 follow-up B (stage3_amendment_3): what causes the power collapse at p = 2048?
+# 2 x 2 x 2 x 2 factorial: latents x rows per latent x S matrix x real/Gaussian data.
+stage3_dims:
+  p_levels: [512, 2048]         # 512 = the stage3_v2 latents; 2048 = all retained latents
+  rows:                         # n per p level, at n/p = 9.77 and 32.88
+    512: [5000, 16837]
+    2048: [20000, all]          # 20000 = the stage3_p2048 random rows; all = every cached row
+  covariance:
+    512: v2_rule                # sample covariance unless cond > threshold, then Ledoit-Wolf
+    2048: ledoit_wolf
+  s_methods: [equicorrelated, mvr]
+  mvr_max_block: 512            # MVR via knockpy's block-diagonal approximation above 512 latents
+  data: [real, gauss]
+  signal_amplitudes: [0.5, 1.0] # where the collapse is
+  functional_forms: [linear, interaction]
+  signal_sizes: [10, 20, 30]
+  nominal_fdr_targets: [0.05, 0.10, 0.20]
+  replicates: 30
+  lasso:
+    lambda: 0.02
+    max_iter: 1000
+    tol: 1.0e-4
+  diagnose:
+    pilot_replicates: 2
+    pilot_cell: [0.5, linear, 20]
+
 paths:
   cache_dir: data/cache
   results_dir: results

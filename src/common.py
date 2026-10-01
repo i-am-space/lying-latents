@@ -38,6 +38,11 @@ STREAMS = [
     "s4r_knockoff",          # Stage 4 repairs: knockoff draw seeds (per arm and replicate)
     "s4r_split",             # Stage 4 repairs: e-value sample splits (per replicate)
     "s4r_diagnostics",       # Stage 4 repairs: exchangeability swap tests
+    "s3s_hurdle",            # Stage 3 stress: hurdle knockoff draw bank (per replicate)
+    "s3s_diagnostics",       # Stage 3 stress: exchangeability swap tests
+    "s3d_data",              # Stage 3 dims: row subsets and the Gaussian control data
+    "s3d_planted",           # Stage 3 dims: planted signals and labels (per-cell streams)
+    "s3d_knockoff",          # Stage 3 dims: knockoff draws (per-cell streams)
 ]
 
 

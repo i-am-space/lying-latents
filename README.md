@@ -30,6 +30,8 @@ src/calibrate_pipeline.py     Stage 1: FWER calibration under the global null
 src/calibrate_validation.py   Stage 1: validate-step FWER (same-data vs held-out) + power gate
 src/planted_fdr.py            Stage 3 v1: planted-signal FDR benchmark (superseded, kept as history)
 src/planted_fdr_controls.py   Stage 3 v2: same benchmark with a Gaussian control, MVR S, WY baseline
+src/stage3_followups.py       Stage 3 follow-ups: mechanism of the FDR rise, failure boundary, p = 2048 factorial
+src/stage4_repairs.py         Stage 4: hurdle (SCIP), binarised and e-value repairs vs Gaussian knockoffs
 src/common.py                 config loading, seed derivation, cache hashing
 scripts/                      one-off verification of reference-code behaviour
 NOTES_reference.md            what the audited pipeline actually does
@@ -48,6 +50,9 @@ python src/calibrate_validation.py --config config/default.yaml --device cuda  #
 python src/planted_fdr.py       --config config/default.yaml --device cuda  # ~15 min, GPU (v1)
 python src/planted_fdr_controls.py --config config/default.yaml --device cuda --stage full  # ~76 min, GPU; needs knockpy
 python src/planted_fdr_controls.py --config config/default.yaml --device cuda --experiment p2048 --stage full  # p = 2048 follow-up
+python src/stage3_followups.py --config config/default.yaml --device cuda --experiment stress --stage full  # mechanism + boundary
+python src/stage3_followups.py --config config/default.yaml --device cuda --experiment dims --stage full    # power-collapse factorial
+python src/stage4_repairs.py --config config/default.yaml --device cuda --stage full  # ~18 h on a server GPU; resumable
 ```
 
 Every run is determined by `master_seed` in the config. Per-component RNG streams are
