@@ -63,6 +63,14 @@ for design in ("dilution", "redundancy"):
                                   "mean_s_latent": res[k]["info"]["mean_s_lat"], "mean_s_group": res[k]["info"]["mean_s_grp"],
                                   **{f"{arm}/{v}": A(k, arm, v)[:, :, iq].mean(1).tolist() for arm in ARMS
                                      for v in ("con_pow", "lat_pow", "con_fdr", "lat_fdr")}}
+gs_path = rd / "toy_sumstat.json"
+GS = json.loads(gs_path.read_text()) if gs_path.exists() else None
+if GS:
+    for design in ("dilution", "redundancy"):
+        for m in MS:
+            g = GS[f"zinf/{design}/m{m}/planted"]
+            for v in ("con_pow", "lat_pow", "con_fdr", "lat_fdr"):
+                prop[f"{design}/m{m}"][f"group_sum/{v}"] = np.array(g[v])[:, :, iq].mean(1).tolist()
 (rd / "toy_report.json").write_text(json.dumps({"T1": T1, "proposition": prop, "t1_cells": t1}, indent=1, default=float))
 
 # ---- figure ------------------------------------------------------------------
@@ -77,11 +85,16 @@ for r, design in enumerate(("dilution", "redundancy")):
     for c, (v, title) in enumerate((("con_pow", "concept power"), ("lat_pow", "latent power"), ("con_fdr", "concept FDR"))):
         a = ax[r, c + 1]
         for arm in ARMS:
-            a.plot(MS, [prop[f"{design}/m{m}"][f"{arm}/{v}"][ia] for m in MS], "o-", color=COL[arm], label=LAB[arm])
+            thick = arm in ("latent", "group")
+            a.plot(MS, [prop[f"{design}/m{m}"][f"{arm}/{v}"][ia] for m in MS], "o-" if thick else "s--", color=COL[arm],
+                   label=LAB[arm], lw=5 if thick else 1.6, alpha=0.55 if thick else 1.0, ms=8 if thick else 4)
+        if GS:
+            a.plot(MS, [prop[f"{design}/m{m}"][f"group_sum/{v}"][ia] for m in MS], "D--", color="#f39c12",
+                   label="group-sum statistic (exploratory)")
         if v == "con_fdr":
             for arm in ARMS:
                 a.plot(MS, [prop[f"{design}/m{m}"][f"{arm}/lat_fdr"][ia] for m in MS], ":", color=COL[arm])
-            a.axhline(0.1, color="k", ls="--", lw=1); a.set_ylim(0, 0.3); title += " (solid) / latent FDR (dotted)"
+            a.axhline(0.1, color="k", ls="--", lw=1); a.set_ylim(-0.01, 0.3); title = "FDR: concept —, latent ···"
         else:
             a.set_ylim(-0.02, 1.02)
         a.set(xscale="log", title=f"{design}: {title}", xlabel="children per concept m")

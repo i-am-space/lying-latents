@@ -98,6 +98,26 @@
     0.0,
     0.0,
     0.0
+   ],
+   "group_sum/con_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/lat_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/con_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/lat_fdr": [
+    0.0,
+    0.0,
+    0.0
    ]
   },
   "dilution/m2": {
@@ -181,6 +201,26 @@
     0.0
    ],
    "mkf_c1.93/lat_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/con_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/lat_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/con_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/lat_fdr": [
     0.0,
     0.0,
     0.0
@@ -270,6 +310,26 @@
     0.0,
     0.0,
     0.0
+   ],
+   "group_sum/con_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/lat_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/con_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/lat_fdr": [
+    0.0,
+    0.0,
+    0.0
    ]
   },
   "dilution/m8": {
@@ -353,6 +413,26 @@
     0.0
    ],
    "mkf_c1.93/lat_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/con_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/lat_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/con_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/lat_fdr": [
     0.0,
     0.0,
     0.0
@@ -442,6 +522,26 @@
     0.0,
     0.0,
     0.0
+   ],
+   "group_sum/con_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/lat_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/con_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/lat_fdr": [
+    0.0,
+    0.0,
+    0.0
    ]
   },
   "dilution/m32": {
@@ -525,6 +625,26 @@
     0.0
    ],
    "mkf_c1.93/lat_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/con_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/lat_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/con_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/lat_fdr": [
     0.0,
     0.0,
     0.0
@@ -614,6 +734,26 @@
     0.0,
     0.0,
     0.0
+   ],
+   "group_sum/con_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/lat_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/con_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/lat_fdr": [
+    0.0,
+    0.0,
+    0.0
    ]
   },
   "redundancy/m2": {
@@ -697,6 +837,26 @@
     0.0
    ],
    "mkf_c1.93/lat_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/con_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/lat_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/con_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/lat_fdr": [
     0.0,
     0.0,
     0.0
@@ -786,6 +946,26 @@
     0.0,
     0.0,
     0.0
+   ],
+   "group_sum/con_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/lat_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/con_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/lat_fdr": [
+    0.0,
+    0.0,
+    0.0
    ]
   },
   "redundancy/m8": {
@@ -869,6 +1049,26 @@
     0.0
    ],
    "mkf_c1.93/lat_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/con_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/lat_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/con_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/lat_fdr": [
     0.0,
     0.0,
     0.0
@@ -958,6 +1158,26 @@
     0.0,
     0.0,
     0.0
+   ],
+   "group_sum/con_pow": [
+    0.9979999995231629,
+    1.0,
+    1.0
+   ],
+   "group_sum/lat_pow": [
+    0.9979999995231629,
+    1.0,
+    1.0
+   ],
+   "group_sum/con_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/lat_fdr": [
+    0.0,
+    0.0,
+    0.0
    ]
   },
   "redundancy/m32": {
@@ -1041,6 +1261,26 @@
     0.0
    ],
    "mkf_c1.93/lat_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/con_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/lat_pow": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "group_sum/con_fdr": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "group_sum/lat_fdr": [
     0.0,
     0.0,
     0.0
