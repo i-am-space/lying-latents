@@ -626,9 +626,11 @@ def covariance_for(Z: np.ndarray, rule: str, cfg: dict):
     return S, "sample"
 
 
-def s_matrix(Sigma: np.ndarray, method: str, sec: dict):
+def s_matrix(Sigma: np.ndarray, method: str, sec: dict, seed: int | None = None):
     from knockpy import smatrix
     t = time.time()
+    if seed is not None:
+        np.random.seed(seed)          # knockpy's MVR solver draws from numpy's global state
     if method == "mvr":
         S = smatrix.compute_smatrix(Sigma, method="mvr", how_approx="blockdiag", max_block=sec["mvr_max_block"])
     else:
@@ -673,7 +675,8 @@ def build_dims(cfg: dict, sec: dict, X_all: np.ndarray, device) -> dict:
                 info[key] = {"p": p, "n": len(r), "n_over_p": len(r) / p, "covariance": est,
                              "median_zero_mass": p0 if data == "real" else 0.0, "S": {}}
                 for sm in sec["s_methods"]:
-                    S, secs, mineig = s_matrix(Sig, sm, sec)
+                    S, secs, mineig = s_matrix(Sig, sm, sec,
+                                               seed=int(cell_rng(cfg, "s3d_data", p, lvl, int(data == "gauss")).integers(2**31)))
                     smp = GaussKnockoffGPU(Z_t, Sig, S)
                     D[key]["samplers"][sm] = smp
                     D[key]["S"][sm] = S
@@ -958,12 +961,271 @@ def main_dims(args, cfg, d, X_all, device, rd: Path) -> None:
     print(f"\nwrote {rd}/stage3_dims.json, stage3_dims_records.npz, fig21 ({out['minutes']} min)")
 
 
+# ---------------------------------------------------------------------------
+# largek: many weak planted latents, as the amplitude calibration found real labels to be
+# (config/preregistration.yaml stage3_amendment_5)
+# ---------------------------------------------------------------------------
+
+def build_largek(cfg: dict, sec: dict, X_all: np.ndarray, device) -> dict:
+    """All 2048 latents and all rows (the calibration's p2048_all setting), Ledoit-Wolf covariance,
+    a Gaussian control with the same covariance and n, and seeded block-MVR knockoffs for both."""
+    t = time.time()
+    Z, _, _ = standardise(X_all.astype(np.float64))
+    n, p = Z.shape
+    Sigma = estimate_cov(Z, "ledoit_wolf")
+    rng = rng_for(cfg, "s3k_data")
+    Lc = np.linalg.cholesky(Sigma + 1e-10 * np.eye(p))
+    Zg, _, _ = standardise(rng.standard_normal((n, p)) @ Lc.T)
+    del Lc
+    Sigma_g = estimate_cov(Zg, "ledoit_wolf")
+    seed = int(cell_rng(cfg, "s3k_data", 0).integers(2**31))
+    S, secs, mineig = s_matrix(Sigma, "mvr", sec, seed=seed)
+    if np.linalg.eigvalsh(2 * Sigma_g - S).min() > 1e-8:
+        S_g, note = S, "reused the real-latent S"
+    else:
+        S_g, note = s_matrix(Sigma_g, "mvr", sec, seed=seed)[0], "recomputed"
+    D, info = {}, {"n": n, "p": p, "S_seconds": secs, "min_eig_2Sigma_minus_S": mineig, "control_S": note}
+    for name, Zd, Sig, Sd in (("real", Z, Sigma, S), ("gauss", Zg, Sigma_g, S_g)):
+        Z_t = torch.from_numpy(Zd.astype(np.float32)).to(device)
+        smp = GaussKnockoffGPU(Z_t, Sig, Sd)
+        D[name] = {"Z_np": Zd.astype(np.float32), "Z_t": Z_t, "sampler": smp}
+        info[name] = {"mean_s": float(np.diag(Sd).mean()), "mean_corr_X_Xk": corr_gpu(Z_t, smp.sample(12345))}
+        print(f"  [{name}] mean s={info[name]['mean_s']:.4f}  corr(X,Xk)={info[name]['mean_corr_X_Xk']:.3f}", flush=True)
+    del Z, Zg
+    print(f"  n={n} p={p}  block MVR {secs:.0f}s  control: {note}  built in {time.time() - t:.0f}s", flush=True)
+    return {"D": D, "info": info}
+
+
+def largek_probe_auc(cfg: dict, sec: dict, B: dict, device, amps, forms, ks) -> dict:
+    """Held-out probe AUC of the planted labels (replicate 0 of each cell, real latents), with the
+    calibration's split, probe and ridge, so cells can be placed against the real labels' AUC."""
+    from sklearn.metrics import roc_auc_score
+    from amplitude_calibration import Probe
+
+    cal = cfg["stage3_calibration"]
+    ref = json.loads((results_dir(cfg) / "stage3_calibration.json").read_text())["settings"]["p2048_all"]["real"]
+    Zr = B["D"]["real"]["Z_np"]
+    n, p = Zr.shape
+    perm = cell_rng(cfg, "s3c_calibration", 0).permutation(n)
+    a, b_ = int(cal["split"][0] * n), int((cal["split"][0] + cal["split"][1]) * n)
+    split = {"train": perm[:a], "val": perm[a:b_], "test": perm[b_:]}
+    probe = Probe(Zr, split, cal, device)
+    out = {"real_test_auc": ref["test_auc"], "ridge": ref["ridge"], "cells": []}
+    for ia, amp in enumerate(amps):
+        for jf, form in enumerate(forms):
+            for kk, k in enumerate(ks):
+                rng = cell_rng(cfg, "s3k_planted", ia, jf, kk, 0)
+                S_idx = np.sort(rng.choice(p, size=k, replace=False))
+                y, prob = generate_planted_labels(Zr, S_idx, form, amp, rng)
+                beta, b, _ = probe.fit(y[split["train"]], ref["ridge"])
+                yt = y[split["test"]]
+                out["cells"].append({"amplitude": amp, "form": form, "k": k,
+                                     "probe_auc": float(roc_auc_score(yt, probe.logits("test", beta, b))),
+                                     "bayes_auc": float(roc_auc_score(yt, prob[split["test"]]))})
+    del probe
+    torch.cuda.empty_cache() if device.type == "cuda" else None
+    for c in out["cells"]:
+        print(f"  amp {c['amplitude']:>4} {c['form']:11s} k={c['k']:3d}: probe AUC {c['probe_auc']:.3f} "
+              f"(real labels {out['real_test_auc']:.3f})", flush=True)
+    return out
+
+
+def run_largek(cfg, sec, B, device, R, amps, forms, ks, checkpoint=None):
+    qs, lam = sec["nominal_fdr_targets"], sec["lasso"]["lambda"]
+    names = list(B["D"])
+    shape = (len(amps), len(forms), len(ks), R)
+    M = {m: {a: np.full(shape + (len(qs),), np.nan, dtype=np.float32) for a in names} for m in METRICS}
+    CONV = {a: np.zeros(shape, dtype=bool) for a in names}
+    key = {"shape": list(shape), "names": names}
+    start = 0
+    if checkpoint is not None:
+        ck = load_checkpoint(checkpoint, key)
+        if ck:
+            meta, z = ck
+            for a in names:
+                for m in METRICS:
+                    M[m][a] = z[f"{m}__{a}"]
+                CONV[a] = z[f"conv__{a}"]
+            start = meta["reps_done"]
+            print(f"  resuming from checkpoint: {start}/{R} replicates done", flush=True)
+    t0 = time.time()
+    no_thr = {q: float("inf") for q in qs}
+    for rep in range(start, R):
+        for ia, amp in enumerate(amps):
+            for jf, form in enumerate(forms):
+                for kk, k in enumerate(ks):
+                    kseed = int(cell_rng(cfg, "s3k_knockoff", ia, jf, kk, rep).integers(2**31))
+                    for a, dd in B["D"].items():
+                        p = dd["Z_np"].shape[1]
+                        rng = cell_rng(cfg, "s3k_planted", ia, jf, kk, rep)
+                        S_idx = np.sort(rng.choice(p, size=k, replace=False))
+                        y_np, _ = generate_planted_labels(dd["Z_np"], S_idx, form, amp, rng)
+                        y_t = torch.from_numpy(y_np.astype(np.float32)).to(device)
+                        Phi = torch.cat([dd["Z_t"], dd["sampler"].sample(kseed)], dim=1)
+                        w, cv, _, _ = fit_lasso_checked(Phi, y_t, lam, sec["lasso"]["max_iter"], sec["lasso"]["tol"])
+                        del Phi
+                        w_np = w.cpu().numpy()
+                        sc = score_fit(np.abs(w_np[:p]) - np.abs(w_np[p:]), np.zeros(p), no_thr, qs, set(S_idx.tolist()))
+                        for m in METRICS:
+                            M[m][a][ia, jf, kk, rep] = np.nan if m.startswith("wy") else sc[m]
+                        CONV[a][ia, jf, kk, rep] = cv
+        if checkpoint is not None:
+            arrays = {f"{m}__{a}": M[m][a] for m in METRICS for a in names}
+            arrays.update({f"conv__{a}": CONV[a] for a in names})
+            save_checkpoint(checkpoint, arrays, {**key, "reps_done": rep + 1})
+        el = time.time() - t0
+        print(f"  rep {rep + 1:>2}/{R}  elapsed {el / 60:.1f}m  ETA {el / (rep + 1 - start) * (R - rep - 1) / 60:.1f}m", flush=True)
+    return M, CONV
+
+
+def analyse_largek(sec, M, CONV, amps, forms, ks, auc) -> dict:
+    """Rules K1-K3 with the corrected methods of reanalysis_multiplicity."""
+    from reanalysis_multiplicity import by_adjust, cells, fdr_exceedance, holm, one_sided_exceed, pooled, trend
+
+    qs = sec["nominal_fdr_targets"]
+    z = {f"{m}__{a}": M[m][a] for m in ("ko_fdr", "ko_pow") for a in M["ko_fdr"]}
+    d = {"amplitudes": amps, "forms": forms, "signal_sizes": ks, "nominal_fdr_targets": qs}
+    exc = {a: fdr_exceedance(z, d, a, "stage3_largek") for a in M["ko_fdr"]}
+    for a, r in exc.items():          # Benjamini-Yekutieli count (arbitrary dependence between cells)
+        pv = np.array([one_sided_exceed(z[f"ko_fdr__{a}"][ia, jf, kk, :, iq], c["q"])[2]
+                       for (ia, jf, kk, iq), c in cells(d)])
+        r["n_by"] = int((by_adjust(pv) < 0.05).sum())
+    trends = {}
+    for k in ks:
+        w = (lambda kk: (lambda c: c["k"] == kk))(k)
+        trends[str(k)] = {"real": trend(z, d, "real", "stage3_largek", where=w),
+                          "gauss": trend(z, d, "gauss", "stage3_largek", where=w),
+                          "real_minus_gauss": trend(z, d, "real", "stage3_largek", minus="gauss", where=w)}
+    ph = holm(np.array([trends[str(k)]["real_minus_gauss"]["p_two_sided"] for k in ks]))
+    for k, x in zip(ks, ph):
+        trends[str(k)]["real_minus_gauss"]["p_holm_over_k"] = float(x)
+    pooled_fdr = {str(k): pooled(z, d, "real", "gauss", "ko_fdr", False, f"largek k={k}",
+                                 where=(lambda kk: (lambda c: c["k"] == kk))(k)) for k in ks}
+    # realistic cells: per form and k, FDR (q = 0.10) interpolated at the probe-AUC-matched amplitude
+    iq = qs.index(0.10)
+    realistic = {}
+    for jf, form in enumerate(forms):
+        for kk, k in enumerate(ks):
+            cs = sorted([c for c in auc["cells"] if c["form"] == form and c["k"] == k], key=lambda c: c["amplitude"])
+            m = match_amplitude_simple([c["amplitude"] for c in cs], [c["probe_auc"] for c in cs], auc["real_test_auc"])
+            fdr_r = [float(M["ko_fdr"]["real"][ia, jf, kk, :, iq].mean()) for ia in range(len(amps))]
+            fdr_g = [float(M["ko_fdr"]["gauss"][ia, jf, kk, :, iq].mean()) for ia in range(len(amps))]
+            la = np.log(amps)
+            x = math.log(m["amplitude"])
+            realistic[f"{form}|{k}"] = {**m, "fdr_real_q0.10": float(np.interp(x, la, fdr_r)),
+                                        "fdr_gauss_q0.10": float(np.interp(x, la, fdr_g))}
+    return {"fdr_exceedance": exc, "trends": trends, "pooled_fdr_real_minus_gauss": pooled_fdr,
+            "realistic_cells": realistic,
+            "K1_control_valid": bool(exc["gauss"]["n_by"] == 0),
+            "K3_breach_after_BY": {a: exc[a]["n_by"] for a in exc},
+            "convergence": {a: float(CONV[a].mean()) for a in CONV}}
+
+
+def match_amplitude_simple(amps, values, target):
+    x = np.log(np.asarray(amps, float))
+    v = np.maximum.accumulate(np.asarray(values, float))
+    if target <= v[0]:
+        return {"amplitude": float(amps[0]), "bound": "at or below"}
+    if target >= v[-1]:
+        return {"amplitude": float(amps[-1]), "bound": "at or above"}
+    i = int(np.searchsorted(v, target))
+    t = (target - v[i - 1]) / max(v[i] - v[i - 1], 1e-12)
+    return {"amplitude": float(math.exp(x[i - 1] + t * (x[i] - x[i - 1]))), "bound": None}
+
+
+def fig_largek(M, amps, forms, ks, auc, res, q_ref, rd: Path) -> None:
+    iq = [0.05, 0.10, 0.20].index(q_ref)
+    fig, axes = plt.subplots(2, len(ks), figsize=(4.4 * len(ks), 7.0), sharex=True, squeeze=False)
+    for j, k in enumerate(ks):
+        kk = ks.index(k)
+        for jf, form in enumerate(forms):
+            ls = "-" if form == "linear" else "--"
+            for a, col in (("real", "#c0392b"), ("gauss", "#3b6ea5")):
+                f = M["ko_fdr"][a][:, jf, kk, :, iq]
+                pw = M["ko_pow"][a][:, jf, kk, :, iq]
+                axes[0, j].errorbar(amps, f.mean(1), yerr=1.96 * f.std(1, ddof=1) / np.sqrt(f.shape[1]), ls=ls,
+                                    marker="o", ms=3, capsize=2, color=col,
+                                    label=f"{'real latents' if a == 'real' else 'Gaussian control'}, {form}")
+                axes[1, j].plot(amps, pw.mean(1), ls=ls, marker="o", ms=3, color=col)
+            m = res["realistic_cells"][f"{form}|{k}"]
+            for r in (0, 1):
+                axes[r, j].axvline(m["amplitude"], color="k", ls=ls, lw=0.8, alpha=0.6)
+        axes[0, j].axhline(q_ref, color="k", ls=":", lw=1)
+        axes[0, j].set_title(f"{k} planted latents", fontsize=10)
+        axes[1, j].set_xscale("log"); axes[1, j].set_xlabel("signal amplitude"); axes[1, j].set_ylim(0, 1.02)
+    axes[0, 0].set_ylabel(f"realised FDR (q = {q_ref})"); axes[1, 0].set_ylabel("power")
+    axes[0, 0].legend(fontsize=7)
+    fig.suptitle("Stage 3, many weak signals (p = 2,048, all rows): vertical lines = amplitude whose probe AUC "
+                 "matches the real SST-2 labels", y=1.01, fontsize=10)
+    fig.tight_layout()
+    fig.savefig(rd / "fig24_stage3_largek.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
+def main_largek(args, cfg, d, X_all, device, rd: Path) -> None:
+    sec = cfg["stage3_largek"]
+    t0 = time.time()
+    amps, forms, ks = sec["signal_amplitudes"], sec["functional_forms"], sec["signal_sizes"]
+    print("\n=== data and block-MVR knockoffs (all latents, all rows) ===")
+    B = build_largek(cfg, sec, X_all, device)
+    del X_all
+    print("\n=== probe AUC of the planted designs (placement against the real labels) ===")
+    auc = largek_probe_auc(cfg, sec, B, device, amps, forms, ks)
+    if args.stage == "diagnose":
+        R = args.limit_reps or sec["diagnose"]["pilot_replicates"]
+        print(f"\n=== pilot: full grid, {R} replicate(s) ===")
+        t = time.time()
+        M, CONV = run_largek(cfg, sec, B, device, R, amps, forms, ks)
+        per_rep = (time.time() - t) / R
+        iq = sec["nominal_fdr_targets"].index(0.10)
+        for a in M["ko_fdr"]:
+            print(f"  {a:6s} FDR(q=.1) {np.nanmean(M['ko_fdr'][a][..., iq]):.3f}  power {np.nanmean(M['ko_pow'][a][..., iq]):.3f}"
+                  f"  converged {CONV[a].mean():.0%}")
+        est = sec["replicates"] * per_rep / 60
+        peak = torch.cuda.max_memory_allocated() / 2**30 if device.type == "cuda" else 0.0
+        print(f"  {per_rep:.0f}s per replicate, peak GPU {peak:.1f} GB -> projected full run ~{est:.0f} min")
+        (rd / "stage3_largek_diagnose.json").write_text(json.dumps(
+            {"info": B["info"], "probe_auc": auc, "seconds_per_replicate": per_rep, "projected_full_minutes": est,
+             "peak_gpu_gb": peak, "minutes": (time.time() - t0) / 60}, indent=2, default=float))
+        print(f"\nwrote {rd}/stage3_largek_diagnose.json ({(time.time() - t0) / 60:.1f} min)")
+        return
+    R = args.limit_reps or sec["replicates"]
+    print(f"\n=== full: 2 datasets x {len(amps)} amplitudes x {len(forms)} forms x {len(ks)} k x {R} reps ===")
+    ckpt = rd / "stage3_largek_checkpoint.json"
+    M, CONV = run_largek(cfg, sec, B, device, R, amps, forms, ks, checkpoint=ckpt)
+    res = analyse_largek(sec, M, CONV, amps, forms, ks, auc)
+    conds = cell_rows({m: M[m] for m in ("ko_fdr", "ko_pow", "ko_nd")}, list(M["ko_fdr"]), amps, forms, ks,
+                      sec["nominal_fdr_targets"])
+    print("\n=== results ===")
+    for a, r in res["fdr_exceedance"].items():
+        print(f"  {a:6s} cells significantly above q: uncorrected {r['n_uncorrected_1.96SE']}, Holm {r['n_holm']}, "
+              f"BH {r['n_bh']}, BY {r['n_by']}")
+    for k, t in res["trends"].items():
+        x = t["real_minus_gauss"]
+        print(f"  k={k:>3}: FDR slope per log-amplitude real {t['real']['slope_per_log_amplitude']:+.4f}, control "
+              f"{t['gauss']['slope_per_log_amplitude']:+.4f}, difference {x['slope_per_log_amplitude']:+.4f} "
+              f"(p {x['p_two_sided']:.2g}, Holm over k {x['p_holm_over_k']:.2g})")
+    for key, r in res["realistic_cells"].items():
+        print(f"  realistic {key:16s}: amplitude {r['amplitude']:.2f}{' (' + r['bound'] + ')' if r['bound'] else ''}  "
+              f"FDR real {r['fdr_real_q0.10']:.3f}  control {r['fdr_gauss_q0.10']:.3f}")
+    out = {"config_hash": str(d["config_hash"]), "master_seed": cfg["master_seed"], "replicates": R,
+           "amplitudes": amps, "forms": forms, "signal_sizes": ks, "nominal_fdr_targets": sec["nominal_fdr_targets"],
+           "info": B["info"], "probe_auc": auc, "analysis": res, "conditions": conds,
+           "minutes": round((time.time() - t0) / 60, 1)}
+    (rd / "stage3_largek.json").write_text(json.dumps(out, indent=2, default=float))
+    np.savez(rd / "stage3_largek_records.npz", **{f"{m}__{a}": M[m][a] for m in ("ko_fdr", "ko_pow", "ko_nd")
+                                                   for a in M["ko_fdr"]})
+    fig_largek(M, amps, forms, ks, auc, res, 0.10, rd)
+    drop_checkpoint(ckpt)
+    print(f"\nwrote {rd}/stage3_largek.json, stage3_largek_records.npz, fig24 ({out['minutes']} min)")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Stage 3 follow-ups: mechanism, boundary, dimension")
     ap.add_argument("--config", default="config/default.yaml")
     ap.add_argument("--cache", default=None)
     ap.add_argument("--device", default=None)
-    ap.add_argument("--experiment", required=True, choices=["stress", "dims"])
+    ap.add_argument("--experiment", required=True, choices=["stress", "dims", "largek"])
     ap.add_argument("--stage", default="diagnose", choices=["diagnose", "full"])
     ap.add_argument("--limit-reps", type=int, default=None)
     ap.add_argument("--skip-exchangeability", action="store_true", help="stress only")
@@ -973,7 +1235,7 @@ def main() -> None:
     rd = results_dir(cfg)
     d, X_all = load_cache(args, cfg)
     print(f"device: {device} | cache {d['config_hash']} | experiment: {args.experiment} | stage: {args.stage}")
-    (main_stress if args.experiment == "stress" else main_dims)(args, cfg, d, X_all, device, rd)
+    {"stress": main_stress, "dims": main_dims, "largek": main_largek}[args.experiment](args, cfg, d, X_all, device, rd)
 
 
 if __name__ == "__main__":

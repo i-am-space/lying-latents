@@ -1150,3 +1150,60 @@ stage3_amendment_4:
     extended to 1.0 and the amplitudes to 30 and 50, to keep both choices off the grid edge. The
     smoke test also showed the two mappings disagreeing (AUC-matched >= 8, norm-matched about 2);
     both stay as specified.
+
+# ===========================================================================
+# AMENDMENT 5 - Stage 3 large-k follow-up (written BEFORE it ran)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+stage3_amendment_5:
+  meta:
+    date_written: "2026-10-05"
+    status: written_before_run
+    trigger: >
+      The amplitude calibration (stage3_amendment_4) found the real SST-2 labels highly predictable
+      overall (probe AUC 0.972, matched by planted amplitudes of about 5 to over 50) but spread over many
+      latents (top-k coefficient norms matched by amplitudes of about 1 to 3). The Stage 3 benchmark
+      plants 10-30 strong latents, so it never tested many weak signals that add up to strong overall
+      predictability, which is where real labels sit.
+  design:
+    setting: "All 2048 latents and all 67,349 rows; Ledoit-Wolf covariance; lambda 0.02 as in Stage 3."
+    arms: >
+      real: real latents with block-diagonal MVR Gaussian knockoffs (knockpy blockdiag, blocks <= 512,
+      solve seeded from s3k_data). gauss: Gaussian control with the same covariance and n, same S if valid.
+      Fresh GPU knockoff draw per fit (stage3_followups.GaussKnockoffGPU).
+    grid: "k = 100, 200, 300 x amplitudes 1, 2, 4, 8, 16, 32 x linear/interaction x q .05/.10/.20, 30 replicates."
+    placement: >
+      Each (amplitude, form, k) design also gets the calibration's held-out probe AUC (same split, probe
+      and ridge, one label draw), so the realistic design is the amplitude whose probe AUC matches the real
+      labels' 0.972 (log-linear interpolation; a bound if outside the grid).
+    statistics: >
+      Corrected methods only (src/reanalysis_multiplicity.py): per-cell FDR exceedance with Holm, BH and
+      Benjamini-Yekutieli; per-replicate FDR-vs-log-amplitude slopes, real, control and real minus control,
+      per k (Holm over the three k); pooled real-minus-control FDR per k.
+  decision_rules:
+    - id: K1
+      rule: "The control is valid only if no control cell exceeds q after Benjamini-Yekutieli; otherwise the run is investigated before interpretation."
+    - id: K2
+      rule: >
+        FDR erosion is said to extend to many weak signals at a given k only if the real-minus-control
+        slope is positive with Holm-adjusted p < 0.05 over the three k. The real and control FDR at the
+        AUC-matched (realistic) amplitude are reported for every form and k.
+    - id: K3
+      rule: "An FDR breach is claimed only for cells significant after Benjamini-Yekutieli."
+    - id: K4
+      rule: "No tuning of lambda, amplitudes, k or block size after seeing results."
+  interpretation_constraints:
+    - "Planted signals are random latents with equal weights; real signals may be clustered (a teammate's separate cluster experiment) and unequal."
+  changes_after_smoke_test: >
+    A diagnose run (one replicate of the full grid, plus the probe-AUC placement) ran before this
+    amendment was committed. Its placement showed interaction designs below the real labels' AUC at
+    every amplitude up to 16 (0.948-0.960), so amplitude 32 was added to bring the realistic design
+    inside the grid. Its FDR and power were seen (real 0.062 / 0.461, control 0.053 / 0.500 at
+    q = 0.10, averaged over all cells) and played no part in the change.
+  analysis_test_before_commit: >
+    After amplitude 32 was added, a 2-replicate run of the full grid tested the analysis and figure
+    code; its outputs were deleted. Its interaction placements stayed at the grid edge: a linear probe
+    cannot represent the interaction part of the label, so its AUC levels off below the real labels'
+    value. Interaction placements are therefore reported as bounds, and the grid is not extended
+    further. No setting was changed after this test.

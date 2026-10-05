@@ -330,6 +330,24 @@ stage3_calibration:
   newton_max_iter: 50
   newton_tol: 1.0e-8
 
+# Stage 3 large-k follow-up (config/preregistration.yaml stage3_amendment_5): many weak planted
+# latents, the regime the amplitude calibration placed the real SST-2 labels in.
+stage3_largek:
+  setting: p2048_all            # all 2048 latents, all 67,349 rows (the calibration's main setting)
+  covariance: ledoit_wolf
+  mvr_max_block: 512            # block-diagonal MVR knockoffs (the best Gaussian baseline), seeded solve
+  signal_amplitudes: [1.0, 2.0, 4.0, 8.0, 16.0, 32.0]
+  functional_forms: [linear, interaction]
+  signal_sizes: [100, 200, 300]
+  nominal_fdr_targets: [0.05, 0.10, 0.20]
+  replicates: 30
+  lasso:
+    lambda: 0.02
+    max_iter: 1000
+    tol: 1.0e-4
+  diagnose:
+    pilot_replicates: 1
+
 paths:
   cache_dir: data/cache
   results_dir: results

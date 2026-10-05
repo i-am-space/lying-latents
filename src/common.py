@@ -44,6 +44,9 @@ STREAMS = [
     "s3d_planted",           # Stage 3 dims: planted signals and labels (per-cell streams)
     "s3d_knockoff",          # Stage 3 dims: knockoff draws (per-cell streams)
     "s3c_calibration",       # Stage 3 amplitude calibration: data split and planted labels
+    "s3k_data",              # Stage 3 largek: Gaussian control data and the block-MVR solve seed
+    "s3k_planted",           # Stage 3 largek: planted signals and labels (per-cell streams)
+    "s3k_knockoff",          # Stage 3 largek: knockoff draws (per-cell streams)
 ]
 
 
