@@ -1,0 +1,130 @@
+# Concept-dilution branch — amendments. Same format as config/preregistration.yaml.
+# Written and committed BEFORE any labelled run of Steps 1, 6, 7 or 8. Label-free work done before
+# this commit (caches, the family census on the widths then available, layer-20 candidates and
+# S solves) is disclosed under changes_before_registration.
+
+concept_amendment_1:
+  meta:
+    date_written: "2026-10-05"
+    status: written_before_run
+    branch: concept-dilution
+    plan: CONCEPT_DILUTION_PLAN.md
+    thesis: >
+      Per-latent feature discovery tests the wrong unit. As the dictionary widens, a concept is carried
+      by more latents (dilution: children fire on disjoint inputs, per-child standardised signal ~ 1/sqrt(m);
+      redundancy: near-duplicate children, each conditionally null given the others). Prediction:
+      per-latent discovery degrades with width; concept-level (group) discovery does not.
+
+  design:
+    model_sae: "Gemma-2-2B residual stream. Width sweep at layer 12 (16k, 32k, 65k, 131k, 262k, 524k, 1M);
+      layer-20 bridge (16k, 65k) to the main project. Canonical Gemma Scope SAEs except 131k at layer 12,
+      which exists only in gemma-scope-2b-pt-res: average_l0_129 is used, chosen by Gemma Scope's own
+      canonical rule (L0 closest to 100). Mean L0 on SST-2 content tokens is logged per width as a confound."
+    data: "SST-2 train, all 67,349 sentences, mean over content tokens (BOS/EOS/pad excluded), as the main cache."
+    step1_toy:
+      sizes: {n: 20000, p: 1024, K_planted_concepts: 20, pi_concept_fires: 0.05}
+      m: [1, 2, 4, 8, 16, 32]
+      mechanisms: "dilution (exactly one child fires, log-normal sigma 0.75) and redundancy (all children
+        co-fire, child = a * exp(N(0, 0.1^2)))"
+      flavours: "zinf (zero-inflated, the proposition) and gauss (Gaussian with family-block correlation
+        0.3 / 0.95, where second-order knockoffs are exactly valid: the unit test of the library)"
+      labels: "c_g = standardise(sum of children); generate_planted_labels(C, arange(K), linear, amp)"
+      amplitudes: [1, 3, 8]
+      replicates: 50
+      null_replicates_gauss: 200
+      why_K20_not_1: "Knockoff+ needs >= 1/q discoveries; one planted concept gives zero power by arithmetic."
+    step3_census:
+      taus: [0.3, 0.4, 0.5, 0.6, 0.7]
+      child_floor: 0.001
+      mechanism: "multi-child family: redundancy if mean pairwise child correlation >= 0.9; dilution if
+        mean co-firing Jaccard < 0.2 and correlation < 0.9"
+    step4_candidates:
+      p_star: 2048
+      pool: "seeded random 16k reference parents whose families exist at every width of the layer, union at
+        the widest width <= p*/2; target 60 parents, minimum 40"
+      groups: "primary: parent family; sensitivity: average-linkage decoder-cosine clusters cut at 1 - tau;
+        both capped at 64 latents"
+      labels_never_read: true
+    step5_library: "BlockGaussKnockoff (full block-diagonal S), knockpy group MVR (method='mvr' explicit,
+      blockdiag, max_block 512, seeded), group W = sum|beta| - sum|beta~|, MKF(c)+ per Katsevich & Sabatti
+      (2019) Algorithm 1 with c = 1 (primary) and c = 1.93 (guaranteed). Each layer has its own knockoff draw.
+      Lasso: FISTA L1-logistic, lambda 0.02, max_iter 1000, tol 1e-4, as Stage 3."
+    step6_gate:
+      grid: {design: B, arms: [latent], K_c: [20, 30], amplitudes: [1, 3, 8], forms: [linear, interaction], replicates: 10, q: 0.1}
+      real: "per-latent discoveries at q = 0.1, median over 10 knockoff draws; Jaccard of discovered parent sets vs 16k"
+    step7_planted:
+      widths: "all layer-12 widths and the layer-20 bridge"
+      designs:
+        A: "exact truth: c_g = standardise(sum of the concept's children at that width)"
+        B: "realistic: c_g = standardise(the 16k parent's activation), identical across widths (paired);
+            latent-level FDR is approximate here"
+      grid: {K_c: [20, 30], amplitudes: [0.5, 1, 2, 3, 5, 8, 20], forms: [linear, interaction], q: [0.05, 0.10, 0.20], replicates: 30}
+      arms: [latent, group, cluster, mkf_c1, mkf_c1.93]
+      concept_counting: "a concept (16k parent family) is discovered when >= 1 of its latents is selected"
+      knockoff_draws: "one fresh draw per (width, arm, replicate), shared by all label columns of that
+        replicate (as the main repo's p = 2048 draw banks); replicates use independent draws"
+    step8_real: {draws: 30, q: [0.05, 0.10, 0.20], stable_frequency: 0.5,
+      stability: "Jaccard of stable 16k-parent sets between every width pair; primary on planted-pool
+      families (identical parents at every width), secondary on all families"}
+
+  decision_rules:
+    - id: TAU
+      rule: "tau is frozen from the full layer-12 census before Step 6 as the tau in the grid that minimises,
+        over layer-12 widths, the maximum |log(median sum-of-children firing / parent firing)| (children
+        best cover their parent); ties go to the larger tau. The plan's wording ('the smallest tau where
+        summed firing tracks parent firing') is ambiguous because smaller tau always admits more children;
+        this is the operationalisation. tau is not changed afterwards."
+    - id: C0
+      rule: "If the median family size at the widest width is 1 for every tau, stop and report."
+    - id: T1
+      rule: "Library unit test (gauss flavour): under the global null, P(any discovery) <= q at both layers
+        for latent, group and MKF(1.93); in planted gauss cells, no FDR breach after Benjamini-Yekutieli.
+        If T1 fails the library is investigated before Steps 6-8 are interpreted."
+    - id: G1
+      rule: "Per replicate, per-latent concept recovery at q = 0.1 averaged over (form, K_c); least-squares
+        slope vs log2(width) over the 7 layer-12 widths; one-sided t-test of mean slope < 0 per amplitude;
+        Holm across the three amplitudes. Proceed to Step 7 only if at least one Holm-adjusted p < 0.05.
+        Otherwise stop: the thesis is wrong at this layer."
+    - id: P1
+      rule: "Step 7 contrast (i): per arm and cell, paired-over-replicates slope of concept power vs
+        log2(width); significance after Benjamini-Yekutieli across cells."
+    - id: P2
+      rule: "Step 7 contrast (ii): group minus per-latent concept power, paired over replicates, per width
+        and cell; Benjamini-Yekutieli across cells."
+    - id: P3
+      rule: "Step 7 contrast (iii): an FDR breach (latent or concept level) is claimed only for cells
+        significant after Benjamini-Yekutieli (one-sided, mean FDR > q), as main-repo rule K3."
+    - id: P4
+      rule: "The thesis is supported at a layer if per-latent concept power has BY-significant negative
+        slopes in design B while group concept power does not, or group minus per-latent power is
+        BY-significantly positive and grows with width. Mixed results are reported as mixed."
+    - id: NT
+      rule: "No tuning of lambda, amplitudes, K_c, tau, p*, pool size or block size after seeing labelled results."
+
+  interpretation_constraints:
+    - "Gaussian knockoffs on zero-inflated latents are approximate (Stage 2); FDR results are empirical."
+    - "Design B: the 16k parent's signal may not be fully carried by its wide-SAE children within the
+       candidate set (children below tau, below the firing floor, or capped at 64). A fall in GROUP power
+       with width in design B therefore mixes coverage loss with dilution; design A has no coverage loss."
+    - "Canonical SAEs differ in L0 across widths; L0 is logged and is a confound for width effects."
+    - "Layer 12 is not the main project's layer 20; the 16k/65k layer-20 bridge links the two."
+    - "The clustering arm is a sensitivity analysis; the plan notes a teammate's separate cluster
+       experiment (stage3_amendment_5) that has not been checked against this one."
+
+  changes_before_registration:
+    - "Residuals stored fp32, not fp16 as planned: the plan's own reproduction check needs 1e-4 agreement,
+       and fp16 rounding of norm-350 residuals would flip JumpReLU gates."
+    - "Reproduction check (label-free) ran: the plan's criterion (max |diff| < 1e-4) FAILED. Max |diff|
+       1.705; 5,829 of 137,930,752 entries exceed 1e-4; of these 14 are JumpReLU threshold flips (|diff| x
+       n_tokens ~ threshold) and the rest are fp32 rounding on large activations (max relative diff
+       6.6e-5, median 4.9e-6; max abs diff excluding flips 3.6e-4); 7 zero-pattern mismatches; token
+       counts identical; the 1% firing filter keeps 7,696 latents in both. Recorded in
+       concept/results/check_reproduction.json. Interpreted as the same pipeline up to float roundoff."
+    - "Family census diagnose on layer-12 16k/32k/65k (label-free): C0 already passes at 65k (median
+       family 2 at tau <= 0.4); multi-child families 92% dilution, 0% redundancy at tau 0.5."
+    - "Layer-20 bridge candidates and S solves built with provisional tau = 0.5 (label-free); rebuilt if TAU
+       freezes elsewhere."
+    - "GPU driver faults on this host (intermittent cuInit failures): GPU jobs initialise CUDA with retries
+       and are requeued on failure. No effect on results."
+
+  changes_after_smoke_test: "to be filled after the one-replicate diagnose pass, before the full runs"
