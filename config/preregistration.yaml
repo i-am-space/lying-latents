@@ -1105,3 +1105,9 @@ stage4_amendment_3:
   interpretation_constraints:
     - "Block-diagonal MVR is an approximation to MVR at p = 2048; it is a stronger baseline, not the strongest possible."
     - "The comparison is on Stage 4's planted-signal benchmark only."
+  seed_fix_before_run: >
+    The first full run was stopped a few minutes in, before any replicate finished, because the
+    block-MVR solve was not reproducible: knockpy's MVR solver draws from numpy's global random
+    state, which was unseeded (mean s 0.227 in the diagnose run, 0.252 in the stopped run, on the
+    same covariance). The solve is now seeded from s4r_diagnostics (index 900). No result of the
+    stopped run was seen; the design is unchanged.

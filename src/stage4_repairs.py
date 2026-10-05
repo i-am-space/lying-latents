@@ -253,7 +253,7 @@ def evalue_discoveries(Z: torch.Tensor, y: torch.Tensor, split: np.ndarray, ev: 
 # data
 # ---------------------------------------------------------------------------
 
-def build_block_mvr(Z, Sigma, Zg, Sigma_g, sec: dict, device) -> dict:
+def build_block_mvr(Z, Sigma, Zg, Sigma_g, sec: dict, device, seed: int) -> dict:
     """Block-diagonal MVR S (knockpy's blockdiag approximation with its line search, so 2 Sigma - S
     stays PSD) for the real latents and the Gaussian control, with GPU samplers of the same law as
     knockpy's GaussianSampler (stage3_followups.GaussKnockoffGPU, checked against knockpy there)."""
@@ -262,6 +262,7 @@ def build_block_mvr(Z, Sigma, Zg, Sigma_g, sec: dict, device) -> dict:
 
     def solve(Sig):
         t = time.time()
+        np.random.seed(seed)                # knockpy's MVR solver draws from numpy's global state
         S = np.asarray(smatrix.compute_smatrix(Sig, method="mvr", how_approx="blockdiag",
                                                max_block=sec["mvr_max_block"]))
         return S, time.time() - t
@@ -313,7 +314,8 @@ def build(cfg: dict, sec: dict, X_all: np.ndarray, device, methods=None) -> dict
         samplers["binary_scip"] = SCIPSampler(X, "binary", sec["scip"], device)
     mvr = {}
     if need & {"gaussian_mvr", "gaussian_control_mvr"}:
-        mvr = build_block_mvr(Z, Sigma, Zg, Sigma_g, sec, device)
+        mvr = build_block_mvr(Z, Sigma, Zg, Sigma_g, sec, device,
+                              seed=int(cell_rng(cfg, "s4r_diagnostics", 900).integers(2**31)))
     return {"X": X, "Z": Z, "mu": mu, "sd": sd, "Zg": Zg, "Zb": (Zb - mb) / sb, "mb": mb, "sb": sb,
             "gauss": GaussianSampler(Z, mu=Z.mean(0), Sigma=Sigma, S=S),
             "gauss_ctrl": GaussianSampler(Zg, mu=Zg.mean(0), Sigma=Sigma_g, S=S_g),
