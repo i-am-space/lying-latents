@@ -56,16 +56,19 @@ def main() -> None:
     print(f"[{args.key}] d_sae={d_sae}  loaded in {time.time() - t0:.0f}s", flush=True)
 
     # chunks of whole sentences, about `budget` tokens each (smaller at 1M to bound memory)
-    budget = int(min(cc["encode_chunk_tokens"], 2.2e9 / d_sae))
+    # <= 2 GB per fp32 activation buffer: the GPUs are shared (another user's jobs hold ~20 GB each)
+    budget = int(min(cc["encode_chunk_tokens"], 5e8 / d_sae))
     bounds = [0]
     while bounds[-1] < n:
         s = bounds[-1]
         e = int(np.searchsorted(offsets, offsets[s] + budget, side="right")) - 1
         bounds.append(max(e, s + 1) if e < n else n)
 
-    W_dec = None
-    if True:                                    # decoder for EV; loaded once to the device
-        W_dec = torch.from_numpy(np.ascontiguousarray(raw["W_dec"])).to(dev, torch.float32)
+    # decoder only feeds the explained-variance diagnostic: fp16 on the device (fp32 accumulate) so the
+    # 1M SAE fits beside other users' jobs; fp32 for widths below 524k, as originally run
+    dec_dtype = torch.float16 if d_sae >= 524288 else torch.float32
+    W_dec_np = np.ascontiguousarray(raw["W_dec"])
+    W_dec = torch.from_numpy(W_dec_np).to(dev, dec_dtype)
     rows, cols, vals = [], [], []
     fire_tok = 0.0; ntok = 0; sse = 0.0; ss_sum = torch.zeros(R.shape[1], dtype=torch.float64, device=dev)
     ss_sq = 0.0
@@ -76,8 +79,8 @@ def main() -> None:
         pre = x @ P["W_enc"]
         pre += P["b_enc"]
         pre.mul_(pre > P["threshold"])                      # z, in place
-        fire_tok += float((pre > 0).sum()); ntok += b - a
-        rec = pre @ W_dec + P["b_dec"]
+        fire_tok += float(torch.count_nonzero(pre)); ntok += b - a
+        rec = (pre.to(dec_dtype) @ W_dec).float() + P["b_dec"]
         sse += float(((x - rec) ** 2).sum()); del rec
         ss_sum += x.double().sum(0); ss_sq += float((x.double() ** 2).sum())
         # per-sentence mean over content tokens: segment-sum via a (sentences x tokens) indicator
@@ -105,10 +108,15 @@ def main() -> None:
     np.savez(out, firing_rate_all=fr, labels=meta["labels"], sentence_ids=meta["sentence_ids"],
              n_tokens=meta["n_tokens"], mean_l0=np.asarray(l0), explained_variance=np.asarray(ev),
              sae_path=np.asarray(sae["path"]), layer=np.asarray(sae["layer"]), width=np.asarray(d_sae))
-    Wd = W_dec / W_dec.norm(dim=1, keepdim=True).clamp(min=1e-12)
-    np.save(cdir / f"dec_{args.key}.npy", Wd.half().cpu().numpy())
+    del W_dec, P; torch.cuda.empty_cache() if dev.type == "cuda" else None
+    dec = np.lib.format.open_memmap(cdir / f"dec_{args.key}.npy", mode="w+", dtype=np.float16, shape=W_dec_np.shape)
+    for s0 in range(0, W_dec_np.shape[0], 65536):                     # row-normalise on the CPU, in chunks
+        blk = W_dec_np[s0:s0 + 65536].astype(np.float32)
+        dec[s0:s0 + 65536] = (blk / np.maximum(np.linalg.norm(blk, axis=1, keepdims=True), 1e-12)).astype(np.float16)
+    dec.flush()
     info = {"key": args.key, "n": n, "d_sae": d_sae, "nnz": int(X.nnz), "nnz_per_sentence": X.nnz / n,
             "mean_l0": l0, "explained_variance": ev, "minutes": (time.time() - t0) / 60,
+            "chunk_tokens": budget, "ev_decoder_dtype": str(dec_dtype).replace("torch.", ""),
             "n_firing_ge_0.1pct": int((fr >= 0.001).sum()), "n_firing_ge_1pct": int((fr >= 0.01).sum())}
     (cdir / f"lat_{args.key}.json").write_text(json.dumps(info, indent=1))
     print(json.dumps(info), flush=True)
