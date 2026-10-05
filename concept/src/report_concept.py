@@ -24,9 +24,10 @@ from bench import ARMS
 from cseeds import ROOT, load_concept_config
 from reanalysis_multiplicity import by_adjust, one_sided_exceed, two_sided_diff
 
-ARM_COLOR = {"latent": "#c0392b", "group": "#2e86c1", "cluster": "#7d3c98", "mkf_c1": "#27ae60", "mkf_c1.93": "#82e0aa"}
+ARM_COLOR = {"latent": "#c0392b", "group": "#2e86c1", "cluster": "#7d3c98", "mkf_c1": "#27ae60", "mkf_c1.93": "#82e0aa", "group_sum": "#f39c12"}
 ARM_LABEL = {"latent": "per-latent Knockoff+", "group": "group Knockoff+ (families)", "cluster": "group Knockoff+ (clusters)",
-             "mkf_c1": "MKF+ (c=1)", "mkf_c1.93": "MKF+ (c=1.93)"}
+             "mkf_c1": "MKF+ (c=1)", "mkf_c1.93": "MKF+ (c=1.93)",
+             "group_sum": "group-sum statistic (amendment 2)"}
 
 
 def load(cdir, tag, keys):

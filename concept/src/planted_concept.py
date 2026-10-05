@@ -39,7 +39,8 @@ def run(cfg, layer, keys, all_keys, grid, device, tag, arms=ARMS, designs=DESIGN
     cc = cfg["concept"]; cdir = ROOT / cc["cache_dir"]
     lam, mit, tol = cc["lasso"]["lambda"], cc["lasso"]["max_iter"], cc["lasso"]["tol"]
     Kcs, amps, forms, R, qs = grid["K_c"], grid["amplitudes"], grid["forms"], grid["replicates"], grid["qs"]
-    fit_arms = [a for a in FIT_ARMS if a in arms or (a in ("latent", "group") and any(x.startswith("mkf") for x in arms))]
+    fit_arms = [a for a in FIT_ARMS if a in arms or (a in ("latent", "group") and any(x.startswith("mkf") for x in arms))
+                or (a == "group" and "group_sum" in arms)]
     key16 = all_keys[0]
     cols = [(d, iK, ia, jf) for d in designs for iK in range(len(Kcs)) for ia in range(len(amps)) for jf in range(len(forms))]
     Kmax = max(Kcs)
@@ -84,8 +85,11 @@ def run(cfg, layer, keys, all_keys, grid, device, tag, arms=ARMS, designs=DESIGN
             Yt = torch.from_numpy(np.stack(Y, 1).astype(np.float32)).to(device)
             Wd = {}
             for ai, a in enumerate(fit_arms):
-                w, cv, _ = wd.fit(a, cint(cfg, stream[1], layer, ki, ai, rep), Yt, lam, mit, tol)
+                # seed by the arm's GLOBAL index, so every run draws identical knockoffs for an arm
+                w, cv, _ = wd.fit(a, cint(cfg, stream[1], layer, ki, FIT_ARMS.index(a), rep), Yt, lam, mit, tol)
                 Wd[a] = w; CONV[ai, :, rep] = cv
+            if "group_sum" in arms:
+                Wd["group_sum"] = wd.fit_groupsum(cint(cfg, stream[1], layer, ki, FIT_ARMS.index("group"), rep), Yt, lam, mit, tol)[0]
             for ci, (d, iK, ia, jf) in enumerate(cols):
                 pl = planted[iK]
                 true_lat = set(np.flatnonzero(np.isin(wd.parent, pl)).tolist())

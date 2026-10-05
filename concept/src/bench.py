@@ -14,11 +14,11 @@ import numpy as np
 import torch
 
 import _paths  # noqa: F401
-from group_knockoffs import (BlockGaussKnockoff, fit_lasso_batched, group_W, latent_W, mkf_select,
-                             select_single)
+from group_knockoffs import (BlockGaussKnockoff, fit_lasso_batched, group_sum_design, group_W, latent_W,
+                             mkf_select, select_single)
 from planted_fdr_controls import lmax_power
 
-ARMS = ["latent", "group", "cluster", "mkf_c1", "mkf_c1.93"]
+ARMS = ["latent", "group", "cluster", "mkf_c1", "mkf_c1.93", "group_sum"]
 FIT_ARMS = ["latent", "group", "cluster"]
 LV = ["lat_fdr", "lat_pow", "lat_nd", "con_fdr", "con_pow", "con_nd"]
 
@@ -57,6 +57,14 @@ class Width:
         del Phi
         return w.cpu().numpy(), conv.cpu().numpy(), it.cpu().numpy()
 
+    def fit_groupsum(self, seed, Yt, lam, max_iter, tol):
+        """group_sum arm (concept_amendment_2): the GROUP arm's draw (same seed -> identical knockoffs),
+        lasso on within-family sums [s, s~]."""
+        D = group_sum_design(self.Zt, self.smp["group"].sample(seed), self.g_fam, self.n_fam)
+        w, conv, _, it = fit_lasso_batched(D, Yt, lam, max_iter, tol, lmax=lmax_power(D))
+        del D
+        return w.cpu().numpy(), conv.cpu().numpy(), it.cpu().numpy()
+
 
 def arm_W(Wd: dict, col: int, wd: Width) -> dict:
     p = wd.p; W = {}
@@ -66,6 +74,9 @@ def arm_W(Wd: dict, col: int, wd: Width) -> dict:
         W["group"] = group_W(Wd["group"][:, col], p, wd.g_fam, wd.n_fam)
     if "cluster" in Wd:
         W["cluster"] = group_W(Wd["cluster"][:, col], p, wd.g_clu, wd.n_clu)
+    if "group_sum" in Wd:
+        w = Wd["group_sum"][:, col]
+        W["group_sum"] = np.abs(w[:wd.n_fam]) - np.abs(w[wd.n_fam:])
     return W
 
 
@@ -78,6 +89,8 @@ def select_arms(W: dict, wd: Width, q: float, arms=ARMS) -> dict:
         sel["group"] = np.flatnonzero(np.isin(wd.g_fam, select_single(W["group"], q)))
     if "cluster" in arms:
         sel["cluster"] = np.flatnonzero(np.isin(wd.g_clu, select_single(W["cluster"], q)))
+    if "group_sum" in arms:
+        sel["group_sum"] = np.flatnonzero(np.isin(wd.g_fam, select_single(W["group_sum"], q)))
     for c in (1.0, 1.93):
         a = f"mkf_c{c:g}"
         if a in arms:
@@ -117,7 +130,8 @@ def real_sweep(cfg, layer, keys, all_keys, arms, draws, qs, device, tag, stream=
     from planted_fdr_controls import fit_lasso_checked  # noqa: F401  (same solver, B = 1 via the batched path)
     cc = cfg["concept"]; cdir = ROOT / cc["cache_dir"]
     lam, mit, tol = cc["lasso"]["lambda"], cc["lasso"]["max_iter"], cc["lasso"]["tol"]
-    fit_arms = [a for a in FIT_ARMS if a in arms or (a in ("latent", "group") and any(x.startswith("mkf") for x in arms))]
+    fit_arms = [a for a in FIT_ARMS if a in arms or (a in ("latent", "group") and any(x.startswith("mkf") for x in arms))
+                or (a == "group" and "group_sum" in arms)]
     y = np.load(cdir / "resid_meta.npz")["labels"].astype(np.float32)
     for key in keys:
         out = cdir / f"real_{tag}_{key}.npz"
@@ -133,8 +147,10 @@ def real_sweep(cfg, layer, keys, all_keys, arms, draws, qs, device, tag, stream=
         for r in range(draws):
             Wd = {}
             for ai, a in enumerate(fit_arms):
-                w, cv, _ = wd.fit(a, cint(cfg, stream, layer, ki, ai, r), Yt, lam, mit, tol)
+                w, cv, _ = wd.fit(a, cint(cfg, stream, layer, ki, FIT_ARMS.index(a), r), Yt, lam, mit, tol)
                 Wd[a] = w; conv[ai, r] = cv[0]
+            if "group_sum" in arms:
+                Wd["group_sum"] = wd.fit_groupsum(cint(cfg, stream, layer, ki, FIT_ARMS.index("group"), r), Yt, lam, mit, tol)[0]
             W = arm_W(Wd, 0, wd)
             for iq, q in enumerate(qs):
                 for a, s in select_arms(W, wd, q, arms).items():

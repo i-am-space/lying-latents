@@ -165,8 +165,13 @@ concept_amendment_2:
       knockoffs and labels"
     toy: "EXPLORATORY (post hoc, motivated by the result above): same toy data, labels and draws; Gaussian
       flavour null and planted cells re-check validity (rule T1 applied to this arm)."
-    real_benchmark: "CONFIRMATORY, registered here before it runs: after the Step 7 main run completes,
-      the group_sum arm is added on the same widths, grid, replicates, labels and group-arm draws."
+    real_benchmark: "CONFIRMATORY, registered here before it runs: the group_sum arm runs inside the Step 7
+      run itself (the main run had not started), on the same widths, grid, replicates, labels and
+      group-arm draws; the other arms are unaffected (verified: a one-replicate rerun reproduces every
+      existing arm's numbers exactly). It is also added to the Step 8 real sweep, using the group arm's draws."
+    toy_result: "S1 passed: 0 BY-significant FDR breaches in 432 planted toy cells (max mean FDR 0.000) and
+      no discovery in any Gaussian global-null replicate; concept power 1.00 at every m, both mechanisms,
+      every amplitude (exploratory, and favourable by construction: toy labels are functions of the group sum)."
   decision_rules:
     - id: S1
       rule: "group_sum is interpreted only if it passes T1 on the Gaussian toy (no BY-significant FDR breach)."

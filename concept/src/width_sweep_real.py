@@ -25,7 +25,7 @@ from bench import ARMS, real_sweep
 from cseeds import ROOT, load_concept_config
 from gpu import init_cuda
 
-ARM_COLOR = {"latent": "#c0392b", "group": "#2e86c1", "cluster": "#7d3c98", "mkf_c1": "#27ae60", "mkf_c1.93": "#a9cce3"}
+ARM_COLOR = {"latent": "#c0392b", "group": "#2e86c1", "cluster": "#7d3c98", "mkf_c1": "#27ae60", "mkf_c1.93": "#a9cce3", "group_sum": "#f39c12"}
 
 
 def jac(a: set, b: set) -> float:
@@ -118,7 +118,7 @@ def main():
         ax.plot(wid, Mj[0], "o-", color=ARM_COLOR[a], label=a)
     ax.set(xscale="log", ylim=(0, 1.02), xlabel="SAE width", ylabel="Jaccard of stable parent set vs 16k", title="Stability vs 16k (planted-pool families)")
     ax.grid(alpha=0.3)
-    for i, a in enumerate(("latent", "group", "mkf_c1")):
+    for i, a in enumerate(("latent", "group", "group_sum")):
         ax = fig.add_subplot(2, 3, 4 + i)
         Mj = np.array(L["jaccard"][f"{a}/pool"])
         im = ax.imshow(Mj, vmin=0, vmax=1, cmap="viridis")
