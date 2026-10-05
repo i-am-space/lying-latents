@@ -127,4 +127,15 @@ concept_amendment_1:
     - "GPU driver faults on this host (intermittent cuInit failures): GPU jobs initialise CUDA with retries
        and are requeued on failure. No effect on results."
 
-  changes_after_smoke_test: "to be filled after the one-replicate diagnose pass, before the full runs"
+  changes_after_smoke_test:
+    - "Diagnose pass (2026-10-05 ~17:25): layer-20 bridge, one replicate of the full Step 7 grid and two
+       real-label draws per width. Single-replicate concept power and FDR per cell were seen."
+    - "Observed and now an interpretation constraint (no setting changed): in design B the concept-level
+       FDR is 0.2-0.6 at 65k for every arm, because wide latents outside the 16k parent's family also carry
+       the parent's signal and are conditionally non-null. Design B truth is approximate at BOTH levels, not
+       only the latent level as planned. FDR claims (rule P3) therefore rest on design A only; design B is
+       reported for power and width trends."
+    - "Code only: design A's concept sums are computed from the standardised matrix without a dense float64
+       copy (identical to 7e-15); --draws/--tag overrides for the real sweep. No setting changed."
+    - "Timing: about 34 s per replicate per width for the whole grid and 3 fitted arms; about 2 min to load a
+       width; 100% lasso convergence."

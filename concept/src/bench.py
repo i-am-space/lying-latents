@@ -47,8 +47,8 @@ class Width:
 
     def family_sum(self, parents):
         """standardise(sum of raw children) for each parent: design A's concept columns."""
-        Xraw = self.Z.astype(np.float64) * self.sd + self.mu
-        C = np.stack([Xraw[:, self.parent == pa].sum(1) for pa in parents], 1)
+        cols = [np.flatnonzero(self.parent == pa) for pa in parents]       # sum_j X_j = Z_j sd_j + mu_j
+        C = np.stack([self.Z[:, c].astype(np.float64) @ self.sd[c] + self.mu[c].sum() for c in cols], 1)
         return (C - C.mean(0)) / C.std(0)
 
     def fit(self, arm, seed, Yt, lam, max_iter, tol):

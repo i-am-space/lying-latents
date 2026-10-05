@@ -38,13 +38,15 @@ def main():
     ap.add_argument("--layer", type=int, default=12)
     ap.add_argument("--keys", nargs="*")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--draws", type=int, default=None)
+    ap.add_argument("--tag", default="real")
     args = ap.parse_args()
     cfg = load_concept_config(); cc = cfg["concept"]; qs = cc["nominal_fdr_targets"]
     cdir = ROOT / cc["cache_dir"]; rd = ROOT / "concept" / "results"
     if args.phase == "run":
         all_keys = cc["sweep_L12"] if args.layer == 12 else cc["bridge_L20"]
         dev = init_cuda(args.device); torch.set_num_threads(8)
-        real_sweep(cfg, args.layer, args.keys, all_keys, ARMS, cc["real"]["draws"], qs, dev, "real")
+        real_sweep(cfg, args.layer, args.keys, all_keys, ARMS, args.draws or cc["real"]["draws"], qs, dev, args.tag)
         print("DONE", flush=True)
         return
     res = {}
