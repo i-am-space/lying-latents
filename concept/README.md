@@ -43,8 +43,8 @@ pytest -q concept/tests                                         # library tests,
 concept/scripts/fetch_saes.sh data/cache/concept/sae 16 <paths>  # ~40 GB; link-bound (~2 h at 5 MB/s)
 python concept/src/cache_resid.py --layers 12 20                 # ~4 min on one L40S
 python concept/scripts/cache_queue.py                            # encodes each SAE when its download lands (<1 min each, 1M ~3 min)
-concept/scripts/run_toy.sh                                       # Step 1
-concept/scripts/run_all.sh                                       # Steps 3-8, both GPUs, resumable
+concept/scripts/run_toy.sh                                       # Step 1 (~60 min: S solves on CPU, fits on one GPU)
+concept/scripts/run_all.sh                                       # Steps 3-8, both GPUs, resumable (~90 min after caches)
 bash concept/status.sh                                           # progress
 ```
 

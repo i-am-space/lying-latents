@@ -1,0 +1,118 @@
+{
+ "G1": {
+  "amplitudes": [
+   1.0,
+   3.0,
+   8.0
+  ],
+  "mean_slope_per_log2_width": [
+   -0.07507440575531552,
+   -0.026622026945863426,
+   -0.016458333602973378
+  ],
+  "se": [
+   0.005317787245356142,
+   0.001601261340634752,
+   0.00245384802826903
+  ],
+  "p_one_sided": [
+   9.538911851232163e-08,
+   2.300867830576585e-08,
+   4.390947457745357e-05
+  ],
+  "p_holm": [
+   1.9077823702464326e-07,
+   6.902603491729755e-08,
+   4.390947457745357e-05
+  ],
+  "PASS": true
+ },
+ "recovery_mean": {
+  "L12_16k": [
+   0.9570833444595337,
+   1.0,
+   1.0
+  ],
+  "L12_32k": [
+   0.6349999904632568,
+   0.9320833086967468,
+   0.9529167413711548
+  ],
+  "L12_65k": [
+   0.53166663646698,
+   0.8558333516120911,
+   0.8883333206176758
+  ],
+  "L12_131k": [
+   0.5495833158493042,
+   0.903749942779541,
+   0.9233333468437195
+  ],
+  "L12_262k": [
+   0.502916693687439,
+   0.887499988079071,
+   0.9174998998641968
+  ],
+  "L12_524k": [
+   0.44083333015441895,
+   0.8341667056083679,
+   0.8954166173934937
+  ],
+  "L12_1m": [
+   0.3954166769981384,
+   0.8062499761581421,
+   0.875
+  ]
+ },
+ "real": {
+  "L12_16k": {
+   "median_discoveries": 49.0,
+   "median_parents": 49.0,
+   "stable_parents": 50,
+   "jaccard_stable_vs_16k": 1.0,
+   "median_jaccard_draw_vs_16k": 1.0
+  },
+  "L12_32k": {
+   "median_discoveries": 60.0,
+   "median_parents": 54.0,
+   "stable_parents": 56,
+   "jaccard_stable_vs_16k": 0.17777777777777778,
+   "median_jaccard_draw_vs_16k": 0.18181818181818182
+  },
+  "L12_65k": {
+   "median_discoveries": 63.0,
+   "median_parents": 57.0,
+   "stable_parents": 57,
+   "jaccard_stable_vs_16k": 0.11458333333333333,
+   "median_jaccard_draw_vs_16k": 0.1256578947368421
+  },
+  "L12_131k": {
+   "median_discoveries": 68.0,
+   "median_parents": 55.0,
+   "stable_parents": 55,
+   "jaccard_stable_vs_16k": 0.10526315789473684,
+   "median_jaccard_draw_vs_16k": 0.10811126694717157
+  },
+  "L12_262k": {
+   "median_discoveries": 67.0,
+   "median_parents": 50.0,
+   "stable_parents": 51,
+   "jaccard_stable_vs_16k": 0.07446808510638298,
+   "median_jaccard_draw_vs_16k": 0.07692307692307693
+  },
+  "L12_524k": {
+   "median_discoveries": 63.5,
+   "median_parents": 49.0,
+   "stable_parents": 49,
+   "jaccard_stable_vs_16k": 0.06451612903225806,
+   "median_jaccard_draw_vs_16k": 0.06521739130434782
+  },
+  "L12_1m": {
+   "median_discoveries": 65.0,
+   "median_parents": 42.0,
+   "stable_parents": 42,
+   "jaccard_stable_vs_16k": 0.05747126436781609,
+   "median_jaccard_draw_vs_16k": 0.05813953488372093
+  }
+ }
+}

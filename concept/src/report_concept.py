@@ -179,7 +179,10 @@ def figures(out, cc, rd):
                 ax.plot(wid, F.reshape(len(keys), -1).max(1), ":", color=ARM_COLOR[a], lw=1)
             ax.axhline(0.1, color="k", ls="--", lw=1)
             ax.set(xscale="log", ylim=(0, 0.35), title=f"design {d}: {'concept' if lvl == 'con_fdr' else 'latent'}-level FDR (q = 0.1)"
-                   + (" — approximate truth" if (d == "B" and lvl == "lat_fdr") else ""))
+                   + (" — approximate truth, not an error rate" if d == "B" else ""))
+            if a == ARMS[-1] and d == "A" and lvl == "con_fdr":
+                ax.text(0.02, 0.97, "cluster arm: unit mismatch (clusters span several parents)", transform=ax.transAxes,
+                        fontsize=8, va="top", color=ARM_COLOR["cluster"])
             ax.grid(alpha=0.3)
             if li == 1: ax.set_xlabel("SAE width (layer 12)")
     axes[0, 0].legend(fontsize=8); axes[0, 0].set_ylabel("solid: mean over cells; dotted: worst cell")
@@ -193,11 +196,11 @@ def figures(out, cc, rd):
         for a in ARMS:
             vals = []
             for b in bins:
-                v = [np.mean(np.array(S[f"{k}/{a}/size{b}"])[di, gr["amplitudes"].index(3.0)]) for k in keys if f"{k}/{a}/size{b}" in S]
+                v = [np.mean(np.array(S[f"{k}/{a}/size{b}"])[di, gr["amplitudes"].index(1.0)]) for k in keys if f"{k}/{a}/size{b}" in S]
                 vals.append(np.mean(v) if v else np.nan)
             ax.plot(range(len(bins)), vals, "o-", color=ARM_COLOR[a], label=ARM_LABEL[a])
         ax.set(xticks=range(len(bins)), xticklabels=bins, xlabel="children of the planted concept at that width",
-               title=f"design {d}, amplitude 3, q = 0.1 (pooled over widths)", ylim=(-0.02, 1.02))
+               title=f"design {d}, amplitude 1, q = 0.1 (pooled over widths)", ylim=(-0.02, 1.02))
         ax.grid(alpha=0.3)
     axes[0].set_ylabel("concept recovery"); axes[0].legend(fontsize=8)
     fig.tight_layout(); fig.savefig(rd / "fig_c5_mechanism.png", dpi=140); plt.close(fig)

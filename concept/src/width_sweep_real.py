@@ -80,7 +80,7 @@ def main():
                                            for iq, q in enumerate(qs)}}
             L["per_width"][k] = W
         for a in ARMS:
-            for scope in ("pool", "all"):
+            for scope in ("pool", "all", "shared"):         # shared: post hoc, see concept_findings.md
                 Mj = np.full((len(keys), len(keys)), np.nan)
                 for i, ki in enumerate(keys):
                     for j, kj in enumerate(keys):
@@ -89,6 +89,9 @@ def main():
                         if scope == "pool":
                             pool = set(R[ki]["pool"].tolist())
                             si, sj = si & pool, sj & pool
+                        elif scope == "shared":                  # parents in both widths' candidate sets
+                            sh = set(R[ki]["par"].tolist()) & set(R[kj]["par"].tolist())
+                            si, sj = si & sh, sj & sh
                         Mj[i, j] = jac(si, sj)
                 L["jaccard"][f"{a}/{scope}"] = Mj.tolist()
         res[f"L{layer}"] = L
@@ -114,19 +117,20 @@ def main():
     ax.grid(alpha=0.3)
     ax = fig.add_subplot(2, 3, 3)
     for a in ARMS:
-        Mj = np.array(L["jaccard"][f"{a}/pool"])
+        Mj = np.array(L["jaccard"][f"{a}/shared"])
         ax.plot(wid, Mj[0], "o-", color=ARM_COLOR[a], label=a)
-    ax.set(xscale="log", ylim=(0, 1.02), xlabel="SAE width", ylabel="Jaccard of stable parent set vs 16k", title="Stability vs 16k (planted-pool families)")
+    ax.set(xscale="log", ylim=(0, 1.02), xlabel="SAE width", ylabel="Jaccard of stable parent set vs 16k",
+           title="Stability vs 16k (parents present at both widths; post hoc)")
     ax.grid(alpha=0.3)
     for i, a in enumerate(("latent", "group", "group_sum")):
         ax = fig.add_subplot(2, 3, 4 + i)
-        Mj = np.array(L["jaccard"][f"{a}/pool"])
+        Mj = np.array(L["jaccard"][f"{a}/shared"])
         im = ax.imshow(Mj, vmin=0, vmax=1, cmap="viridis")
         lab = [k.split("_")[1] for k in keys]
         ax.set_xticks(range(len(keys)), lab, rotation=45); ax.set_yticks(range(len(keys)), lab)
         for (r, c), v in np.ndenumerate(Mj):
             ax.text(c, r, "–" if np.isnan(v) else f"{v:.2f}", ha="center", va="center", fontsize=7, color="w" if (np.isnan(v) or v < 0.6) else "k")
-        ax.set_title(f"{a}: Jaccard between widths (pool, q=0.1)")
+        ax.set_title(f"{a}: stable-parent Jaccard (shared, q=0.1)", fontsize=10)
     fig.colorbar(im, ax=fig.axes[-3:], shrink=0.7)
     fig.savefig(rd / "fig_c6_real_sweep.png", dpi=130, bbox_inches="tight"); plt.close(fig)
 
