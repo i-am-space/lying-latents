@@ -1,0 +1,14 @@
+{
+ "criterion": "max |diff| < 1e-4 (plan)",
+ "PASS_plan_criterion": false,
+ "max_abs_diff": 1.7052075862884521,
+ "n_entries": 137930752,
+ "n_entries_over_1e-4": 5829,
+ "n_threshold_flips": 14,
+ "n_zero_pattern_mismatch": 7,
+ "token_counts_identical": true,
+ "max_rel_diff_excluding_flips": 6.624738014455452e-05,
+ "median_rel_diff_over_1e-4_excluding_flips": 4.946514268684144e-06,
+ "max_abs_diff_excluding_flips": 0.00035858154296875,
+ "frac_entries_rel_diff_le_1e-5": 0.9997185133313168
+}
