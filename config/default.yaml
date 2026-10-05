@@ -293,6 +293,30 @@ stage3_dims:
     pilot_replicates: 2
     pilot_cell: [0.5, linear, 20]
 
+# Stage 4 block-MVR baseline (config/preregistration.yaml stage4_amendment_3): Gaussian knockoffs
+# with block-diagonal MVR S added to the Stage 4 benchmark. All other settings come from
+# stage4_repairs; labels are Stage 4's (same streams), so the new arms pair with its saved records.
+stage4_mvr:
+  base: stage4_repairs
+  mvr_max_block: 512            # knockpy blockdiag approximation, as in stage3_dims
+  arms:                         # appended after stage4_repairs' five arms (arm ids 5, 6: new knockoff seeds)
+    - [gauss_mvr, gaussian_mvr]
+    - [gauss_ceiling_mvr, gaussian_control_mvr]
+  saved_records: results/stage4_repairs_records.npz
+  contrasts:                    # [name, a, b]: a - b, paired over replicates (identical labels)
+    - [hurdle_vs_mvr, hurdle, gauss_mvr]
+    - [mvr_gain, gauss_mvr, gauss_real]
+    - [atom_gap_mvr, gauss_ceiling_mvr, gauss_mvr]
+    - [evalue_vs_mvr, evalue, gauss_mvr]
+    - [hurdle_gain, hurdle, gauss_real]
+    - [atom_gap, gauss_ceiling, gauss_real]
+  exchangeability:
+    swap_sizes: [0, 50, all]
+    swap_replicates: 1
+  diagnose:
+    pilot_replicates: 2
+    pilot_cell: [1.0, linear, 20]
+
 paths:
   cache_dir: data/cache
   results_dir: results

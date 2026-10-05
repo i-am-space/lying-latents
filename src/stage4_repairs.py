@@ -46,8 +46,11 @@ from planted_fdr import evaluate_discoveries, generate_planted_labels
 from planted_fdr_controls import METRICS, cell_rng, fit_lasso_checked, mean_se, score_fit
 
 ARM_COLOR = {"gauss_real": "#c0392b", "hurdle": "#2e8b57", "binarised": "#8e44ad",
-             "evalue": "#e07b39", "gauss_ceiling": "#3b6ea5"}
-KNOCKOFF_METHODS = ("gaussian", "hurdle_scip", "binary_scip", "gaussian_control")
+             "evalue": "#e07b39", "gauss_ceiling": "#3b6ea5", "gauss_mvr": "#f1948a",
+             "gauss_ceiling_mvr": "#85c1e9"}
+KNOCKOFF_METHODS = ("gaussian", "hurdle_scip", "binary_scip", "gaussian_control",
+                    "gaussian_mvr", "gaussian_control_mvr")
+CONTROL_METHODS = ("gaussian_control", "gaussian_control_mvr")
 
 
 # ---------------------------------------------------------------------------
@@ -250,7 +253,35 @@ def evalue_discoveries(Z: torch.Tensor, y: torch.Tensor, split: np.ndarray, ev: 
 # data
 # ---------------------------------------------------------------------------
 
-def build(cfg: dict, sec: dict, X_all: np.ndarray, device) -> dict:
+def build_block_mvr(Z, Sigma, Zg, Sigma_g, sec: dict, device) -> dict:
+    """Block-diagonal MVR S (knockpy's blockdiag approximation with its line search, so 2 Sigma - S
+    stays PSD) for the real latents and the Gaussian control, with GPU samplers of the same law as
+    knockpy's GaussianSampler (stage3_followups.GaussKnockoffGPU, checked against knockpy there)."""
+    from knockpy import smatrix
+    from stage3_followups import GaussKnockoffGPU   # imported here: stage3_followups imports this module
+
+    def solve(Sig):
+        t = time.time()
+        S = np.asarray(smatrix.compute_smatrix(Sig, method="mvr", how_approx="blockdiag",
+                                               max_block=sec["mvr_max_block"]))
+        return S, time.time() - t
+
+    S, t_real = solve(Sigma)
+    if np.linalg.eigvalsh(2 * Sigma_g - S).min() > 1e-8:
+        S_g, t_g, note = S, 0.0, "reused the real-latent S"
+    else:
+        (S_g, t_g), note = solve(Sigma_g), "recomputed for the control covariance"
+    Zt = torch.from_numpy(Z.astype(np.float32)).to(device)
+    Zgt = torch.from_numpy(Zg.astype(np.float32)).to(device)
+    info = {"mean_s": float(np.diag(S).mean()), "seconds": t_real, "control_S": note, "control_seconds": t_g,
+            "min_eig_2Sigma_minus_S": float(np.linalg.eigvalsh(2 * Sigma - S).min())}
+    print(f"  block MVR: mean s={info['mean_s']:.4f} ({t_real:.0f}s), control: {note}", flush=True)
+    return {"gauss_mvr": GaussKnockoffGPU(Zt, Sigma, S), "gauss_ctrl_mvr": GaussKnockoffGPU(Zgt, Sigma_g, S_g),
+            "mvr_info": info}
+
+
+def build(cfg: dict, sec: dict, X_all: np.ndarray, device, methods=None) -> dict:
+    """methods: the arm methods that will run; samplers for the others are not built."""
     from knockpy import smatrix
     from knockpy.knockoffs import GaussianSampler
 
@@ -274,15 +305,23 @@ def build(cfg: dict, sec: dict, X_all: np.ndarray, device) -> dict:
     print(f"  n={n} p={p} n/p={n / p:.1f}  median Pr(X=0)={np.median((X == 0).mean(0)):.3f}  "
           f"equicorrelated s={np.diag(S).mean():.4f}", flush=True)
     t = time.time()
-    samplers = {"hurdle_scip": SCIPSampler(X, "hurdle", sec["scip"], device),
-                "binary_scip": SCIPSampler(X, "binary", sec["scip"], device)}
+    need = set(methods) if methods else set(KNOCKOFF_METHODS)
+    samplers = {}
+    if "hurdle_scip" in need:
+        samplers["hurdle_scip"] = SCIPSampler(X, "hurdle", sec["scip"], device)
+    if "binary_scip" in need:
+        samplers["binary_scip"] = SCIPSampler(X, "binary", sec["scip"], device)
+    mvr = {}
+    if need & {"gaussian_mvr", "gaussian_control_mvr"}:
+        mvr = build_block_mvr(Z, Sigma, Zg, Sigma_g, sec, device)
     return {"X": X, "Z": Z, "mu": mu, "sd": sd, "Zg": Zg, "Zb": (Zb - mb) / sb, "mb": mb, "sb": sb,
             "gauss": GaussianSampler(Z, mu=Z.mean(0), Sigma=Sigma, S=S),
             "gauss_ctrl": GaussianSampler(Zg, mu=Zg.mean(0), Sigma=Sigma_g, S=S_g),
-            "scip": samplers, "cols": cols,
+            "scip": samplers, "cols": cols, **mvr,
             "info": {"n": n, "p": p, "s_equicorrelated": float(np.diag(S).mean()),
                      "median_zero_mass": float(np.median((X == 0).mean(0))),
-                     "sampler_setup_seconds": time.time() - t}}
+                     "sampler_setup_seconds": time.time() - t,
+                     **({"block_mvr": mvr["mvr_info"]} if mvr else {})}}
 
 
 def data_and_knockoffs(method: str, D: dict, seed: int):
@@ -293,6 +332,10 @@ def data_and_knockoffs(method: str, D: dict, seed: int):
     if method == "gaussian_control":
         np.random.seed(seed)
         return D["Zg"], D["gauss_ctrl"].sample_knockoffs(), {}
+    if method == "gaussian_mvr":
+        return D["Z"], D["gauss_mvr"].sample(seed).double().cpu().numpy(), {}
+    if method == "gaussian_control_mvr":
+        return D["Zg"], D["gauss_ctrl_mvr"].sample(seed).double().cpu().numpy(), {}
     if method == "hurdle_scip":
         Xk, info = D["scip"]["hurdle_scip"].sample(seed)
         info["zero_mass_error_max"] = float(np.abs((D["X"] == 0).mean(0) - (Xk == 0).mean(0)).max())
@@ -314,14 +357,14 @@ def mean_corr(A: np.ndarray, B: np.ndarray) -> float:
 # exchangeability, grid, aggregation
 # ---------------------------------------------------------------------------
 
-def exchangeability(cfg: dict, sec: dict, D: dict, arms) -> dict:
+def exchangeability(cfg: dict, sec: dict, D: dict, arms, arm_ids=None) -> dict:
     ex = sec["exchangeability"]
     rng = rng_for(cfg, "s4r_diagnostics")
     out = {}
     for ai, (name, method) in enumerate(arms):
         if method not in KNOCKOFF_METHODS:
             continue
-        seed = int(cell_rng(cfg, "s4r_diagnostics", ai).integers(2**31))
+        seed = int(cell_rng(cfg, "s4r_diagnostics", (arm_ids or {}).get(name, ai)).integers(2**31))
         t = time.time()
         Dm, Dk, info = data_and_knockoffs(method, D, seed)
         print(f"  [{name}] draw {time.time() - t:.0f}s", flush=True)
@@ -338,7 +381,7 @@ def exchangeability(cfg: dict, sec: dict, D: dict, arms) -> dict:
 
 
 def run_grid(cfg: dict, sec: dict, D: dict, device, R: int, amps, forms, ks, arms,
-             checkpoint: Path | None = None):
+             checkpoint: Path | None = None, arm_ids: dict | None = None):
     """Every replicate's seeds are derived from its own index, so a run resumed from a checkpoint
     gives the same numbers as an uninterrupted one."""
     qs, lam = sec["nominal_fdr_targets"], sec["lasso"]["lambda"]
@@ -372,7 +415,7 @@ def run_grid(cfg: dict, sec: dict, D: dict, device, R: int, amps, forms, ks, arm
         for ai, (name, method) in enumerate(arms):
             t = time.time()
             if method in KNOCKOFF_METHODS:
-                seed = int(cell_rng(cfg, "s4r_knockoff", ai, rep).integers(2**31))
+                seed = int(cell_rng(cfg, "s4r_knockoff", (arm_ids or {}).get(name, ai), rep).integers(2**31))
                 Dm, Dk, info = data_and_knockoffs(method, D, seed)
                 corr[name].append(mean_corr(Dm, Dk))
                 draw_info[name].append(info)
@@ -381,7 +424,7 @@ def run_grid(cfg: dict, sec: dict, D: dict, device, R: int, amps, forms, ks, arm
             else:
                 split = cell_rng(cfg, "s4r_split", rep).permutation(D["Z"].shape[0])
             t_draw[name] += time.time() - t
-            label_Z = D["Zg"] if method == "gaussian_control" else D["Z"]
+            label_Z = D["Zg"] if method in CONTROL_METHODS else D["Z"]
             for ia, amp in enumerate(amps):
                 for jf, form in enumerate(forms):
                     for kk, k in enumerate(ks):
@@ -471,7 +514,7 @@ def aggregate(sec: dict, M, amps, forms, ks, arms):
     return conds, contrasts, summary
 
 
-def make_figure(conds, amps, arms, q_ref, rd: Path) -> None:
+def make_figure(conds, amps, arms, q_ref, rd: Path, fname: str = "fig18_stage4_repairs.png") -> None:
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
     for ax, (met, lab) in zip(axes, (("ko_pow", "power"), ("ko_fdr", "realised FDR"))):
         for name, _ in arms:
@@ -484,7 +527,7 @@ def make_figure(conds, amps, arms, q_ref, rd: Path) -> None:
         ax.set_title(f"{lab} at q = {q_ref} (mean over forms and k)")
     axes[0].legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig(rd / "fig18_stage4_repairs.png", dpi=150)
+    fig.savefig(rd / fname, dpi=150)
     plt.close(fig)
 
 
@@ -500,7 +543,12 @@ def main() -> None:
     ap.add_argument("--stage", default="diagnose", choices=["diagnose", "full"])
     ap.add_argument("--limit-reps", type=int, default=None)
     ap.add_argument("--skip-exchangeability", action="store_true")
+    ap.add_argument("--experiment", default="repairs", choices=["repairs", "mvr"],
+                    help="repairs: the five pre-registered arms; mvr: add block-MVR Gaussian arms (stage4_amendment_3)")
     args = ap.parse_args()
+    if args.experiment == "mvr":
+        main_mvr(args)
+        return
 
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
     cfg = load_config(args.config)
@@ -578,6 +626,144 @@ def main() -> None:
     for f in (ckpt, ckpt.with_suffix(".npz"), ckpt.with_suffix(".pt")):
         f.unlink(missing_ok=True)
     print(f"\nwrote {rd}/stage4_repairs.json, stage4_repairs_records.npz, fig18 ({out['minutes']} min)")
+
+
+# ---------------------------------------------------------------------------
+# block-MVR baseline (config/preregistration.yaml stage4_amendment_3)
+# ---------------------------------------------------------------------------
+
+def holm(pvals: np.ndarray) -> np.ndarray:
+    """Holm step-down adjusted p-values."""
+    p = np.asarray(pvals, dtype=float)
+    order = np.argsort(p)
+    adj = np.empty_like(p)
+    running = 0.0
+    for i, j in enumerate(order):
+        running = max(running, min(1.0, (len(p) - i) * p[j]))
+        adj[j] = running
+    return adj
+
+
+def main_mvr(args) -> None:
+    """Block-MVR Gaussian knockoffs on the Stage 4 benchmark. The new arms reuse Stage 4's label
+    streams (identical labels) and get arm ids after the five original arms (new knockoff seeds), so
+    they are paired with the saved Stage 4 records replicate by replicate without rerunning those."""
+    from math import erfc, sqrt
+
+    device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
+    cfg = load_config(args.config)
+    rd = results_dir(cfg)
+    ext = cfg["stage4_mvr"]
+    sec = {**cfg["stage4_repairs"], **{k: v for k, v in ext.items() if k not in ("arms", "base")}}
+    base_arms = [tuple(a) for a in cfg["stage4_repairs"]["arms"]]
+    new_arms = [tuple(a) for a in ext["arms"]]
+    arm_ids = {name: i for i, (name, _) in enumerate(base_arms + new_arms)}
+    saved_path = Path(ext["saved_records"])
+    if not saved_path.exists():
+        raise SystemExit(f"{saved_path} not found: the Stage 4 records are needed for the paired comparison")
+    saved = np.load(saved_path)
+    cp = Path(args.cache) if args.cache else cache_path(cfg)
+    if not cp.exists():
+        raise SystemExit(f"Cache not found at {cp}. Run src/cache_activations.py first.")
+    d = np.load(cp, allow_pickle=True)
+    X_all = d[f"X_{cfg['aggregation']['primary']}"].astype(np.float32, copy=False)
+    print(f"device: {device} | cache {d['config_hash']} | experiment: mvr | stage: {args.stage}")
+    t0 = time.time()
+    amps, forms, ks = sec["signal_amplitudes"], sec["functional_forms"], sec["signal_sizes"]
+    qs = sec["nominal_fdr_targets"]
+
+    check_arms = [a for a in base_arms if a[0] == "gauss_real"]
+    run_arms = new_arms + (check_arms if args.stage == "diagnose" else [])
+    print("\n=== data and samplers ===")
+    D = build(cfg, sec, X_all, device, methods=[m for _, m in run_arms])
+    del X_all
+
+    exch = None
+    if not args.skip_exchangeability:
+        print("\n=== exchangeability swap tests (block-MVR arms) ===")
+        exch = exchangeability(cfg, sec, D, new_arms, arm_ids=arm_ids)
+
+    if args.stage == "diagnose":
+        # The full grid, not one pilot cell: label seeds are indexed by a cell's position in the grid,
+        # so only the full grid reproduces Stage 4's labels.
+        R = args.limit_reps or sec["diagnose"]["pilot_replicates"]
+        print(f"\n=== pilot: full grid, {R} replicate(s), block-MVR arms + the Stage 4 gauss_real arm ===")
+        M, corr, dinfo, timing = run_grid(cfg, sec, D, device, R, amps, forms, ks, run_arms, arm_ids=arm_ids)
+        # M0: the Gaussian baseline rerun must reproduce the saved Stage 4 records (same labels and seeds)
+        r0 = {}
+        for m in ("ko_fdr", "ko_pow"):
+            new_v, old_v = M[m]["gauss_real"], saved[f"{m}__gauss_real"][..., :R, :]
+            r0[m] = {"max_abs_diff": float(np.abs(new_v - old_v).max()),
+                     "share_identical": float((new_v == old_v).mean())}
+        print(f"  M0 gauss_real vs saved Stage 4 records ({R} replicate(s), all cells): {r0}")
+        iq = qs.index(0.10)
+        for a, _ in run_arms:
+            print(f"  {a:18s} power {M['ko_pow'][a][..., iq].mean():.3f}  FDR {M['ko_fdr'][a][..., iq].mean():.3f}"
+                  + (f"  corr(X,Xk) {np.mean(corr[a]):.3f}" if corr[a] else ""))
+        n_cells = len(amps) * len(forms) * len(ks)
+        est = sec["replicates"] * sum(timing["seconds_per_draw"][a] + n_cells * timing["seconds_per_cell_fit"][a]
+                                      for a, _ in new_arms) / 60
+        print(f"  -> projected full run on this machine: ~{est:.0f} min (plus the S solves)")
+        (rd / "stage4_mvr_diagnose.json").write_text(json.dumps(
+            {"info": D["info"], "exchangeability": exch, "M0": r0, "timing": timing,
+             "projected_full_minutes": est, "minutes": (time.time() - t0) / 60}, indent=2, default=float))
+        print(f"\nwrote {rd}/stage4_mvr_diagnose.json ({(time.time() - t0) / 60:.1f} min)")
+        return
+
+    R = args.limit_reps or sec["replicates"]
+    print(f"\n=== full: {len(new_arms)} block-MVR arms x {len(amps) * len(forms) * len(ks)} cells x {R} reps ===")
+    ckpt = rd / "stage4_mvr_checkpoint.json"
+    M, corr, dinfo, timing = run_grid(cfg, sec, D, device, R, amps, forms, ks, new_arms, checkpoint=ckpt,
+                                      arm_ids=arm_ids)
+    # combine with the saved Stage 4 arms (same labels, replicate r paired with replicate r)
+    for m in ("ko_fdr", "ko_pow", "ko_nd"):
+        for a, _ in base_arms:
+            M[m][a] = saved[f"{m}__{a}"][..., :R, :]
+    all_arms = base_arms + new_arms
+    conds, contrasts, summary = aggregate(sec, M, amps, forms, ks, all_arms)
+    # multiplicity: Holm across the 54 cells of each contrast, two-sided normal p-values
+    for cname, _, _ in sec["contrasts"]:
+        cs = [c for c in contrasts if c["contrast"] == cname]
+        for m in ("ko_pow", "ko_fdr"):
+            pv = np.array([erfc(abs(c[m + "_diff"]) / (c[m + "_diff_se"] * sqrt(2))) if c[m + "_diff_se"] > 0 else 1.0
+                           for c in cs])
+            adj = holm(pv)
+            for c, a in zip(cs, adj):
+                c[m + "_p_holm"] = float(a)
+            s = summary["contrasts"][cname]
+            s[f"n_{m}_holm_positive"] = int(sum(a < 0.05 and c[m + "_diff"] > 0 for c, a in zip(cs, adj)))
+            s[f"n_{m}_holm_negative"] = int(sum(a < 0.05 and c[m + "_diff"] < 0 for c, a in zip(cs, adj)))
+    gap = summary["contrasts"].get("atom_gap_mvr", {}).get("mean_power_diff")
+    summary["gap_closed_vs_mvr"] = (summary["contrasts"]["hurdle_vs_mvr"]["mean_power_diff"] / gap
+                                    if gap and abs(gap) > 1e-9 else None)
+    floor = [c for c in conds if not c["power_capped_k_lt_1_over_q"]]
+    summary["mean_power_excl_floor"] = {a: float(np.mean([c["ko_pow"] for c in floor if c["arm"] == a]))
+                                        for a, _ in all_arms}
+    print("\n=== results ===")
+    for a, s in summary["arms"].items():
+        print(f"  {a:18s} power {s['mean_power']:.3f} (excl. floor {summary['mean_power_excl_floor'][a]:.3f})  "
+              f"mean FDR {s['mean_fdr']:.4f}  max {s['max_fdr']:.3f}  inflated {s['n_fdr_inflated']}"
+              + (f"  corr(X,Xk) {np.mean(corr[a]):.3f}" if a in corr and corr[a] else ""))
+    for c, s in summary["contrasts"].items():
+        print(f"  {c:16s} ({s['a']} - {s['b']}): power {s['mean_power_diff']:+.3f}  sig +{s['n_power_sig_positive']}"
+              f"/-{s['n_power_sig_negative']}  Holm +{s['n_ko_pow_holm_positive']}/-{s['n_ko_pow_holm_negative']}"
+              f"  FDR {s['mean_fdr_diff']:+.4f}")
+    print(f"  hurdle's share of the block-MVR atom gap: {summary['gap_closed_vs_mvr']}")
+    out = {"config_hash": str(d["config_hash"]), "master_seed": cfg["master_seed"], "replicates": R,
+           "amplitudes": amps, "forms": forms, "signal_sizes": ks, "arms": [list(a) for a in all_arms],
+           "new_arms": [list(a) for a in new_arms], "arm_ids": arm_ids, "nominal_fdr_targets": qs,
+           "info": D["info"], "exchangeability": exch,
+           "mean_corr_X_Xk": {a: float(np.mean(v)) for a, v in corr.items() if v},
+           "timing": timing, "summary": summary, "conditions": conds, "contrasts": contrasts,
+           "minutes": round((time.time() - t0) / 60, 1)}
+    (rd / "stage4_mvr.json").write_text(json.dumps(out, indent=2, default=float))
+    np.savez(rd / "stage4_mvr_records.npz", **{f"{m}__{a}": M[m][a] for m in METRICS for a, _ in new_arms})
+    make_figure(conds, amps, [a for a in all_arms if a[0] in ("gauss_real", "gauss_mvr", "hurdle",
+                                                              "gauss_ceiling", "gauss_ceiling_mvr")],
+                0.10, rd, fname="fig22_stage4_mvr.png")
+    for f in (ckpt, ckpt.with_suffix(".npz"), ckpt.with_suffix(".pt")):
+        f.unlink(missing_ok=True)
+    print(f"\nwrote {rd}/stage4_mvr.json, stage4_mvr_records.npz, fig22 ({out['minutes']} min)")
 
 
 if __name__ == "__main__":
