@@ -1,0 +1,237 @@
+{
+  "info": {
+    "n": 67349,
+    "p": 2048,
+    "S_seconds": 42.70796036720276,
+    "min_eig_2Sigma_minus_S": 0.015462780959767167,
+    "control_S": "reused the real-latent S",
+    "real": {
+      "mean_s": 0.2529051423772817,
+      "mean_corr_X_Xk": 0.748194694519043
+    },
+    "gauss": {
+      "mean_s": 0.2529051423772817,
+      "mean_corr_X_Xk": 0.7481688261032104
+    }
+  },
+  "probe_auc": {
+    "real_test_auc": 0.9716767771086484,
+    "ridge": 0.01,
+    "cells": [
+      {
+        "amplitude": 1.0,
+        "form": "linear",
+        "k": 100,
+        "probe_auc": 0.699567778731425,
+        "bayes_auc": 0.7275166815446069
+      },
+      {
+        "amplitude": 1.0,
+        "form": "linear",
+        "k": 200,
+        "probe_auc": 0.7088193417035216,
+        "bayes_auc": 0.7325027340847363
+      },
+      {
+        "amplitude": 1.0,
+        "form": "linear",
+        "k": 300,
+        "probe_auc": 0.6956167441108226,
+        "bayes_auc": 0.7274427691920764
+      },
+      {
+        "amplitude": 1.0,
+        "form": "interaction",
+        "k": 100,
+        "probe_auc": 0.648448420371621,
+        "bayes_auc": 0.685551326171032
+      },
+      {
+        "amplitude": 1.0,
+        "form": "interaction",
+        "k": 200,
+        "probe_auc": 0.6458779599923943,
+        "bayes_auc": 0.6831117969802774
+      },
+      {
+        "amplitude": 1.0,
+        "form": "interaction",
+        "k": 300,
+        "probe_auc": 0.6431399318203703,
+        "bayes_auc": 0.682187333223751
+      },
+      {
+        "amplitude": 2.0,
+        "form": "linear",
+        "k": 100,
+        "probe_auc": 0.8276818756769858,
+        "bayes_auc": 0.8455207438177221
+      },
+      {
+        "amplitude": 2.0,
+        "form": "linear",
+        "k": 200,
+        "probe_auc": 0.841017518207872,
+        "bayes_auc": 0.8557206857054755
+      },
+      {
+        "amplitude": 2.0,
+        "form": "linear",
+        "k": 300,
+        "probe_auc": 0.841630859902032,
+        "bayes_auc": 0.8585276537040977
+      },
+      {
+        "amplitude": 2.0,
+        "form": "interaction",
+        "k": 100,
+        "probe_auc": 0.7614685056515926,
+        "bayes_auc": 0.7970650564171473
+      },
+      {
+        "amplitude": 2.0,
+        "form": "interaction",
+        "k": 200,
+        "probe_auc": 0.7609542069911872,
+        "bayes_auc": 0.7957843393223326
+      },
+      {
+        "amplitude": 2.0,
+        "form": "interaction",
+        "k": 300,
+        "probe_auc": 0.7547490397792145,
+        "bayes_auc": 0.794594001522099
+      },
+      {
+        "amplitude": 4.0,
+        "form": "linear",
+        "k": 100,
+        "probe_auc": 0.9370657442232703,
+        "bayes_auc": 0.9478105787084158
+      },
+      {
+        "amplitude": 4.0,
+        "form": "linear",
+        "k": 200,
+        "probe_auc": 0.9328122012380811,
+        "bayes_auc": 0.9440659595548576
+      },
+      {
+        "amplitude": 4.0,
+        "form": "linear",
+        "k": 300,
+        "probe_auc": 0.937661827601411,
+        "bayes_auc": 0.9460188381834215
+      },
+      {
+        "amplitude": 4.0,
+        "form": "interaction",
+        "k": 100,
+        "probe_auc": 0.8718998747108764,
+        "bayes_auc": 0.9046279320485979
+      },
+      {
+        "amplitude": 4.0,
+        "form": "interaction",
+        "k": 200,
+        "probe_auc": 0.8721805508348266,
+        "bayes_auc": 0.908209077023138
+      },
+      {
+        "amplitude": 4.0,
+        "form": "interaction",
+        "k": 300,
+        "probe_auc": 0.8754092806678946,
+        "bayes_auc": 0.9103587585489676
+      },
+      {
+        "amplitude": 8.0,
+        "form": "linear",
+        "k": 100,
+        "probe_auc": 0.9706258698019319,
+        "bayes_auc": 0.9809562225131125
+      },
+      {
+        "amplitude": 8.0,
+        "form": "linear",
+        "k": 200,
+        "probe_auc": 0.9692012383854511,
+        "bayes_auc": 0.9789812891068858
+      },
+      {
+        "amplitude": 8.0,
+        "form": "linear",
+        "k": 300,
+        "probe_auc": 0.9745956941015881,
+        "bayes_auc": 0.9829422406728033
+      },
+      {
+        "amplitude": 8.0,
+        "form": "interaction",
+        "k": 100,
+        "probe_auc": 0.9429847102652561,
+        "bayes_auc": 0.9737423578391444
+      },
+      {
+        "amplitude": 8.0,
+        "form": "interaction",
+        "k": 200,
+        "probe_auc": 0.9289745398745954,
+        "bayes_auc": 0.9682790714594376
+      },
+      {
+        "amplitude": 8.0,
+        "form": "interaction",
+        "k": 300,
+        "probe_auc": 0.9300060901507656,
+        "bayes_auc": 0.9691053871654896
+      },
+      {
+        "amplitude": 16.0,
+        "form": "linear",
+        "k": 100,
+        "probe_auc": 0.9845840041580569,
+        "bayes_auc": 0.9943036274416321
+      },
+      {
+        "amplitude": 16.0,
+        "form": "linear",
+        "k": 200,
+        "probe_auc": 0.9855881531715782,
+        "bayes_auc": 0.9948095559114994
+      },
+      {
+        "amplitude": 16.0,
+        "form": "linear",
+        "k": 300,
+        "probe_auc": 0.9886689790500343,
+        "bayes_auc": 0.9961205522568136
+      },
+      {
+        "amplitude": 16.0,
+        "form": "interaction",
+        "k": 100,
+        "probe_auc": 0.96016737602531,
+        "bayes_auc": 0.9900615014616239
+      },
+      {
+        "amplitude": 16.0,
+        "form": "interaction",
+        "k": 200,
+        "probe_auc": 0.9540983728721245,
+        "bayes_auc": 0.9915247656722089
+      },
+      {
+        "amplitude": 16.0,
+        "form": "interaction",
+        "k": 300,
+        "probe_auc": 0.947663265857043,
+        "bayes_auc": 0.9909606312210951
+      }
+    ]
+  },
+  "seconds_per_replicate": 141.54918694496155,
+  "projected_full_minutes": 70.77459347248077,
+  "peak_gpu_gb": 3.2179131507873535,
+  "minutes": 3.949381955464681
+}
