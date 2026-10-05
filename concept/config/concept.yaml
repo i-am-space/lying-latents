@@ -1,0 +1,54 @@
+# Overlay on config/default.yaml. Only new keys. master_seed must not change.
+base: ../../config/default.yaml
+
+concept:
+  cache_dir: data/cache/concept          # symlink to /scratch (home is 99% full)
+  hf_repo: google/gemma-scope-2b-pt-res
+  # (layer, width) -> Gemma Scope path. 131k at L12 exists only in the non-canonical release;
+  # average_l0_129 is chosen by Gemma Scope's own canonical rule (L0 closest to 100).
+  saes:
+    L12_16k:  {layer: 12, width: 16384,   path: layer_12/width_16k/average_l0_82}
+    L12_32k:  {layer: 12, width: 32768,   path: layer_12/width_32k/average_l0_76}
+    L12_65k:  {layer: 12, width: 65536,   path: layer_12/width_65k/average_l0_72}
+    L12_131k: {layer: 12, width: 131072,  path: layer_12/width_131k/average_l0_129}
+    L12_262k: {layer: 12, width: 262144,  path: layer_12/width_262k/average_l0_121}
+    L12_524k: {layer: 12, width: 524288,  path: layer_12/width_524k/average_l0_115}
+    L12_1m:   {layer: 12, width: 1048576, path: layer_12/width_1m/average_l0_107}
+    L20_16k:  {layer: 20, width: 16384,   path: layer_20/width_16k/average_l0_71}
+    L20_65k:  {layer: 20, width: 65536,   path: layer_20/width_65k/average_l0_114}
+  sweep_L12: [L12_16k, L12_32k, L12_65k, L12_131k, L12_262k, L12_524k, L12_1m]
+  bridge_L20: [L20_16k, L20_65k]
+  encode_chunk_tokens: 2048
+
+  census:
+    taus: [0.3, 0.4, 0.5, 0.6, 0.7]
+    child_floor: 0.001           # 0.1% firing floor, not 1%: dilution lowers child firing
+    redundancy_corr: 0.9
+    max_children_pairs: 64       # cap on children per family for pairwise mechanism stats
+
+  candidates:
+    p_star: 2048
+    k_pool_min: 40
+    k_pool_target: 60
+    pool_max_frac: 0.5           # planted pool's widest-width union <= p*/2
+    max_group: 64
+
+  lasso: {lambda: 0.02, max_iter: 1000, tol: 1.0e-04}
+  mvr_max_block: 512
+  nominal_fdr_targets: [0.05, 0.1, 0.2]
+
+  planted:                       # Step 7 grid
+    K_c: [20, 30]
+    amplitudes: [0.5, 1.0, 2.0, 3.0, 5.0, 8.0, 20.0]
+    forms: [linear, interaction]
+    replicates: 30
+  gate:                          # Step 6 grid: per-latent only, design B
+    K_c: [20, 30]
+    amplitudes: [1.0, 3.0, 8.0]
+    forms: [linear, interaction]
+    replicates: 10
+    q: 0.1
+    real_draws: 10
+  real:                          # Step 8
+    draws: 30
+    stable_freq: 0.5
