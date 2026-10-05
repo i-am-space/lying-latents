@@ -1111,3 +1111,42 @@ stage4_amendment_3:
     state, which was unseeded (mean s 0.227 in the diagnose run, 0.252 in the stopped run, on the
     same covariance). The solve is now seeded from s4r_diagnostics (index 900). No result of the
     stopped run was seen; the design is unchanged.
+
+# ===========================================================================
+# AMENDMENT 4 - Stage 3 amplitude calibration (written BEFORE it ran)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+stage3_amendment_4:
+  meta:
+    date_written: "2026-10-05"
+    status: written_before_run
+    trigger: >
+      Stage 3's planted-signal amplitudes (0.5 to 20) are not tied to anything real. FDR erosion is
+      strongest at amplitudes 8-20, so whether that regime is realistic decides how much it matters.
+  design:
+    what: >
+      A descriptive calibration, no hypothesis test. In two settings (all 2048 latents and 67,349
+      rows; the stage3_v2 subset of 512 latents and 20,000 rows), rows are split 60/20/20 (seeded).
+      A ridge-logistic probe is fitted on the real SST-2 labels; its ridge is chosen by validation
+      log-loss and then fixed. The same probe, same ridge and same split are fitted to planted labels
+      (the Stage 3 generator) at amplitudes 0.25 to 20, both forms, k = 10/20/30, 3 label draws each.
+    mapping_primary: >
+      AUC-matched amplitude: per setting, form and k, the amplitude at which the planted labels' mean
+      held-out probe AUC equals the real labels' held-out AUC (linear interpolation in log amplitude;
+      reported as a bound if outside the grid).
+    mapping_secondary: >
+      Coefficient-norm-matched amplitude: the planted generator's coefficient vector on the k signal
+      latents has L2 norm equal to the amplitude (linear form). The real probe's top-k coefficient
+      norm is matched to the planted probes' top-k norms in the same way. Also reported: the planted
+      labels' true (Bayes) AUC and true log-odds SD on the test rows.
+  interpretation_constraints:
+    - "Real labels depend on many latents, on the model's residual stream beyond the SAE, and on label noise; the planted generator does not. The mapping places real labels on the axis by one summary at a time; it is an anchor, not an equivalence."
+    - "Nothing is tuned after seeing results; the ridge grid and amplitudes are fixed here."
+  changes_after_smoke_test: >
+    A smoke test (p512 setting, amplitudes 1 and 8, k = 10, one label draw, every third ridge value)
+    ran before this amendment was committed. Its selected ridge was the largest in the grid and its
+    real-label test AUC (0.934) exceeded the planted AUC at amplitude 8, so the ridge grid was
+    extended to 1.0 and the amplitudes to 30 and 50, to keep both choices off the grid edge. The
+    smoke test also showed the two mappings disagreeing (AUC-matched >= 8, norm-matched about 2);
+    both stay as specified.

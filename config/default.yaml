@@ -317,6 +317,19 @@ stage4_mvr:
     pilot_replicates: 2
     pilot_cell: [1.0, linear, 20]
 
+# Stage 3 amplitude calibration (config/preregistration.yaml stage3_amendment_4): where do the real
+# SST-2 labels sit on the planted-signal amplitude axis?
+stage3_calibration:
+  settings: [p2048_all, p512_v2]   # all latents and rows (Stage 4 / dims); the stage3_v2 subset
+  split: [0.6, 0.2, 0.2]          # train / validation (ridge choice) / test, seeded rows
+  ridge_grid: [1.0e-5, 1.0e-4, 1.0e-3, 3.0e-3, 1.0e-2, 3.0e-2, 1.0e-1, 3.0e-1, 1.0]
+  signal_amplitudes: [0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 8.0, 12.0, 20.0, 30.0, 50.0]
+  functional_forms: [linear, interaction]
+  signal_sizes: [10, 20, 30]
+  planted_replicates: 3           # label draws per amplitude; probe AUCs are averaged
+  newton_max_iter: 50
+  newton_tol: 1.0e-8
+
 paths:
   cache_dir: data/cache
   results_dir: results
