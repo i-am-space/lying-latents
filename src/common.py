@@ -47,6 +47,7 @@ STREAMS = [
     "s3k_data",              # Stage 3 largek: Gaussian control data and the block-MVR solve seed
     "s3k_planted",           # Stage 3 largek: planted signals and labels (per-cell streams)
     "s3k_knockoff",          # Stage 3 largek: knockoff draws (per-cell streams)
+    "s3cv_folds",            # Stage 3 cvlambda: cross-validation folds (per-cell streams)
 ]
 
 

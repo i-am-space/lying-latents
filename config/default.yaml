@@ -348,6 +348,36 @@ stage3_largek:
   diagnose:
     pilot_replicates: 1
 
+# Stage 3 cross-validated lambda (config/preregistration.yaml stage3_amendment_6): the stress and
+# large-k cells refitted with the lasso penalty chosen by 5-fold CV, on the same data, labels and
+# knockoff draws as the saved runs, so CV and fixed lambda are paired.
+stage3_cvlambda:
+  fixed_lambda: 0.02            # the saved runs' penalty (used only for the M0 reproduction check)
+  folds: 5
+  lambda_ratios: [0.5, 0.3, 0.2, 0.1, 0.06, 0.04, 0.02, 0.01, 0.005, 0.0025]   # x lambda_max of [X, X~]; lowest CV log-loss wins
+  functional_forms: [linear, interaction]
+  nominal_fdr_targets: [0.05, 0.10, 0.20]
+  lasso:
+    max_iter: 1000
+    tol: 1.0e-4
+  parts:
+    stress:                     # stage3_stress cells (p = 512, v2 data, knockpy MVR / Gaussian control)
+      saved_records: stage3_stress_records.npz
+      base_amplitudes: [1.0, 2.0, 3.0, 5.0, 8.0, 12.0, 20.0]
+      base_signal_sizes: [10, 20, 30]
+      signal_amplitudes: [1.0, 5.0, 20.0]
+      signal_sizes: [10, 20, 30]
+      replicates: 30
+    largek:                     # stage3_largek cells (p = 2048, all rows, block-MVR GPU knockoffs)
+      saved_records: stage3_largek_records.npz
+      base_amplitudes: [1.0, 2.0, 4.0, 8.0, 16.0, 32.0]
+      base_signal_sizes: [100, 200, 300]
+      signal_amplitudes: [8.0, 32.0]  # the AUC-matched (realistic) designs: linear ~8, interaction >= 32
+      signal_sizes: [100, 300]
+      replicates: 10
+  diagnose:
+    pilot_replicates: 1
+
 paths:
   cache_dir: data/cache
   results_dir: results

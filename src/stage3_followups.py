@@ -1220,22 +1220,272 @@ def main_largek(args, cfg, d, X_all, device, rd: Path) -> None:
     print(f"\nwrote {rd}/stage3_largek.json, stage3_largek_records.npz, fig24 ({out['minutes']} min)")
 
 
+# ---------------------------------------------------------------------------
+# cvlambda: the lasso penalty chosen by cross-validation (config/preregistration.yaml stage3_amendment_6)
+# ---------------------------------------------------------------------------
+
+def fista_path(Phi: torch.Tensor, y: torch.Tensor, lams, max_iter: int, tol: float, lr: float | None = None):
+    """L1-logistic FISTA along a decreasing lambda path with warm starts; the step and the update are
+    those of planted_fdr_controls.fit_lasso_checked. Returns [(w, b, converged)] per lambda."""
+    from planted_fdr_controls import lmax_power
+    n, d = Phi.shape
+    if lr is None:
+        lr = 1.0 / (0.25 * (1.1 * lmax_power(Phi) + 1.0))
+    w = torch.zeros(d, device=Phi.device); b = torch.zeros(1, device=Phi.device)
+    out = []
+    for lam in lams:
+        w_prev, b_prev, t, converged = w.clone(), b.clone(), 1.0, False
+        for it in range(1, max_iter + 1):
+            t_new = 0.5 * (1 + math.sqrt(1 + 4 * t * t))
+            mom = (t - 1.0) / t_new
+            v = w + mom * (w - w_prev); vb = b + mom * (b - b_prev)
+            w_prev, b_prev = w, b
+            err = (torch.sigmoid(Phi @ v + vb) - y) / n
+            u = v - lr * (Phi.t() @ err)
+            w = torch.sign(u) * torch.clamp(u.abs() - lr * lam, min=0.0)
+            b = vb - lr * err.sum()
+            t = t_new
+            if it % 25 == 0 and float((v - w).abs().max() / lr) < tol:
+                converged = True
+                break
+        out.append((w.clone(), b.clone(), converged))
+    return out
+
+
+def cv_lasso(Phi: torch.Tensor, y: torch.Tensor, sec: dict, fold_rng: np.random.Generator):
+    """5-fold CV over a lambda grid relative to lambda_max of the augmented design [X, X~] (so the
+    choice is symmetric in each variable and its knockoff and W keeps the flip-sign property); the
+    lambda with the lowest held-out mean log-loss is refitted on all rows."""
+    n = Phi.shape[0]
+    yc = y - y.mean()
+    lam_max = float((Phi.t() @ yc).abs().max() / n)
+    lams = [lam_max * r for r in sec["lambda_ratios"]]
+    folds = np.array_split(fold_rng.permutation(n), sec["folds"])
+    dev = np.zeros(len(lams))
+    for f in folds:
+        va = torch.as_tensor(np.sort(f), device=Phi.device)
+        tr_mask = torch.ones(n, dtype=torch.bool, device=Phi.device); tr_mask[va] = False
+        path = fista_path(Phi[tr_mask], y[tr_mask], lams, sec["lasso"]["max_iter"], sec["lasso"]["tol"])
+        for i, (w, b, _) in enumerate(path):
+            eta = Phi[va] @ w + b
+            dev[i] += float((torch.nn.functional.softplus(eta) - y[va] * eta).sum())
+    best = int(np.argmin(dev))
+    full = fista_path(Phi, y, lams[: best + 1], sec["lasso"]["max_iter"], sec["lasso"]["tol"])
+    w, b, conv = full[-1]
+    return w, conv, {"lambda": lams[best], "lambda_max": lam_max, "index": best, "edge": best in (0, len(lams) - 1)}
+
+
+def run_cvlambda(cfg, sec, part: str, data, device, R: int, checkpoint=None):
+    """Re-fits the saved grid's cells (same labels, same knockoff draws) with the CV-chosen lambda."""
+    qs = sec["nominal_fdr_targets"]
+    ps = sec["parts"][part]
+    base_amps, base_ks = ps["base_amplitudes"], ps["base_signal_sizes"]
+    forms = sec["functional_forms"]
+    amps, ks = ps["signal_amplitudes"], ps["signal_sizes"]
+    names = list(data["arms"])
+    shape = (len(amps), len(forms), len(ks), R)
+    M = {m: {a: np.full(shape + (len(qs),), np.nan, dtype=np.float32) for a in names} for m in ("ko_fdr", "ko_pow", "ko_nd")}
+    LAM = {a: np.zeros(shape + (3,), dtype=np.float32) for a in names}     # lambda, lambda / lambda_max, at grid edge
+    CONV = {a: np.zeros(shape, dtype=bool) for a in names}
+    key = {"shape": list(shape), "names": names, "part": part}
+    start = 0
+    if checkpoint is not None:
+        ck = load_checkpoint(checkpoint, key)
+        if ck:
+            meta, z = ck
+            for a in names:
+                for m in M:
+                    M[m][a] = z[f"{m}__{a}"]
+                LAM[a], CONV[a] = z[f"lam__{a}"], z[f"conv__{a}"]
+            start = meta["reps_done"]
+            print(f"  resuming from checkpoint: {start}/{R} replicates done", flush=True)
+    t0 = time.time()
+    no_thr = {q: float("inf") for q in qs}
+    for rep in range(start, R):
+        for ia, amp in enumerate(amps):
+            gi = base_amps.index(amp)                     # index in the saved run's grid (its seeds)
+            for jf, form in enumerate(forms):
+                for kk, k in enumerate(ks):
+                    gk = base_ks.index(k)
+                    for a in names:
+                        Z_np, Phi, y_np, S_idx = data["cell"](a, gi, jf, gk, rep, amp, form, k)
+                        p = Z_np.shape[1]
+                        y_t = torch.from_numpy(y_np.astype(np.float32)).to(device)
+                        fold_rng = cell_rng(cfg, "s3cv_folds", int(part == "largek"), gi, jf, gk, rep)
+                        w, cv, info = cv_lasso(Phi, y_t, sec, fold_rng)
+                        del Phi
+                        w_np = w.cpu().numpy()
+                        sc = score_fit(np.abs(w_np[:p]) - np.abs(w_np[p:]), np.zeros(p), no_thr, qs, set(S_idx.tolist()))
+                        for m in M:
+                            M[m][a][ia, jf, kk, rep] = sc[m]
+                        LAM[a][ia, jf, kk, rep] = (info["lambda"], info["lambda"] / info["lambda_max"], float(info["edge"]))
+                        CONV[a][ia, jf, kk, rep] = cv
+        if checkpoint is not None:
+            arrays = {f"{m}__{a}": M[m][a] for m in M for a in names}
+            arrays.update({f"lam__{a}": LAM[a] for a in names}); arrays.update({f"conv__{a}": CONV[a] for a in names})
+            save_checkpoint(checkpoint, arrays, {**key, "reps_done": rep + 1})
+        el = time.time() - t0
+        print(f"  rep {rep + 1:>2}/{R}  elapsed {el / 60:.1f}m  ETA {el / (rep + 1 - start) * (R - rep - 1) / 60:.1f}m", flush=True)
+    return M, LAM, CONV
+
+
+def cv_data_stress(cfg, sec, X_all, device):
+    """The stage3_stress cells: v2 data and knockpy samplers, stress seeds (v2 amplitude indices)."""
+    ds, info = build_datasets(cfg, X_all)
+    v2_amps, st_amps = cfg["stage3_v2"]["signal_amplitudes"], cfg["stage3_stress"]["signal_amplitudes"]
+    arms = {"real_mvr": ds["real_mvr"], "gauss_mvr": ds["gauss_mvr"]}
+
+    def cell(a, gi, jf, gk, rep, amp, form, k):
+        iv = amp_index(st_amps[gi], v2_amps, st_amps)
+        dsd = arms[a]
+        p = dsd["Z"].shape[1]
+        seed = int(cell_rng(cfg, "s3v2_knockoff", iv, jf, gk, rep).integers(2**31))
+        rng = cell_rng(cfg, "s3v2_planted", iv, jf, gk, rep)
+        S_idx = np.sort(rng.choice(p, size=k, replace=False))
+        y_np, _ = generate_planted_labels(dsd["Z"], S_idx, form, amp, rng)
+        np.random.seed(seed)
+        Zk = dsd["sampler"].sample_knockoffs()
+        Phi = torch.from_numpy(np.hstack([dsd["Z"], Zk]).astype(np.float32)).to(device)
+        return dsd["Z"], Phi, y_np, S_idx
+    return {"arms": arms, "cell": cell, "info": info}
+
+
+def cv_data_largek(cfg, sec, X_all, device):
+    """The stage3_largek cells: all rows and latents, seeded block-MVR GPU samplers, largek seeds."""
+    B = build_largek(cfg, cfg["stage3_largek"], X_all, device)
+
+    def cell(a, gi, jf, gk, rep, amp, form, k):
+        dd = B["D"]["real" if a == "real" else "gauss"]
+        p = dd["Z_np"].shape[1]
+        kseed = int(cell_rng(cfg, "s3k_knockoff", gi, jf, gk, rep).integers(2**31))
+        rng = cell_rng(cfg, "s3k_planted", gi, jf, gk, rep)
+        S_idx = np.sort(rng.choice(p, size=k, replace=False))
+        y_np, _ = generate_planted_labels(dd["Z_np"], S_idx, form, amp, rng)
+        Phi = torch.cat([dd["Z_t"], dd["sampler"].sample(kseed)], dim=1)
+        return dd["Z_np"], Phi, y_np, S_idx
+    return {"arms": {"real": None, "gauss": None}, "cell": cell, "info": B["info"]}
+
+
+def analyse_cvlambda(cfg, sec, part, M, LAM, CONV) -> dict:
+    from reanalysis_multiplicity import by_adjust, cells, one_sided_exceed, two_sided_diff, trend, pooled
+    ps = sec["parts"][part]
+    qs, forms = sec["nominal_fdr_targets"], sec["functional_forms"]
+    amps, ks = ps["signal_amplitudes"], ps["signal_sizes"]
+    saved = np.load(results_dir(cfg) / ps["saved_records"])
+    ia_s = [ps["base_amplitudes"].index(a) for a in amps]
+    kk_s = [ps["base_signal_sizes"].index(k) for k in ks]
+    d = {"amplitudes": amps, "forms": forms, "signal_sizes": ks, "nominal_fdr_targets": qs}
+    z = {}
+    for a in M["ko_fdr"]:
+        for m in ("ko_fdr", "ko_pow"):
+            z[f"{m}__{a}"] = M[m][a]
+            z[f"{m}__{a}_fixed"] = saved[f"{m}__{a}"][np.ix_(ia_s, range(len(forms)), kk_s)][..., : M[m][a].shape[3], :]
+    res = {"fdr_by_cell": {}, "breaches_BY": {}, "paired_cv_minus_fixed": {}, "lambda": {}, "trend": {}}
+    for a in M["ko_fdr"]:
+        pv = np.array([one_sided_exceed(z[f"ko_fdr__{a}"][ia, jf, kk, :, iq], c["q"])[2] for (ia, jf, kk, iq), c in cells(d)])
+        res["breaches_BY"][a] = int((by_adjust(pv) < 0.05).sum())
+        for m in ("ko_pow", "ko_fdr"):
+            res["paired_cv_minus_fixed"][f"{a}|{m}"] = pooled(z, d, a, f"{a}_fixed", m, True, f"{part}: {a} CV - fixed")
+        lam = LAM[a]
+        res["lambda"][a] = {"median_ratio_to_lambda_max": float(np.median(lam[..., 1])),
+                            "median_lambda": float(np.median(lam[..., 0])),
+                            "share_at_grid_edge": float(lam[..., 2].mean()),
+                            "fraction_converged": float(CONV[a].mean())}
+    real, ctrl = list(M["ko_fdr"])
+    res["pooled_fdr_real_minus_control_cv"] = pooled(z, d, real, ctrl, "ko_fdr", False, f"{part}: real - control at CV lambda")
+    if len(amps) > 1:
+        res["trend"] = {"real_minus_control_cv": trend(z, d, real, part, minus=ctrl),
+                        "real_minus_control_fixed": trend(z, d, f"{real}_fixed", part, minus=f"{ctrl}_fixed")}
+    iq = qs.index(0.10)
+    res["mean_fdr_q0.10"] = {a: {f"{amp}|{form}|{k}": float(z[f"ko_fdr__{a}"][ia, jf, kk, :, iq].mean())
+                                 for ia, amp in enumerate(amps) for jf, form in enumerate(forms) for kk, k in enumerate(ks)}
+                             for a in list(M["ko_fdr"]) + [f"{x}_fixed" for x in M["ko_fdr"]]}
+    res["mean_pow_q0.10"] = {a: float(z[f"ko_pow__{a}"][..., iq].mean()) for a in list(M["ko_fdr"]) + [f"{x}_fixed" for x in M["ko_fdr"]]}
+    return res
+
+
+def main_cvlambda(args, cfg, d, X_all, device, rd: Path) -> None:
+    sec = cfg["stage3_cvlambda"]
+    part = args.part
+    t0 = time.time()
+    print(f"\n=== data: {part} setting ===")
+    data = (cv_data_stress if part == "stress" else cv_data_largek)(cfg, sec, X_all, device)
+    del X_all
+    ps = sec["parts"][part]
+    if args.stage == "diagnose":
+        # M0: the regenerated cells must reproduce the saved fixed-lambda records exactly
+        saved = np.load(rd / ps["saved_records"])
+        qs = sec["nominal_fdr_targets"]
+        m0 = {}
+        for a in data["arms"]:
+            amp, form, k = ps["signal_amplitudes"][0], sec["functional_forms"][0], ps["signal_sizes"][0]
+            gi, gk = ps["base_amplitudes"].index(amp), ps["base_signal_sizes"].index(k)
+            Z_np, Phi, y_np, S_idx = data["cell"](a, gi, 0, gk, 0, amp, form, k)
+            p = Z_np.shape[1]
+            w, _, _, _ = fit_lasso_checked(Phi, torch.from_numpy(y_np.astype(np.float32)).to(device),
+                                           sec["fixed_lambda"], sec["lasso"]["max_iter"], sec["lasso"]["tol"])
+            w_np = w.cpu().numpy()
+            sc = score_fit(np.abs(w_np[:p]) - np.abs(w_np[p:]), np.zeros(p), {q: float("inf") for q in qs}, qs,
+                           set(S_idx.tolist()))
+            m0[a] = {m: float(np.abs(sc[m] - saved[f"{m}__{a}"][gi, 0, gk, 0]).max()) for m in ("ko_fdr", "ko_pow")}
+            del Phi
+        print(f"  M0 fixed-lambda refit vs saved records (max |difference|): {m0}")
+        R = args.limit_reps or sec["diagnose"]["pilot_replicates"]
+        print(f"\n=== pilot: {R} replicate(s) of the {part} cells at CV lambda ===")
+        t = time.time()
+        M, LAM, CONV = run_cvlambda(cfg, sec, part, data, device, R)
+        per_rep = (time.time() - t) / R
+        res = analyse_cvlambda(cfg, sec, part, M, LAM, CONV)
+        print(f"  CV lambda: {json.dumps(res['lambda'], default=float)}")
+        print(f"  mean power at q=.1, CV vs fixed: {json.dumps(res['mean_pow_q0.10'], default=float)}")
+        est = ps["replicates"] * per_rep / 60
+        print(f"  {per_rep:.0f}s per replicate -> projected full run ~{est:.0f} min on this machine")
+        (rd / f"stage3_cvlambda_{part}_diagnose.json").write_text(json.dumps(
+            {"M0": m0, "lambda": res["lambda"], "seconds_per_replicate": per_rep, "projected_full_minutes": est,
+             "minutes": (time.time() - t0) / 60}, indent=2, default=float))
+        print(f"\nwrote {rd}/stage3_cvlambda_{part}_diagnose.json")
+        return
+    R = args.limit_reps or ps["replicates"]
+    print(f"\n=== full: {part}, {R} replicates ===")
+    ckpt = rd / f"stage3_cvlambda_{part}_checkpoint.json"
+    M, LAM, CONV = run_cvlambda(cfg, sec, part, data, device, R, checkpoint=ckpt)
+    res = analyse_cvlambda(cfg, sec, part, M, LAM, CONV)
+    print("\n=== results ===")
+    print(f"  CV lambda: {json.dumps(res['lambda'], default=float)}")
+    print(f"  cells above q after BY: {res['breaches_BY']}")
+    for k, v in res["paired_cv_minus_fixed"].items():
+        print(f"  {k:22s} CV - fixed: {v['mean_diff']:+.4f} ± {v['se']:.4f}  p {v['p_two_sided']:.2g}")
+    r = res["pooled_fdr_real_minus_control_cv"]
+    print(f"  real - control FDR at CV lambda: {r['mean_diff']:+.4f} ± {r['se']:.4f}  p {r['p_two_sided']:.2g}")
+    for k, v in res.get("trend", {}).items():
+        print(f"  trend {k:26s}: slope {v['slope_per_log_amplitude']:+.4f} ± {v['slope_se']:.4f}  p {v['p_two_sided']:.2g}")
+    out = {"config_hash": str(d["config_hash"]), "master_seed": cfg["master_seed"], "part": part, "replicates": R,
+           "amplitudes": ps["signal_amplitudes"], "forms": sec["functional_forms"], "signal_sizes": ps["signal_sizes"],
+           "nominal_fdr_targets": sec["nominal_fdr_targets"], "analysis": res, "minutes": round((time.time() - t0) / 60, 1)}
+    (rd / f"stage3_cvlambda_{part}.json").write_text(json.dumps(out, indent=2, default=float))
+    np.savez(rd / f"stage3_cvlambda_{part}_records.npz", **{f"{m}__{a}": M[m][a] for m in M for a in M[m]},
+             **{f"lam__{a}": LAM[a] for a in LAM})
+    drop_checkpoint(ckpt)
+    print(f"\nwrote {rd}/stage3_cvlambda_{part}.json ({out['minutes']} min)")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Stage 3 follow-ups: mechanism, boundary, dimension")
     ap.add_argument("--config", default="config/default.yaml")
     ap.add_argument("--cache", default=None)
     ap.add_argument("--device", default=None)
-    ap.add_argument("--experiment", required=True, choices=["stress", "dims", "largek"])
+    ap.add_argument("--experiment", required=True, choices=["stress", "dims", "largek", "cvlambda"])
     ap.add_argument("--stage", default="diagnose", choices=["diagnose", "full"])
     ap.add_argument("--limit-reps", type=int, default=None)
     ap.add_argument("--skip-exchangeability", action="store_true", help="stress only")
+    ap.add_argument("--part", default="stress", choices=["stress", "largek"], help="cvlambda only")
     args = ap.parse_args()
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
     cfg = load_config(args.config)
     rd = results_dir(cfg)
     d, X_all = load_cache(args, cfg)
     print(f"device: {device} | cache {d['config_hash']} | experiment: {args.experiment} | stage: {args.stage}")
-    {"stress": main_stress, "dims": main_dims, "largek": main_largek}[args.experiment](args, cfg, d, X_all, device, rd)
+    {"stress": main_stress, "dims": main_dims, "largek": main_largek, "cvlambda": main_cvlambda}[args.experiment](args, cfg, d, X_all, device, rd)
 
 
 if __name__ == "__main__":

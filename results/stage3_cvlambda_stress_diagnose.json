@@ -1,0 +1,29 @@
+{
+  "M0": {
+    "real_mvr": {
+      "ko_fdr": 0.0,
+      "ko_pow": 0.0
+    },
+    "gauss_mvr": {
+      "ko_fdr": 0.0,
+      "ko_pow": 0.0
+    }
+  },
+  "lambda": {
+    "real_mvr": {
+      "median_ratio_to_lambda_max": 0.019999999552965164,
+      "median_lambda": 0.0023945795837789774,
+      "share_at_grid_edge": 0.0555555559694767,
+      "fraction_converged": 1.0
+    },
+    "gauss_mvr": {
+      "median_ratio_to_lambda_max": 0.019999999552965164,
+      "median_lambda": 0.0028659263625741005,
+      "share_at_grid_edge": 0.0,
+      "fraction_converged": 1.0
+    }
+  },
+  "seconds_per_replicate": 175.10454106330872,
+  "projected_full_minutes": 87.55227053165436,
+  "minutes": 3.1737284660339355
+}

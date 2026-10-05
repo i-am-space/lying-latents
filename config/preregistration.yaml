@@ -1207,3 +1207,58 @@ stage3_amendment_5:
     cannot represent the interaction part of the label, so its AUC levels off below the real labels'
     value. Interaction placements are therefore reported as bounds, and the grid is not extended
     further. No setting was changed after this test.
+
+# ===========================================================================
+# AMENDMENT 6 - Stage 3 cross-validated lambda (written BEFORE either full run)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+stage3_amendment_6:
+  meta:
+    date_written: "2026-10-05"
+    status: written_before_run
+    trigger: >
+      Every Stage 3 and Stage 4 knockoff fit used a fixed lasso penalty (lambda = 0.02), while practice
+      chooses it by cross-validation. The large-k run suggested the fixed penalty caps power when there
+      are many signals (power about 0.45 at k = 300), which is the regime the real labels sit in.
+  design:
+    method: >
+      The lasso penalty for each fit is chosen by 5-fold cross-validation (lowest held-out mean
+      log-loss) over lambda_max x {0.5, 0.3, 0.2, 0.1, 0.06, 0.04, 0.02, 0.01, 0.005, 0.0025}, with
+      lambda_max computed on the augmented design [X, X~]; the knockoff statistic is unchanged
+      (W = |w_j| - |w~_j|, Knockoff+). The choice is symmetric in each variable and its knockoff, so W
+      keeps the flip-sign property. Folds come from a per-cell stream (s3cv_folds).
+    pairing: >
+      The cells are regenerated with the saved runs' seeds (stage3_stress, stage3_largek): identical
+      labels and identical knockoff draws. CV-lambda results are paired replicate by replicate with the
+      saved fixed-lambda records; the fixed fits are not rerun.
+    parts:
+      stress: "p = 512 (v2 data, knockpy MVR knockoffs, Gaussian control); amplitudes 1, 5, 20; both forms; k = 10, 20, 30; 30 replicates."
+      largek: "p = 2048, all rows, block-MVR knockoffs; the realistic designs only: amplitudes 8 (linear) and 32 (interaction), both forms, k = 100, 300; 10 replicates."
+    replicate_note: >
+      The large-k replicate count (10, against 30 elsewhere) was set from timing alone: each CV fit at
+      p = 2048 and n = 67,349 needs about 50 lasso fits, and one replicate took over 20 minutes on a
+      laptop GPU. If a timing check on the server projects the full large-k run beyond 10 hours, the
+      count may be lowered before the full run starts, from timing alone; the count used is recorded.
+  decision_rules:
+    - id: L0
+      rule: "Reproduction: a fixed-lambda refit of one cell per arm must match the saved records exactly (checked in diagnose; held for the stress part before this commit)."
+    - id: L1
+      rule: "FDR breaches at CV lambda are claimed only for cells significant after Benjamini-Yekutieli; the control arm must show none."
+    - id: L2
+      rule: >
+        Per part and arm, the paired pooled differences CV minus fixed (power, FDR) are reported with
+        two-sided p-values; the Stage 3 conclusions are said to depend on the penalty if the real-minus-
+        control FDR difference changes sign or loses significance (p >= 0.05) at CV lambda, or, in the
+        stress part, if the real-minus-control FDR trend in amplitude does.
+    - id: L3
+      rule: "The CV-chosen lambda (median ratio to lambda_max) and the share of fits at a grid edge are reported; an edge share above 25% is stated as a limitation, not fixed by rerunning."
+    - id: L4
+      rule: "No tuning after seeing results."
+  changes_after_smoke_test: >
+    Two diagnose runs of the stress part (one replicate each) preceded this commit; they reproduced the
+    saved records exactly (L0). In the first, 17-28% of CV choices sat at the smallest grid value (0.01 x
+    lambda_max), so the grid was extended to 0.0025 x lambda_max (edge share then 0-6%). Their FDR and
+    power were seen only as averages printed by the pilot (power 1.0 at q = 0.10 for both arms) and
+    played no part in the change. A large-k diagnose run on a laptop did not finish its first replicate
+    before the machine overheated; it produced no results.
