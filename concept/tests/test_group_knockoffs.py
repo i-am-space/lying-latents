@@ -123,3 +123,19 @@ def test_group_W_antisymmetric():
     flip = np.isin(np.arange(7), [1, 4])
     assert np.allclose(Wsw[flip], -W[flip]) and np.allclose(Wsw[~flip], W[~flip])
     assert np.allclose(latent_W(w, p)[:3], np.abs(w[:3]) - np.abs(w[p:p + 3]))
+
+
+def test_group_sum_design_swap_equivariant():
+    from group_knockoffs import group_sum_design
+    rng = np.random.default_rng(9)
+    n, p = 300, 12
+    g = np.array([0, 0, 0, 1, 1, 2, 3, 3, 3, 3, 4, 4])
+    Z = torch.from_numpy(rng.standard_normal((n, p)).astype(np.float32))
+    Zk = torch.from_numpy(rng.standard_normal((n, p)).astype(np.float32))
+    D = group_sum_design(Z, Zk, g, 5)
+    sw = np.flatnonzero(np.isin(g, [1, 3]))
+    Z2, Zk2 = Z.clone(), Zk.clone()
+    Z2[:, sw], Zk2[:, sw] = Zk[:, sw], Z[:, sw]
+    D2 = group_sum_design(Z2, Zk2, g, 5)
+    perm = np.arange(10); perm[[1, 3]] += 5; perm[[6, 8]] -= 5        # swapped groups exchange columns
+    assert torch.allclose(D2, D[:, perm], atol=1e-5)

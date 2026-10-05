@@ -220,3 +220,15 @@ def score_sets(sel_latents: np.ndarray, family: np.ndarray, true_latents: set, t
     lf, lp = fp(sl, true_latents)
     cf, cp = fp(fams, true_families)
     return {"lat_fdr": lf, "lat_pow": lp, "lat_nd": len(sl), "con_fdr": cf, "con_pow": cp, "con_nd": len(fams)}
+
+
+def group_sum_design(Z: torch.Tensor, Zk: torch.Tensor, groups0: np.ndarray, n_groups: int):
+    """[s, s~] with s_g = sum_{j in g} Z_j and s~_g = sum_{j in g} Z~_j, each pair scaled by the SAME
+    constant sqrt((var s_g + var s~_g) / 2). Swapping group g swaps s_g and s~_g and leaves the scale
+    unchanged, so any swap-equivariant fit on this design gives a valid group knockoff statistic.
+    Exploratory (concept_amendment_2): a statistic that pools within a group before penalising."""
+    G = torch.zeros(Z.shape[1], n_groups, device=Z.device)
+    G[torch.arange(Z.shape[1], device=Z.device), torch.from_numpy(groups0).to(Z.device)] = 1.0
+    s, sk = Z @ G, Zk @ G
+    c = torch.sqrt(0.5 * (s.var(0) + sk.var(0))).clamp(min=1e-12)
+    return torch.cat([(s - s.mean(0)) / c, (sk - sk.mean(0)) / c], 1)

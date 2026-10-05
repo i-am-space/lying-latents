@@ -139,3 +139,41 @@ concept_amendment_1:
        copy (identical to 7e-15); --draws/--tag overrides for the real sweep. No setting changed."
     - "Timing: about 34 s per replicate per width for the whole grid and 3 fitted arms; about 2 min to load a
        width; 100% lasso convergence."
+
+concept_amendment_2:
+  meta:
+    date_written: "2026-10-05"
+    status: written_before_run
+    trigger: >
+      Step 1 (toy) result: under REDUNDANCY, group knockoffs keep concept power at 1.00 for every m up to
+      32 while per-latent power collapses (amplitude 3: 1.00, 0.73, 0.01 at m = 2, 4, 8). Under DILUTION,
+      group power collapses together with per-latent power (amplitude 3: 0.89 at m = 8, 0.00 at m = 16),
+      although the per-child effect falls as 1/sqrt(m) exactly as predicted. The pre-registered prediction
+      "group power is flat in m" therefore FAILS for dilution. MKF+ tracks per-latent in both mechanisms
+      (a latent must pass both layers). Library test T1 passed (0 breaches in 288 null and 864 planted
+      Gaussian cells).
+    hypothesis: >
+      The dilution failure is a property of the importance statistic, not of group knockoffs: the
+      coordinate-wise L1 penalty shrinks each diluted child to zero before W_g sums them.
+  design:
+    arm: group_sum
+    statistic: >
+      Lasso (same FISTA, lambda 0.02, no tuning) on [s, s~], s_g = sum_{j in g} Z_j, s~_g = sum_{j in g} Z~_j,
+      each pair scaled by the same constant sqrt((var s_g + var s~_g)/2); W_g = |b_g| - |b~_g|. Swapping a
+      whole group swaps s_g and s~_g, so W is a valid group knockoff statistic (unit-tested).
+    knockoffs: "the group arm's own draws (identical seeds), so group_sum vs group is paired on identical
+      knockoffs and labels"
+    toy: "EXPLORATORY (post hoc, motivated by the result above): same toy data, labels and draws; Gaussian
+      flavour null and planted cells re-check validity (rule T1 applied to this arm)."
+    real_benchmark: "CONFIRMATORY, registered here before it runs: after the Step 7 main run completes,
+      the group_sum arm is added on the same widths, grid, replicates, labels and group-arm draws."
+  decision_rules:
+    - id: S1
+      rule: "group_sum is interpreted only if it passes T1 on the Gaussian toy (no BY-significant FDR breach)."
+    - id: S2
+      rule: "Step 7 follow-up: paired group_sum minus group and group_sum minus latent concept power per width
+        and cell, Benjamini-Yekutieli across cells; slope of group_sum concept power vs log2(width) as P1.
+        FDR breaches as P3 (design A only)."
+  interpretation_constraints:
+    - "The toy comparison is exploratory: it was designed after the dilution result was seen."
+    - "A sum statistic assumes children act in the same direction; signed or mixed children could cancel."
