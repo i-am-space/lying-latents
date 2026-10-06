@@ -232,3 +232,55 @@ def group_sum_design(Z: torch.Tensor, Zk: torch.Tensor, groups0: np.ndarray, n_g
     s, sk = Z @ G, Zk @ G
     c = torch.sqrt(0.5 * (s.var(0) + sk.var(0))).clamp(min=1e-12)
     return torch.cat([(s - s.mean(0)) / c, (sk - sk.mean(0)) / c], 1)
+
+
+def fit_group_lasso_batched(Phi: torch.Tensor, Y: torch.Tensor, col_group: np.ndarray, lam: float, max_iter: int,
+                            tol: float, lmax: float | None = None):
+    """FISTA logistic group lasso on B label columns, UNWEIGHTED groups (penalty lam * sum_g ||b_g||_2).
+    col_group: group id of each of the d columns. Identical to fit_lasso_batched (same step, momentum and
+    stop rule) except for the block prox; with singleton groups it reduces to it exactly. Unweighted, so a
+    diluted concept's detection threshold does not grow with group size (concept_amendment_3)."""
+    n, d = Phi.shape
+    B = Y.shape[1]
+    dev = Phi.device
+    gid = torch.from_numpy(np.asarray(col_group, dtype=np.int64)).to(dev)
+    G = int(gid.max()) + 1
+    lr = 1.0 / (0.25 * (1.1 * (lmax if lmax is not None else lmax_power(Phi)) + 1.0))
+    thr = lr * lam
+
+    def prox(u):
+        sq = torch.zeros(G, B, device=dev).index_add_(0, gid, u * u)
+        norm = sq.sqrt()[gid]
+        return u * torch.clamp(1.0 - thr / norm.clamp(min=1e-30), min=0.0)
+
+    w = torch.zeros(d, B, device=dev); b = torch.zeros(1, B, device=dev)
+    w_prev, b_prev, t = w.clone(), b.clone(), 1.0
+    active = torch.ones(B, dtype=torch.bool, device=dev)
+    res = torch.full((B,), float("inf"), device=dev)
+    iters = torch.full((B,), max_iter, dtype=torch.int64, device=dev)
+    for it in range(1, max_iter + 1):
+        t_new = 0.5 * (1 + math.sqrt(1 + 4 * t * t))
+        mom = (t - 1.0) / t_new
+        v = w + mom * (w - w_prev); vb = b + mom * (b - b_prev)
+        err = (torch.sigmoid(Phi @ v + vb) - Y) / n
+        w_new = prox(v - lr * (Phi.t() @ err))
+        b_new = vb - lr * err.sum(0, keepdim=True)
+        a = active[None, :]
+        w_prev = torch.where(a, w, w_prev); b_prev = torch.where(a, b, b_prev)
+        w = torch.where(a, w_new, w); b = torch.where(a, b_new, b)
+        t = t_new
+        if it % 25 == 0:
+            r = (v - w_new).abs().amax(0) / lr
+            res = torch.where(active, r, res)
+            done = active & (r < tol)
+            iters = torch.where(done, torch.full_like(iters, it), iters)
+            active = active & ~done
+            if not bool(active.any()):
+                break
+    return w, ~active, res, iters
+
+
+def group_norm_W(w: np.ndarray, p: int, groups0: np.ndarray, n_groups: int) -> np.ndarray:
+    """W_g = ||b_g||_2 - ||b~_g||_2 (antisymmetric under group swaps)."""
+    return (np.sqrt(np.bincount(groups0, weights=w[:p] ** 2, minlength=n_groups))
+            - np.sqrt(np.bincount(groups0, weights=w[p:2 * p] ** 2, minlength=n_groups)))

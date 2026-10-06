@@ -24,7 +24,7 @@ import scipy.sparse as sp
 import torch
 
 import _paths  # noqa: F401
-from cseeds import ROOT, load_concept_config
+from cseeds import ROOT, layer_keys, load_concept_config
 from gpu import init_cuda
 
 
@@ -75,7 +75,7 @@ def main():
     cc = cfg["concept"]; cen = cc["census"]
     cdir = ROOT / cc["cache_dir"]
     dev = init_cuda(args.device)
-    keys = cc["sweep_L12"] if args.layer == 12 else cc["bridge_L20"]
+    keys = layer_keys(cc, args.layer)
     keys = [k for k in keys if (cdir / f"lat_{k}.json").exists()]
     base = keys[0]
     assert base.endswith("_16k"), "the 16k SAE is the reference"

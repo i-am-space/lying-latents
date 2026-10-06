@@ -182,3 +182,83 @@ concept_amendment_2:
   interpretation_constraints:
     - "The toy comparison is exploratory: it was designed after the dilution result was seen."
     - "A sum statistic assumes children act in the same direction; signed or mixed children could cancel."
+
+concept_amendment_3:
+  meta:
+    date_written: "2026-10-06"
+    status: written_before_run
+    purpose: >
+      Make the group-sum statistic the primary method and test it confirmatorily on independent layers,
+      with designs that remove its advantage-by-construction (design A labels are literal family sums).
+    seen_before_writing:
+      - "All layer-12 and layer-20 results of concept_amendment_1/2 (concept_findings.md). The primary
+         endpoint below was chosen from layer-12 data: design A, weak amplitudes {0.5, 1, 2}, q = 0.1,
+         where group_sum - latent concept power at 1M was +0.073 (p = 5e-14) and its slope +0.012 per
+         doubling (p = 7e-17); design B showed no effect (-0.017). Layer 12 is therefore NOT independent
+         evidence for this amendment; layers 19 and 5 are."
+      - "One regression replicate on layer-20 65k (designs A-D, all arms) to check the code: existing arms
+         reproduced the full run exactly. Seen (concept power, K_c 20, linear, q 0.1, amps 0.5/1/2):
+         design D group_sum 0.50/0.70/0.75 vs group_lasso 0.80/1.00/1.00; design A group_sum 0.70/1/1 vs
+         group_lasso 0.90/1/1. One replicate; the primary statistic is NOT changed because of it."
+  design:
+    primary_statistic: "group_sum: lasso (lambda 0.02) on within-family sums [s, s~] (amendment 2)"
+    challenger: "group_lasso: unweighted logistic group lasso (lambda 0.02) on [Z, Z~], each family and its
+      knockoff family a group; W_g = ||b_g||_2 - ||b~_g||_2. Sign-robust pooling. Same FISTA, same draws."
+    baselines: [latent, group, mkf_c1, mkf_c1.93]
+    dropped: "cluster arm (its family-level FDR is a unit mismatch; amendment 1 findings)"
+    knockoff_draws: "group, group_sum and group_lasso all use the group arm's draw (identical knockoffs)"
+    layers:
+      primary_replication: "layer 19: 16k (average_l0_73), 65k (average_l0_115), 1M (average_l0_88)"
+      secondary_replication: "layer 5: 16k (average_l0_68), 65k (average_l0_105), 1M (average_l0_114)"
+      consistency: "layer 12 rerun with designs A-D and all arms (A/B reproduce the earlier run exactly)"
+    tau: "fixed at 0.3 (not re-derived per layer); child floor, p*, pool and group caps unchanged"
+    designs:
+      A: "c_g = standardise(sum of children)"
+      B: "c_g = standardise(16k parent activation) (approximate truth)"
+      C: "c_g = standardise(sum_j w_j X_j), w_j ~ U(0.5, 1.5) per child, replicate and width"
+      D: "c_g = standardise(sum_j w_j X_j), w_j = +-1 at random (mixed signs)"
+      truth: "every child of a planted family is non-null in A, C, D"
+    grid: "unchanged: K_c {20, 30}, amplitudes {0.5, 1, 2, 3, 5, 8, 20}, linear and interaction, q {0.05, 0.1, 0.2}, 30 replicates"
+    real_sweep: "arms latent, group, group_sum, group_lasso; 30 draws; stability = Jaccard of stable parents
+      (selected in >= 50% of draws, q 0.1) between 16k and 1M, restricted to parents in both candidate sets"
+  primary_endpoint: >
+    Per replicate: concept power (a planted family counts as found if >= 1 of its latents is selected) at
+    q = 0.1, averaged over K_c, forms and amplitudes {0.5, 1, 2}; design A.
+  decision_rules:
+    - id: R1
+      rule: "Layer 19: mean over replicates of (group_sum - latent) at 1M > 0; one-sided paired t-test."
+    - id: R2
+      rule: "Layer 19: per-replicate least-squares slope of (group_sum - latent) vs log2(width) > 0; one-sided t-test."
+    - id: R12
+      rule: "Holm across R1 and R2. The fix REPLICATES at layer 19 iff both Holm-adjusted p < 0.05."
+    - id: R3
+      rule: "Safety: design A, group_sum concept-level FDR at q = 0.1 has no Benjamini-Yekutieli-significant
+        breach (one-sided, mean > q) across all layer-19 cells. Required for success."
+    - id: R4
+      rule: "Layer 5: R1 and R2 as above, Holm across the two. Both pass = the fix GENERALISES across layers."
+    - id: R5
+      rule: "Layer 12 rerun: R1 and R2 (consistency only; not independent)."
+    - id: T1G
+      rule: "group_lasso is interpreted only if it passes T1 on the Gaussian toy (no BY-significant breach,
+        null and planted cells)."
+    - id: SEC
+      rule: "Secondary, BY within each family of tests: the R1/R2 statistics for designs B, C, D and for
+        group_lasso vs latent and group_lasso vs group_sum (all designs); latent-level power at 1M; real-label
+        stability group_sum vs latent."
+    - id: NT
+      rule: "No tuning of lambda, tau, amplitudes, grid, p*, pool or block size."
+  predictions:
+    - "C: group_sum > latent (positive unequal weights still add up)."
+    - "D: group_sum loses much of its advantage (signed children cancel); group_lasso > group_sum."
+    - "A and C: group_lasso between latent and group_sum (its pooled signal is m-invariant but its noise
+       grows like sqrt(m) under dilution)."
+    - "B: no reliable difference between pooled and per-latent arms (coverage loss dominates)."
+  outcomes:
+    success: "R12 passes at layer 19 and R3 holds"
+    strong_success: "success and R4 passes at layer 5"
+    failure: "R1 fails at layer 19"
+    otherwise: "partial; reported as such"
+  interpretation_constraints:
+    - "The endpoint was chosen on layer 12; layer-12 results are consistency checks, not confirmation."
+    - "Design A favours a sum statistic by construction; designs C and D are the test of generality."
+    - "Three widths per replication layer: the slope test has little leverage, so R1 carries most weight."

@@ -48,6 +48,11 @@ def load_concept_config(path: str | Path = CONCEPT_CFG) -> dict:
     return cfg
 
 
+def layer_keys(cc: dict, layer: int) -> list:
+    """Width keys of a layer, narrowest first."""
+    return cc["bridge_L20"] if layer == 20 else cc[f"sweep_L{layer}"]
+
+
 def cseed(cfg: dict, stream: str, *cell_idx: int) -> np.random.SeedSequence:
     if stream not in CSTREAMS:
         raise KeyError(f"{stream!r} is not a concept seed stream: {CSTREAMS}")

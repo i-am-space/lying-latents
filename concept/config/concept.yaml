@@ -16,8 +16,16 @@ concept:
     L12_1m:   {layer: 12, width: 1048576, path: layer_12/width_1m/average_l0_107}
     L20_16k:  {layer: 20, width: 16384,   path: layer_20/width_16k/average_l0_71}
     L20_65k:  {layer: 20, width: 65536,   path: layer_20/width_65k/average_l0_114}
+    L19_16k:  {layer: 19, width: 16384,   path: layer_19/width_16k/average_l0_73}
+    L19_65k:  {layer: 19, width: 65536,   path: layer_19/width_65k/average_l0_115}
+    L19_1m:   {layer: 19, width: 1048576, path: layer_19/width_1m/average_l0_88}
+    L5_16k:   {layer: 5,  width: 16384,   path: layer_5/width_16k/average_l0_68}
+    L5_65k:   {layer: 5,  width: 65536,   path: layer_5/width_65k/average_l0_105}
+    L5_1m:    {layer: 5,  width: 1048576, path: layer_5/width_1m/average_l0_114}
   sweep_L12: [L12_16k, L12_32k, L12_65k, L12_131k, L12_262k, L12_524k, L12_1m]
   bridge_L20: [L20_16k, L20_65k]
+  sweep_L19: [L19_16k, L19_65k, L19_1m]          # replication (concept_amendment_3)
+  sweep_L5:  [L5_16k, L5_65k, L5_1m]
   encode_chunk_tokens: 2048
 
   census:
@@ -52,3 +60,10 @@ concept:
   real:                          # Step 8
     draws: 30
     stable_freq: 0.5
+
+  replication:                   # concept_amendment_3
+    tau: 0.3
+    designs: [A, B, C, D]
+    arms: [latent, group, group_sum, group_lasso, mkf_c1, mkf_c1.93]
+    weak_amplitudes: [0.5, 1.0, 2.0]
+    q_primary: 0.1

@@ -23,11 +23,11 @@ import torch
 
 import _paths  # noqa: F401
 from bench import ARMS, FIT_ARMS, LV, Width, score_column
-from cseeds import ROOT, cint, crng, load_concept_config
+from cseeds import ROOT, cint, crng, layer_keys, load_concept_config
 from gpu import init_cuda
 from planted_fdr import generate_planted_labels
 
-DESIGNS = ["A", "B"]
+DESIGNS = ["A", "B", "C", "D"]   # C/D: concept_amendment_3
 
 
 def parent_columns(cdir, key16, parents):
@@ -40,7 +40,7 @@ def run(cfg, layer, keys, all_keys, grid, device, tag, arms=ARMS, designs=DESIGN
     lam, mit, tol = cc["lasso"]["lambda"], cc["lasso"]["max_iter"], cc["lasso"]["tol"]
     Kcs, amps, forms, R, qs = grid["K_c"], grid["amplitudes"], grid["forms"], grid["replicates"], grid["qs"]
     fit_arms = [a for a in FIT_ARMS if a in arms or (a in ("latent", "group") and any(x.startswith("mkf") for x in arms))
-                or (a == "group" and "group_sum" in arms)]
+                or (a == "group" and ("group_sum" in arms or "group_lasso" in arms))]
     key16 = all_keys[0]
     cols = [(d, iK, ia, jf) for d in designs for iK in range(len(Kcs)) for ia in range(len(amps)) for jf in range(len(forms))]
     Kmax = max(Kcs)
@@ -78,9 +78,14 @@ def run(cfg, layer, keys, all_keys, grid, device, tag, arms=ARMS, designs=DESIGN
                     if iK not in CA:
                         CA[iK] = wd.family_sum(pl)
                     C = CA[iK]
-                else:
+                elif d == "B":
                     C = PB[:, np.searchsorted(wd.pool, pl)]
-                rng = crng(cfg, stream[0], layer, 1000 + designs.index(d), iK, ia, jf, rep)
+                else:                                     # C/D weights: per width, replicate and K_c
+                    if (d, iK) not in CA:
+                        CA[(d, iK)] = wd.family_combo(pl, crng(cfg, stream[0], layer, 2000 + DESIGNS.index(d), iK, rep, ki), d)
+                    C = CA[(d, iK)]
+                # A/B keep their original seed index (earlier runs reproduce); C/D use their global index
+                rng = crng(cfg, stream[0], layer, 1000 + (designs.index(d) if d in "AB" else DESIGNS.index(d)), iK, ia, jf, rep)
                 Y.append(generate_planted_labels(C, np.arange(Kcs[iK]), forms[jf], amps[ia], rng)[0])
             Yt = torch.from_numpy(np.stack(Y, 1).astype(np.float32)).to(device)
             Wd = {}
@@ -90,6 +95,8 @@ def run(cfg, layer, keys, all_keys, grid, device, tag, arms=ARMS, designs=DESIGN
                 Wd[a] = w; CONV[ai, :, rep] = cv
             if "group_sum" in arms:
                 Wd["group_sum"] = wd.fit_groupsum(cint(cfg, stream[1], layer, ki, FIT_ARMS.index("group"), rep), Yt, lam, mit, tol)[0]
+            if "group_lasso" in arms:
+                Wd["group_lasso"] = wd.fit_grouplasso(cint(cfg, stream[1], layer, ki, FIT_ARMS.index("group"), rep), Yt, lam, mit, tol)[0]
             for ci, (d, iK, ia, jf) in enumerate(cols):
                 pl = planted[iK]
                 true_lat = set(np.flatnonzero(np.isin(wd.parent, pl)).tolist())
@@ -114,15 +121,18 @@ def main():
     ap.add_argument("--tag", default="full")
     ap.add_argument("--replicates", type=int, default=None)
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--designs", nargs="+", default=["A", "B"])
+    ap.add_argument("--arms", nargs="+", default=None)
     args = ap.parse_args()
     cfg = load_concept_config()
     cc = cfg["concept"]
     grid = dict(cc["planted"]); grid["qs"] = cc["nominal_fdr_targets"]
     if args.replicates:
         grid["replicates"] = args.replicates
-    all_keys = cc["sweep_L12"] if args.layer == 12 else cc["bridge_L20"]
+    all_keys = layer_keys(cc, args.layer)
     torch.set_num_threads(8)
-    run(cfg, args.layer, args.keys, all_keys, grid, init_cuda(args.device), args.tag)
+    run(cfg, args.layer, args.keys, all_keys, grid, init_cuda(args.device), args.tag,
+        arms=args.arms or [a for a in ARMS if a != "group_lasso"], designs=args.designs)
     print("DONE", flush=True)
 
 

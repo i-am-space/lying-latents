@@ -25,7 +25,7 @@ import numpy as np
 import scipy.sparse as sp
 
 import _paths  # noqa: F401
-from cseeds import ROOT, cint, crng, load_concept_config
+from cseeds import ROOT, cint, crng, layer_keys, load_concept_config
 from family_census import ref_parents
 
 _READ_KEYS: set = set()
@@ -78,11 +78,12 @@ def main():
     ap.add_argument("--keys", nargs="*", default=None, help="diagnose: subset of widths")
     ap.add_argument("--no-solve", action="store_true")
     ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--no-cluster", action="store_true", help="skip the cluster-group S solves")
     args = ap.parse_args()
     cfg = load_concept_config()
     cc = cfg["concept"]; ca = cc["candidates"]; floor = cc["census"]["child_floor"]
     cdir = ROOT / cc["cache_dir"]
-    keys = args.keys or (cc["sweep_L12"] if args.layer == 12 else cc["bridge_L20"])
+    keys = args.keys or (layer_keys(cc, args.layer))
     base, widest = keys[0], keys[-1]
     P, cap = ca["p_star"], ca["max_group"]
     fr16 = read_npz(cdir / f"lat_{base}.npz", "firing_rate_all")
@@ -162,7 +163,7 @@ def main():
         return
     jobs = []
     for i, k in enumerate(keys):
-        for w in ("lat", "fam", "clu"):
+        for w in ("lat", "fam") + (() if args.no_cluster else ("clu",)):
             if w != "lat" and k.endswith("_16k"):
                 continue                                         # singletons: group S == per-latent S
             if (cdir / f"S_{w}_{k}.npy").exists():

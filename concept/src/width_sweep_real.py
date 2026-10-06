@@ -22,7 +22,7 @@ import torch
 
 import _paths  # noqa: F401
 from bench import ARMS, real_sweep
-from cseeds import ROOT, load_concept_config
+from cseeds import ROOT, layer_keys, load_concept_config
 from gpu import init_cuda
 
 ARM_COLOR = {"latent": "#c0392b", "group": "#2e86c1", "cluster": "#7d3c98", "mkf_c1": "#27ae60", "mkf_c1.93": "#a9cce3", "group_sum": "#f39c12"}
@@ -44,7 +44,7 @@ def main():
     cfg = load_concept_config(); cc = cfg["concept"]; qs = cc["nominal_fdr_targets"]
     cdir = ROOT / cc["cache_dir"]; rd = ROOT / "concept" / "results"
     if args.phase == "run":
-        all_keys = cc["sweep_L12"] if args.layer == 12 else cc["bridge_L20"]
+        all_keys = layer_keys(cc, args.layer)
         dev = init_cuda(args.device); torch.set_num_threads(8)
         real_sweep(cfg, args.layer, args.keys, all_keys, ARMS, args.draws or cc["real"]["draws"], qs, dev, args.tag)
         print("DONE", flush=True)

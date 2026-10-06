@@ -139,3 +139,38 @@ def test_group_sum_design_swap_equivariant():
     D2 = group_sum_design(Z2, Zk2, g, 5)
     perm = np.arange(10); perm[[1, 3]] += 5; perm[[6, 8]] -= 5        # swapped groups exchange columns
     assert torch.allclose(D2, D[:, perm], atol=1e-5)
+
+
+def _toy_problem(seed, n=1500, p=16, B=3):
+    rng = np.random.default_rng(seed)
+    Z = rng.standard_normal((n, p)).astype(np.float32)
+    Zk = rng.standard_normal((n, p)).astype(np.float32)
+    beta = np.zeros(p); beta[:4] = 0.8
+    Y = np.stack([(rng.random(n) < 1 / (1 + np.exp(-(Z @ (beta * s))))).astype(np.float32) for s in (0.5, 1.0, 1.5)][:B], 1)
+    return torch.from_numpy(np.hstack([Z, Zk])), torch.from_numpy(Y)
+
+
+def test_group_lasso_singletons_equal_lasso():
+    from group_knockoffs import fit_group_lasso_batched
+    Phi, Y = _toy_problem(10)
+    w1, c1, _, i1 = fit_lasso_batched(Phi, Y, 0.02, 1000, 1e-4)
+    w2, c2, _, i2 = fit_group_lasso_batched(Phi, Y, np.arange(Phi.shape[1]), 0.02, 1000, 1e-4)
+    assert torch.equal(i1, i2) and torch.equal(c1, c2)
+    assert torch.allclose(w1, w2, atol=1e-6)
+
+
+def test_group_lasso_swap_antisymmetric():
+    from group_knockoffs import fit_group_lasso_batched, group_norm_W
+    Phi, Y = _toy_problem(11)
+    p = Phi.shape[1] // 2
+    g = np.array([0, 0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 4, 4, 4, 5, 5])
+    cg = np.concatenate([g, g + 6])
+    w, _, _, _ = fit_group_lasso_batched(Phi, Y, cg, 0.02, 1000, 1e-4)
+    W = group_norm_W(w[:, 1].numpy(), p, g, 6)
+    sw = np.flatnonzero(np.isin(g, [0, 3]))
+    Phi2 = Phi.clone(); Phi2[:, sw], Phi2[:, sw + p] = Phi[:, sw + p], Phi[:, sw]
+    w2, _, _, _ = fit_group_lasso_batched(Phi2, Y, cg, 0.02, 1000, 1e-4)
+    W2 = group_norm_W(w2[:, 1].numpy(), p, g, 6)
+    flip = np.isin(np.arange(6), [0, 3])
+    assert np.allclose(W2[flip], -W[flip], atol=1e-4) and np.allclose(W2[~flip], W[~flip], atol=1e-4)
+    assert np.abs(W).max() > 0
