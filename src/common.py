@@ -50,6 +50,8 @@ STREAMS = [
     "s3cv_folds",            # Stage 3 cvlambda: cross-validation folds (per-cell streams)
     "s4cv_planted",          # Stage 4 cv: planted signals and labels (per-cell streams)
     "s4cv_folds",            # Stage 4 cv: cross-validation folds (per-cell streams)
+    "s4st_planted",          # Stage 4 stress: planted signals and labels (per-cell streams)
+    "s4st_folds",            # Stage 4 stress: cross-validation folds (per-cell streams)
 ]
 
 

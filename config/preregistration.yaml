@@ -1303,3 +1303,47 @@ stage4_amendment_4:
       rule: "No tuning after seeing results; the CV-lambda grid-edge share is reported (above 25% is a stated limitation)."
   interpretation_constraints:
     - "Same planted-signal benchmark and dataset as Stages 3-4; 10 replicates (timing)."
+
+# ===========================================================================
+# AMENDMENT 5 - Stage 4 hurdle stress tests (written BEFORE the run)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+stage4_amendment_5:
+  meta:
+    date_written: "2026-10-06"
+    status: written_before_run
+    trigger: >
+      Under the cross-validated penalty, hurdle knockoffs had no FDR breach in the realistic many-weak
+      designs where both Gaussian constructions breached (stage4_amendment_4, rule C3 met). Hurdle
+      knockoffs are still detectable (full-swap AUC 0.935), so their control is empirical; this tests
+      where it fails.
+  design:
+    data: "As stage4_amendment_4: p = 2048, n = 20,000, Stage 4's knockoff draws and arm ids, the same 5-fold CV procedure; every fit at fixed and CV lambda; 10 replicates."
+    arms: "hurdle; gauss_real (equicorrelated); gauss_mvr (block MVR); gauss_ceiling_mvr (Gaussian control)."
+    cells: >
+      14 cells in three designs. few_strong: amplitudes 8 and 20 x linear/interaction x k = 10, 30
+      (the regime where Gaussian knockoffs breached worst in Stage 3). many_weak_extreme: amplitude 64,
+      interaction, k = 100, 300. size: a new label form where the label depends only on how strongly the
+      planted latents fire when they fire (per latent, log1p(x) centred and scaled over its firing rows,
+      0 elsewhere, then the linear generator), amplitudes 8 and 32, k = 30, 100; it targets the hurdle's
+      log-normal size model. On the Gaussian control the same transform is applied to its values (x > 0).
+      Labels from s4st_planted (cell index, replicate); folds from s4st_folds.
+  decision_rules:
+    - id: S1
+      rule: "The control must show no Benjamini-Yekutieli breach (over its 42 cell-q combinations) at CV lambda; otherwise the run is investigated before interpretation."
+    - id: S2
+      rule: >
+        The hurdle is said to fail in a design if it has any Benjamini-Yekutieli breach in that design at
+        CV lambda (BY over all 42 of its cell-q combinations). Breaches are listed for every arm.
+    - id: S3
+      rule: "Per design, the paired pooled hurdle - gauss_mvr FDR and power differences at CV lambda are reported."
+    - id: S4
+      rule: "No tuning after seeing results; the CV grid-edge share is reported (above 25% is a stated limitation)."
+  smoke_test_before_commit: >
+    A one-replicate local test of two cells (size, amplitude 8, k = 30; few_strong, amplitude 20,
+    interaction, k = 10) with the two block-MVR Gaussian arms and a three-value lambda grid checked the
+    code path and that size labels are balanced (positive rate 0.51 real, 0.50 control). Its FDR and power
+    values were printed (e.g. block MVR CV FDR 0.33 on the size cell, one replicate) and changed nothing.
+  interpretation_constraints:
+    - "A breach-free design shows the hurdle held there, not that it holds everywhere; a breach locates a limit."

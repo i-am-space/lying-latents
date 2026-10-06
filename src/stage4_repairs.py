@@ -546,7 +546,7 @@ def main() -> None:
     ap.add_argument("--limit-reps", type=int, default=None)
     ap.add_argument("--skip-exchangeability", action="store_true")
     ap.add_argument("--arm-group", default="gauss", help="cv only: which arm group to run")
-    ap.add_argument("--experiment", default="repairs", choices=["repairs", "mvr", "cv"],
+    ap.add_argument("--experiment", default="repairs", choices=["repairs", "mvr", "cv", "stress"],
                     help="repairs: the five pre-registered arms; mvr: add block-MVR Gaussian arms (stage4_amendment_3)")
     args = ap.parse_args()
     if args.experiment == "mvr":
@@ -554,6 +554,9 @@ def main() -> None:
         return
     if args.experiment == "cv":
         main_cv(args)
+        return
+    if args.experiment == "stress":
+        main_stress(args)
         return
 
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
@@ -809,6 +812,205 @@ def main_cv(args) -> None:
         f.unlink(missing_ok=True)
     print(f"\nwrote {rd}/stage4_cv_{group}_records.npz ({(time.time() - t0) / 60:.1f} min); "
           f"run --stage analyse once every group is done")
+
+
+# ---------------------------------------------------------------------------
+# hurdle stress tests under the cross-validated penalty (config/preregistration.yaml stage4_amendment_5)
+# ---------------------------------------------------------------------------
+
+def size_labels(Xraw: np.ndarray, S_idx: np.ndarray, amp: float, rng: np.random.Generator):
+    """Labels that depend on how strongly the planted latents fire, not on whether they fire: for each
+    planted latent, log1p(x) centred and scaled over the rows where it fires (x > 0), 0 elsewhere;
+    then the linear generator of planted_fdr (random signs, / sqrt(k), x amplitude, median-centred)."""
+    k = len(S_idx)
+    cols = Xraw[:, S_idx]
+    on = cols > 0
+    lv = np.log1p(np.where(on, cols, 0.0))
+    sfeat = np.zeros_like(lv, dtype=np.float64)
+    for j in range(k):
+        m = on[:, j]
+        if m.sum() > 1:
+            v = lv[m, j]
+            sfeat[m, j] = (v - v.mean()) / (v.std() + 1e-12)
+    w = rng.choice([-1.0, 1.0], size=k)
+    logits = (sfeat @ w) / np.sqrt(k) * amp
+    logits = logits - np.median(logits)
+    prob = 1.0 / (1.0 + np.exp(-np.clip(logits, -20.0, 20.0)))
+    y = (rng.random(len(prob)) < prob).astype(np.float32)
+    return y, prob
+
+
+def run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=None):
+    """Like run_cv, over an explicit list of (design, amplitude, form, k) cells. One knockoff draw per
+    arm and replicate (Stage 4's stream and arm ids) serves every cell; each fit at fixed and CV lambda."""
+    from stage3_followups import cv_lasso
+    qs = sec["nominal_fdr_targets"]
+    names = [a for a, _ in arms]
+    shape = (len(cells), R)
+    M = {f"{m}_{lam}": {a: np.full(shape + (len(qs),), np.nan, dtype=np.float32) for a in names}
+         for m in ("ko_fdr", "ko_pow", "ko_nd") for lam in ("fixed", "cv")}
+    LAM = {a: np.zeros(shape + (3,), dtype=np.float32) for a in names}
+    corr, dinfo = {a: [] for a in names}, {a: [] for a in names}
+    key = {"shape": list(shape), "arms": names, "cells": [list(c) for c in cells]}
+    start = 0
+    if checkpoint is not None and checkpoint.exists():
+        meta = json.loads(checkpoint.read_text())
+        if all(meta.get(k) == v for k, v in key.items()):
+            z = np.load(checkpoint.with_suffix(".npz"))
+            for m in M:
+                for a in names:
+                    M[m][a] = z[f"{m}__{a}"]
+            for a in names:
+                LAM[a] = z[f"lam__{a}"]
+            corr, dinfo, start = meta["corr"], meta["draw_info"], meta["reps_done"]
+            if checkpoint.with_suffix(".pt").exists():
+                for k_, v in torch.load(checkpoint.with_suffix(".pt"), map_location=device).items():
+                    D["scip"][k_].warm = v
+            print(f"  resuming from checkpoint: {start}/{R} replicates done", flush=True)
+    t0 = time.time()
+    no_thr = {q: float("inf") for q in qs}
+    for rep in range(start, R):
+        for name, method in arms:
+            seed = int(cell_rng(cfg, "s4r_knockoff", arm_ids[name], rep).integers(2**31))
+            Dm, Dk, info = data_and_knockoffs(method, D, seed)
+            corr[name].append(mean_corr(Dm, Dk)); dinfo[name].append(info)
+            Phi = torch.from_numpy(np.hstack([Dm, Dk]).astype(np.float32)).to(device)
+            del Dk
+            p = Dm.shape[1]
+            ctrl = method in CONTROL_METHODS
+            label_Z, raw = (D["Zg"], D["Zg"]) if ctrl else (D["Z"], D["X"])
+            for ci, (design, amp, form, k) in enumerate(cells):
+                rng = cell_rng(cfg, "s4st_planted", ci, rep)
+                S_idx = np.sort(rng.choice(p, size=k, replace=False))
+                truth = set(S_idx.tolist())
+                if form == "size":
+                    y_np, _ = size_labels(raw, S_idx, amp, rng)
+                else:
+                    y_np, _ = generate_planted_labels(label_Z, S_idx, form, amp, rng)
+                y_t = torch.from_numpy(y_np.astype(np.float32)).to(device)
+                w, _, _, _ = fit_lasso_checked(Phi, y_t, sec["lasso"]["lambda"], sec["lasso"]["max_iter"], sec["lasso"]["tol"])
+                wcv, _, li = cv_lasso(Phi, y_t, sec["cv"], cell_rng(cfg, "s4st_folds", ci, rep))
+                for lam, ww in (("fixed", w), ("cv", wcv)):
+                    w_np = ww.cpu().numpy()
+                    sc = score_fit(np.abs(w_np[:p]) - np.abs(w_np[p:]), np.zeros(p), no_thr, qs, truth)
+                    for m in ("ko_fdr", "ko_pow", "ko_nd"):
+                        M[f"{m}_{lam}"][name][ci, rep] = sc[m]
+                LAM[name][ci, rep] = (li["lambda"], li["lambda"] / li["lambda_max"], float(li["edge"]))
+            del Phi
+        if checkpoint is not None:
+            np.savez(checkpoint.with_suffix(".npz"), **{f"{m}__{a}": M[m][a] for m in M for a in names},
+                     **{f"lam__{a}": LAM[a] for a in names})
+            torch.save({k_: smp.warm for k_, smp in D["scip"].items()}, checkpoint.with_suffix(".pt"))
+            checkpoint.write_text(json.dumps({**key, "reps_done": rep + 1, "corr": corr, "draw_info": dinfo}, default=float))
+        el = time.time() - t0
+        print(f"  rep {rep + 1:>2}/{R}  elapsed {el / 60:.1f}m  ETA {el / (rep + 1 - start) * (R - rep - 1) / 60:.1f}m", flush=True)
+    return M, LAM, corr, dinfo
+
+
+def analyse_stress(cfg, sec, rd: Path) -> dict:
+    """Rules S1-S3 over the stress cells (corrected statistics only)."""
+    from reanalysis_multiplicity import by_adjust, one_sided_exceed, two_sided_diff
+    qs = sec["nominal_fdr_targets"]
+    cells = [tuple(c) for c in sec["cells"]]
+    z = {}
+    for g in sec["arm_groups"]:
+        f = rd / f"stage4_stress_{g}_records.npz"
+        if not f.exists():
+            raise SystemExit(f"{f} missing: run --arm-group {g} first")
+        z.update(dict(np.load(f)))
+    arms = sorted({k.split("__", 1)[1] for k in z if k.startswith("ko_fdr_cv__")})
+    designs = sorted({c[0] for c in cells})
+    out = {"arms": arms, "cells": [list(c) for c in cells], "by_lambda": {}}
+    for lam in ("fixed", "cv"):
+        res = {}
+        for a in arms:
+            F = z[f"ko_fdr_{lam}__{a}"]
+            rows = [(ci, iq, *one_sided_exceed(F[ci, :, iq], q)) for ci in range(len(cells)) for iq, q in enumerate(qs)]
+            pb = by_adjust(np.array([r[4] for r in rows]))
+            breaches = [{"design": cells[r[0]][0], "amplitude": cells[r[0]][1], "form": cells[r[0]][2], "k": cells[r[0]][3],
+                         "q": qs[r[1]], "fdr": r[2], "se": r[3], "p_BY": float(x)} for r, x in zip(rows, pb) if x < 0.05]
+            res[a] = {"n_breach_BY": len(breaches), "breaches": breaches,
+                      "by_design": {d: {"n_breach_BY": sum(b["design"] == d for b in breaches),
+                                        "mean_fdr_q0.10": float(np.mean([F[ci, :, qs.index(0.10)].mean()
+                                                                         for ci, c in enumerate(cells) if c[0] == d])),
+                                        "mean_power": float(np.mean([z[f"ko_pow_{lam}__{a}"][ci].mean()
+                                                                     for ci, c in enumerate(cells) if c[0] == d]))}
+                                    for d in designs},
+                      "cells_fdr_q0.10": {f"{c[0]}|{c[1]}|{c[2]}|{c[3]}": float(F[ci, :, qs.index(0.10)].mean())
+                                          for ci, c in enumerate(cells)}}
+        out["by_lambda"][lam] = res
+    cv = out["by_lambda"]["cv"]
+    out["S1_control_valid_cv"] = bool(cv.get("gauss_ceiling_mvr", {}).get("n_breach_BY", 1) == 0)
+    out["S2_hurdle_breaches_cv"] = {d: cv["hurdle"]["by_design"][d]["n_breach_BY"] for d in designs} if "hurdle" in cv else None
+    if "hurdle" in arms and "gauss_mvr" in arms:
+        out["S3_hurdle_minus_mvr_cv"] = {}
+        for d in designs:
+            idx = [ci for ci, c in enumerate(cells) if c[0] == d]
+            r = {}
+            for m in ("ko_fdr", "ko_pow"):
+                va = z[f"{m}_cv__hurdle"][idx].mean(axis=(0, 2))
+                vb = z[f"{m}_cv__gauss_mvr"][idx].mean(axis=(0, 2))
+                mu, se, p = two_sided_diff(va, vb, True)
+                r[m] = {"mean_diff": mu, "se": se, "p_two_sided": p}
+            out["S3_hurdle_minus_mvr_cv"][d] = r
+    lamz = {k.split("__", 1)[1]: v for k, v in z.items() if k.startswith("lam__")}
+    out["cv_lambda"] = {a: {"median_ratio_to_lambda_max": float(np.median(v[..., 1])), "share_at_grid_edge": float(v[..., 2].mean())}
+                        for a, v in lamz.items()}
+    return out
+
+
+def main_stress(args) -> None:
+    device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
+    cfg = load_config(args.config)
+    rd = results_dir(cfg)
+    ext = cfg["stage4_stress"]
+    sec = {**cfg["stage4_repairs"], "mvr_max_block": cfg["stage4_mvr"]["mvr_max_block"], "cv": cfg["stage4_cv"]["cv"],
+           **{k: v for k, v in ext.items()}}
+    if args.stage == "analyse":
+        out = analyse_stress(cfg, sec, rd)
+        (rd / "stage4_stress.json").write_text(json.dumps(out, indent=2, default=float))
+        for lam, res in out["by_lambda"].items():
+            for a, r in res.items():
+                print(f"  [{lam:5s}] {a:18s} BY breaches {r['n_breach_BY']:2d}  " + "  ".join(
+                    f"{d}: FDR(q=.1) {v['mean_fdr_q0.10']:.3f} pow {v['mean_power']:.3f} br {v['n_breach_BY']}"
+                    for d, v in r["by_design"].items()))
+        for k in ("S1_control_valid_cv", "S2_hurdle_breaches_cv", "S3_hurdle_minus_mvr_cv", "cv_lambda"):
+            print(f"  {k}: {json.dumps(out.get(k), default=float)}")
+        print(f"\nwrote {rd}/stage4_stress.json")
+        return
+    group = args.arm_group
+    all_arms = [tuple(a) for a in cfg["stage4_repairs"]["arms"]] + [tuple(a) for a in cfg["stage4_mvr"]["arms"]]
+    arm_ids = {n: i for i, (n, _) in enumerate(all_arms)}
+    arms = [(n, m) for n, m in all_arms if n in ext["arm_groups"][group]]
+    cells = [tuple(c) for c in ext["cells"]]
+    cp = Path(args.cache) if args.cache else cache_path(cfg)
+    if not cp.exists():
+        raise SystemExit(f"Cache not found at {cp}. Run src/cache_activations.py first.")
+    d = np.load(cp, allow_pickle=True)
+    X_all = d[f"X_{cfg['aggregation']['primary']}"].astype(np.float32, copy=False)
+    print(f"device: {device} | cache {d['config_hash']} | experiment: stress | group: {group} | stage: {args.stage}")
+    t0 = time.time()
+    print("\n=== data and samplers ===")
+    D = build(cfg, sec, X_all, device, methods=[m for _, m in arms])
+    del X_all
+    R = args.limit_reps or (ext["diagnose"]["pilot_replicates"] if args.stage == "diagnose" else ext["replicates"])
+    print(f"\n=== {args.stage}: arms {[a for a, _ in arms]}, {len(cells)} cells, {R} replicate(s) ===")
+    ckpt = None if args.stage == "diagnose" else rd / f"stage4_stress_{group}_checkpoint.json"
+    t = time.time()
+    M, LAM, corr, dinfo = run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=ckpt)
+    if args.stage == "diagnose":
+        per_rep = (time.time() - t) / R
+        print(f"  {per_rep:.0f}s per replicate -> projected full run ~{ext['replicates'] * per_rep / 60:.0f} min on this machine")
+        return
+    np.savez(rd / f"stage4_stress_{group}_records.npz", **{f"{m}__{a}": M[m][a] for m in M for a, _ in arms},
+             **{f"lam__{a}": LAM[a] for a, _ in arms})
+    (rd / f"stage4_stress_{group}_info.json").write_text(json.dumps(
+        {"info": D["info"], "mean_corr_X_Xk": {a: float(np.mean(v)) for a, v in corr.items() if v}, "draw_info": dinfo,
+         "replicates": R, "minutes": round((time.time() - t0) / 60, 1)}, indent=2, default=float))
+    for f in (ckpt, ckpt.with_suffix(".npz"), ckpt.with_suffix(".pt")):
+        f.unlink(missing_ok=True)
+    print(f"\nwrote {rd}/stage4_stress_{group}_records.npz ({(time.time() - t0) / 60:.1f} min); "
+          f"run --experiment stress --stage analyse once every group is done")
 
 
 # ---------------------------------------------------------------------------

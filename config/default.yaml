@@ -399,6 +399,32 @@ stage4_cv:
   diagnose:
     pilot_replicates: 1
 
+# Stage 4 hurdle stress tests (config/preregistration.yaml stage4_amendment_5): the hardest designs
+# for Gaussian knockoffs, plus labels driven by activation size, at the CV and fixed penalties.
+# Data, S settings, knockoff draws and the CV procedure are stage4_cv's.
+stage4_stress:
+  replicates: 10
+  cells:                          # [design, amplitude, form, k]
+    - [few_strong, 8.0, linear, 10]
+    - [few_strong, 8.0, linear, 30]
+    - [few_strong, 8.0, interaction, 10]
+    - [few_strong, 8.0, interaction, 30]
+    - [few_strong, 20.0, linear, 10]
+    - [few_strong, 20.0, linear, 30]
+    - [few_strong, 20.0, interaction, 10]
+    - [few_strong, 20.0, interaction, 30]
+    - [many_weak_extreme, 64.0, interaction, 100]
+    - [many_weak_extreme, 64.0, interaction, 300]
+    - [size, 8.0, size, 30]
+    - [size, 8.0, size, 100]
+    - [size, 32.0, size, 30]
+    - [size, 32.0, size, 100]
+  arm_groups:
+    hurdle: [hurdle]
+    gauss: [gauss_real, gauss_mvr, gauss_ceiling_mvr]
+  diagnose:
+    pilot_replicates: 1
+
 paths:
   cache_dir: data/cache
   results_dir: results
