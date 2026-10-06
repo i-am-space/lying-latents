@@ -1,0 +1,29 @@
+{
+  "M0": {
+    "real": {
+      "ko_fdr": 0.0,
+      "ko_pow": 0.0
+    },
+    "gauss": {
+      "ko_fdr": 0.0,
+      "ko_pow": 0.0
+    }
+  },
+  "lambda": {
+    "real": {
+      "median_ratio_to_lambda_max": 0.004999999888241291,
+      "median_lambda": 0.0004999792436137795,
+      "share_at_grid_edge": 0.25,
+      "fraction_converged": 1.0
+    },
+    "gauss": {
+      "median_ratio_to_lambda_max": 0.009999999776482582,
+      "median_lambda": 0.0007619521347805858,
+      "share_at_grid_edge": 0.25,
+      "fraction_converged": 1.0
+    }
+  },
+  "seconds_per_replicate": 1118.8967485427856,
+  "projected_full_minutes": 186.4827914237976,
+  "minutes": 22.624506771564484
+}

@@ -1,0 +1,173 @@
+{
+  "config_hash": "d33d210c5acb",
+  "master_seed": 20260904,
+  "part": "largek",
+  "replicates": 10,
+  "amplitudes": [
+    8.0,
+    32.0
+  ],
+  "forms": [
+    "linear",
+    "interaction"
+  ],
+  "signal_sizes": [
+    100,
+    300
+  ],
+  "nominal_fdr_targets": [
+    0.05,
+    0.1,
+    0.2
+  ],
+  "analysis": {
+    "fdr_by_cell": {},
+    "breaches_BY": {
+      "real": 12,
+      "gauss": 0
+    },
+    "paired_cv_minus_fixed": {
+      "real|ko_pow": {
+        "experiment": "largek: real CV - fixed",
+        "contrast": "real - real_fixed",
+        "metric": "ko_pow",
+        "paired": true,
+        "n_cells": 24,
+        "mean_diff": 0.33720832467079165,
+        "se": 0.0052085484005039455,
+        "p_two_sided": 2.525955593071501e-13
+      },
+      "real|ko_fdr": {
+        "experiment": "largek: real CV - fixed",
+        "contrast": "real - real_fixed",
+        "metric": "ko_fdr",
+        "paired": true,
+        "n_cells": 24,
+        "mean_diff": 0.13575889244675637,
+        "se": 0.004051155783017425,
+        "p_two_sided": 9.246642952525177e-11
+      },
+      "gauss|ko_pow": {
+        "experiment": "largek: gauss CV - fixed",
+        "contrast": "gauss - gauss_fixed",
+        "metric": "ko_pow",
+        "paired": true,
+        "n_cells": 24,
+        "mean_diff": 0.32586111426353453,
+        "se": 0.0038785522471474114,
+        "p_two_sided": 2.4285158949908494e-14
+      },
+      "gauss|ko_fdr": {
+        "experiment": "largek: gauss CV - fixed",
+        "contrast": "gauss - gauss_fixed",
+        "metric": "ko_fdr",
+        "paired": true,
+        "n_cells": 24,
+        "mean_diff": 0.07009058147668838,
+        "se": 0.004194039780196562,
+        "p_two_sided": 4.398100109974342e-08
+      }
+    },
+    "lambda": {
+      "real": {
+        "median_ratio_to_lambda_max": 0.004999999888241291,
+        "median_lambda": 0.0005064675351604819,
+        "share_at_grid_edge": 0.26249998807907104,
+        "fraction_converged": 1.0
+      },
+      "gauss": {
+        "median_ratio_to_lambda_max": 0.009999999776482582,
+        "median_lambda": 0.0007411848055198789,
+        "share_at_grid_edge": 0.26249998807907104,
+        "fraction_converged": 1.0
+      }
+    },
+    "trend": {
+      "real_minus_control_cv": {
+        "experiment": "largek",
+        "arm": "real - gauss",
+        "n_cells_per_amplitude": 12,
+        "mean_fdr_by_amplitude": {
+          "8.0": 0.0605,
+          "32.0": 0.1117
+        },
+        "slope_per_log_amplitude": 0.03694878653685983,
+        "slope_se": 0.009677901196980592,
+        "t": 3.8178511833110544,
+        "p_two_sided": 0.004103412287569722
+      },
+      "real_minus_control_fixed": {
+        "experiment": "largek",
+        "arm": "real_fixed - gauss_fixed",
+        "n_cells_per_amplitude": 12,
+        "mean_fdr_by_amplitude": {
+          "8.0": 0.0201,
+          "32.0": 0.0207
+        },
+        "slope_per_log_amplitude": 0.000468383026588696,
+        "slope_se": 0.005043722411852665,
+        "t": 0.09286455287229993,
+        "p_two_sided": 0.9280455203125987
+      }
+    },
+    "pooled_fdr_real_minus_control_cv": {
+      "experiment": "largek: real - control at CV lambda",
+      "contrast": "real - gauss",
+      "metric": "ko_fdr",
+      "paired": false,
+      "n_cells": 24,
+      "mean_diff": 0.08607442155480385,
+      "se": 0.00575983534054598,
+      "p_two_sided": 2.2369946776230672e-11
+    },
+    "mean_fdr_q0.10": {
+      "real": {
+        "8.0|linear|100": 0.09849725663661957,
+        "8.0|linear|300": 0.11109375953674316,
+        "8.0|interaction|100": 0.1827351599931717,
+        "8.0|interaction|300": 0.2197369784116745,
+        "32.0|linear|100": 0.13339103758335114,
+        "32.0|linear|300": 0.08025485277175903,
+        "32.0|interaction|100": 0.3567507863044739,
+        "32.0|interaction|300": 0.27737241983413696
+      },
+      "gauss": {
+        "8.0|linear|100": 0.0947464257478714,
+        "8.0|linear|300": 0.0877954512834549,
+        "8.0|interaction|100": 0.0929165631532669,
+        "8.0|interaction|300": 0.09184286743402481,
+        "32.0|linear|100": 0.11808466911315918,
+        "32.0|linear|300": 0.089933842420578,
+        "32.0|interaction|100": 0.08994032442569733,
+        "32.0|interaction|300": 0.10546581447124481
+      },
+      "real_fixed": {
+        "8.0|linear|100": 0.06701422482728958,
+        "8.0|linear|300": 0.05883083865046501,
+        "8.0|interaction|100": 0.047806933522224426,
+        "8.0|interaction|300": 0.09184910356998444,
+        "32.0|linear|100": 0.05334807187318802,
+        "32.0|linear|300": 0.06289637833833694,
+        "32.0|interaction|100": 0.05900575965642929,
+        "32.0|interaction|300": 0.09842608124017715
+      },
+      "gauss_fixed": {
+        "8.0|linear|100": 0.02504047192633152,
+        "8.0|linear|300": 0.0603625662624836,
+        "8.0|interaction|100": 0.03848288208246231,
+        "8.0|interaction|300": 0.06511789560317993,
+        "32.0|linear|100": 0.02697371505200863,
+        "32.0|linear|300": 0.055394142866134644,
+        "32.0|interaction|100": 0.035489875823259354,
+        "32.0|interaction|300": 0.0689050629734993
+      }
+    },
+    "mean_pow_q0.10": {
+      "real": 0.9983750581741333,
+      "gauss": 0.99895840883255,
+      "real_fixed": 0.6793333292007446,
+      "gauss_fixed": 0.6889583468437195
+    }
+  },
+  "minutes": 292.0
+}

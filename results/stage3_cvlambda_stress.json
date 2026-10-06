@@ -1,0 +1,217 @@
+{
+  "config_hash": "d33d210c5acb",
+  "master_seed": 20260904,
+  "part": "stress",
+  "replicates": 30,
+  "amplitudes": [
+    1.0,
+    5.0,
+    20.0
+  ],
+  "forms": [
+    "linear",
+    "interaction"
+  ],
+  "signal_sizes": [
+    10,
+    20,
+    30
+  ],
+  "nominal_fdr_targets": [
+    0.05,
+    0.1,
+    0.2
+  ],
+  "analysis": {
+    "fdr_by_cell": {},
+    "breaches_BY": {
+      "real_mvr": 7,
+      "gauss_mvr": 0
+    },
+    "paired_cv_minus_fixed": {
+      "real_mvr|ko_pow": {
+        "experiment": "stress: real_mvr CV - fixed",
+        "contrast": "real_mvr - real_mvr_fixed",
+        "metric": "ko_pow",
+        "paired": true,
+        "n_cells": 54,
+        "mean_diff": 0.025061744451522826,
+        "se": 0.0030389533844834356,
+        "p_two_sided": 4.307643079957923e-09
+      },
+      "real_mvr|ko_fdr": {
+        "experiment": "stress: real_mvr CV - fixed",
+        "contrast": "real_mvr - real_mvr_fixed",
+        "metric": "ko_fdr",
+        "paired": true,
+        "n_cells": 54,
+        "mean_diff": 0.08846684582531453,
+        "se": 0.004568808112638895,
+        "p_two_sided": 3.9387877301457265e-18
+      },
+      "gauss_mvr|ko_pow": {
+        "experiment": "stress: gauss_mvr CV - fixed",
+        "contrast": "gauss_mvr - gauss_mvr_fixed",
+        "metric": "ko_pow",
+        "paired": true,
+        "n_cells": 54,
+        "mean_diff": 0.016872443755467734,
+        "se": 0.002560623505987821,
+        "p_two_sided": 3.2077535636321607e-07
+      },
+      "gauss_mvr|ko_fdr": {
+        "experiment": "stress: gauss_mvr CV - fixed",
+        "contrast": "gauss_mvr - gauss_mvr_fixed",
+        "metric": "ko_fdr",
+        "paired": true,
+        "n_cells": 54,
+        "mean_diff": 0.089083814197996,
+        "se": 0.0027201850244866635,
+        "p_two_sided": 1.855072446391912e-24
+      }
+    },
+    "lambda": {
+      "real_mvr": {
+        "median_ratio_to_lambda_max": 0.019999999552965164,
+        "median_lambda": 0.002584457630291581,
+        "share_at_grid_edge": 0.025925925001502037,
+        "fraction_converged": 1.0
+      },
+      "gauss_mvr": {
+        "median_ratio_to_lambda_max": 0.019999999552965164,
+        "median_lambda": 0.002911517396569252,
+        "share_at_grid_edge": 0.020370369777083397,
+        "fraction_converged": 1.0
+      }
+    },
+    "trend": {
+      "real_minus_control_cv": {
+        "experiment": "stress",
+        "arm": "real_mvr - gauss_mvr",
+        "n_cells_per_amplitude": 18,
+        "mean_fdr_by_amplitude": {
+          "1.0": 0.0171,
+          "5.0": 0.0337,
+          "20.0": 0.0552
+        },
+        "slope_per_log_amplitude": 0.012652399918148729,
+        "slope_se": 0.0025465063211021063,
+        "t": 4.968532696464259,
+        "p_two_sided": 2.768496901943512e-05
+      },
+      "real_minus_control_fixed": {
+        "experiment": "stress",
+        "arm": "real_mvr_fixed - gauss_mvr_fixed",
+        "n_cells_per_amplitude": 18,
+        "mean_fdr_by_amplitude": {
+          "1.0": 0.0039,
+          "5.0": 0.032,
+          "20.0": 0.0719
+        },
+        "slope_per_log_amplitude": 0.02257593831311155,
+        "slope_se": 0.001656324840520675,
+        "t": 13.630139306499007,
+        "p_two_sided": 3.8652110815175876e-14
+      }
+    },
+    "pooled_fdr_real_minus_control_cv": {
+      "experiment": "stress: real - control at CV lambda",
+      "contrast": "real_mvr - gauss_mvr",
+      "metric": "ko_fdr",
+      "paired": false,
+      "n_cells": 54,
+      "mean_diff": 0.035311173150936764,
+      "se": 0.004981306878371894,
+      "p_two_sided": 3.443450958457529e-09
+    },
+    "mean_fdr_q0.10": {
+      "real_mvr": {
+        "1.0|linear|10": 0.10556109994649887,
+        "1.0|linear|20": 0.11062034964561462,
+        "1.0|linear|30": 0.0988498404622078,
+        "1.0|interaction|10": 0.059956710785627365,
+        "1.0|interaction|20": 0.10476239025592804,
+        "1.0|interaction|30": 0.08505014330148697,
+        "5.0|linear|10": 0.12312132865190506,
+        "5.0|linear|20": 0.1018308624625206,
+        "5.0|linear|30": 0.08222498744726181,
+        "5.0|interaction|10": 0.11891024559736252,
+        "5.0|interaction|20": 0.12429527938365936,
+        "5.0|interaction|30": 0.1395544409751892,
+        "20.0|linear|10": 0.09969057887792587,
+        "20.0|linear|20": 0.09899582713842392,
+        "20.0|linear|30": 0.08755389600992203,
+        "20.0|interaction|10": 0.16253887116909027,
+        "20.0|interaction|20": 0.20405252277851105,
+        "20.0|interaction|30": 0.20681770145893097
+      },
+      "gauss_mvr": {
+        "1.0|linear|10": 0.0485292486846447,
+        "1.0|linear|20": 0.08192309737205505,
+        "1.0|linear|30": 0.08782883733510971,
+        "1.0|interaction|10": 0.0715007334947586,
+        "1.0|interaction|20": 0.07448999583721161,
+        "1.0|interaction|30": 0.09917616099119186,
+        "5.0|linear|10": 0.08695748448371887,
+        "5.0|linear|20": 0.09217136353254318,
+        "5.0|linear|30": 0.1030244305729866,
+        "5.0|interaction|10": 0.06714396178722382,
+        "5.0|interaction|20": 0.0657673254609108,
+        "5.0|interaction|30": 0.0727139264345169,
+        "20.0|linear|10": 0.07276196777820587,
+        "20.0|linear|20": 0.09221017360687256,
+        "20.0|linear|30": 0.09082580357789993,
+        "20.0|interaction|10": 0.0829448252916336,
+        "20.0|interaction|20": 0.07292238622903824,
+        "20.0|interaction|30": 0.0881810411810875
+      },
+      "real_mvr_fixed": {
+        "1.0|linear|10": 0.018803419545292854,
+        "1.0|linear|20": 0.015314636752009392,
+        "1.0|linear|30": 0.010687723755836487,
+        "1.0|interaction|10": 0.009090909734368324,
+        "1.0|interaction|20": 0.0063492064364254475,
+        "1.0|interaction|30": 0.010826566256582737,
+        "5.0|linear|10": 0.042540792375802994,
+        "5.0|linear|20": 0.04227101430296898,
+        "5.0|linear|30": 0.03398633003234863,
+        "5.0|interaction|10": 0.05458986014127731,
+        "5.0|interaction|20": 0.03328000381588936,
+        "5.0|interaction|30": 0.03679051250219345,
+        "20.0|linear|10": 0.1124684140086174,
+        "20.0|linear|20": 0.10310199856758118,
+        "20.0|linear|30": 0.06531679630279541,
+        "20.0|interaction|10": 0.10508043318986893,
+        "20.0|interaction|20": 0.08614467829465866,
+        "20.0|interaction|30": 0.04160807281732559
+      },
+      "gauss_mvr_fixed": {
+        "1.0|linear|10": 0.01515151560306549,
+        "1.0|linear|20": 0.0031746032182127237,
+        "1.0|linear|30": 0.005309139844030142,
+        "1.0|interaction|10": 0.0055555556900799274,
+        "1.0|interaction|20": 0.009235208854079247,
+        "1.0|interaction|30": 0.007670940365642309,
+        "5.0|linear|10": 0.0,
+        "5.0|linear|20": 0.0015873016091063619,
+        "5.0|linear|30": 0.005309139844030142,
+        "5.0|interaction|10": 0.0,
+        "5.0|interaction|20": 0.004761904943734407,
+        "5.0|interaction|30": 0.009610215201973915,
+        "20.0|linear|10": 0.0,
+        "20.0|linear|20": 0.004761904943734407,
+        "20.0|linear|30": 0.007526881527155638,
+        "20.0|interaction|10": 0.0,
+        "20.0|interaction|20": 0.0015873016091063619,
+        "20.0|interaction|30": 0.007495519705116749
+      }
+    },
+    "mean_pow_q0.10": {
+      "real_mvr": 0.9994444847106934,
+      "gauss_mvr": 0.9998765587806702,
+      "real_mvr_fixed": 0.9829320907592773,
+      "gauss_mvr_fixed": 0.990493893623352
+    }
+  },
+  "minutes": 88.2
+}
