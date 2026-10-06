@@ -8,61 +8,69 @@ history; §7 lists what was wrong with it. §9 reports a follow-up at v1's p = 2
 (`stage3_amendment_2`) that explains v1's power collapse. §10–§12 report three further
 follow-ups (`stage3_amendment_3`, script `src/stage3_followups.py`): the amplitude sweep
 extended to 20, a direct test of why FDR rises, and a factorial that separates the causes of
-the power collapse.
+the power collapse. §13–§16 add a multiplicity reanalysis of all cell counts, a calibration
+of the amplitude axis against the real labels, a many-weak-signal benchmark, and the same
+benchmarks under the cross-validated penalty (`stage3_amendment_4`–`6`).
 
 ## Summary
 
-The benchmark plants a known set S of latents in synthetic labels Y = f(X_S) + noise, keeps
-the real activations, and runs Gaussian knockoff+ at q ∈ {0.05, 0.10, 0.20}. It is run on
-three datasets with identical draws: **real latents with MVR knockoffs** (primary), **real
-latents with equicorrelated knockoffs** (v1's choice), and a **Gaussian control**
-(N(0, Σ) with the real covariance, same S) on which Gaussian knockoffs are exactly valid.
-So real-vs-control isolates the zero atom, and equicorrelated-vs-MVR isolates the S matrix.
+**Headline (updated 6 October, §16).** Under the lasso penalty practitioners use, chosen by 5-fold
+cross-validation, Gaussian knockoffs on real SAE latents **exceed the FDR target**, while the same
+procedure on a Gaussian control with the same covariance does not. Every earlier Stage 3 run used a
+fixed penalty (λ = 0.02, about 8× larger than the cross-validated one), which made Knockoff+ so
+conservative that the control used almost none of its error budget (FDR ≈ 0.004 at q = 0.10); that
+margin absorbed the effect of the invalid knockoffs and made Gaussian knockoffs look safe.
 
-1. **No evidence that FDR exceeds q up to amplitude 8.** 0 of 108 cells have mean − 1.96·SE > q
-   on either real dataset; 107 of 108 have mean ≤ q. The one exception is at nominal
-   (amplitude 8, linear, k = 20, q = 0.05: 0.053 ± 0.010). **At amplitude 20 it does (§10):**
-   two cells exceed q = 0.05 significantly (0.083 ± 0.016 and 0.076 ± 0.011).
-2. **But the guarantee is not restored — the margin erodes with signal strength.** The
-   valid-knockoff control has FDR ≈ 0.003–0.008 at q = 0.10 (Knockoff+ is very conservative
-   here). Real-data FDR is significantly higher than the control in **48 of 108 cells**
-   (mean +0.018) and rises with amplitude: at q = 0.10, 0.007 → 0.060 from amplitude 0.5
-   to 8, while the control stays flat. In the highest-SNR small-k cells it reaches the
-   nominal level (k = 10, amplitude 8: 0.099 ± 0.023 at q = 0.10, 0.115 ± 0.025 at
-   q = 0.20; control 0.003). Control is empirical, not guaranteed. **Why (§11):** as the
-   signal grows, null latents correlated with the signal latents beat their Gaussian knockoffs
-   about 75% of the time instead of 50%; on the Gaussian control, with the same correlations,
-   they do not. Hurdle knockoffs that model the zero atom cut FDR at amplitudes 5–20 by 30–45%
-   but overshoot and are themselves detectable.
-3. **v1's "power collapse" is real at p = 2,048, but it is mostly a high-dimension effect,
-   not the zero atom.** At p = 512 (this run) power is within a few points of the Gaussian
-   control for linear signals at every amplitude (11 of 108 cells significantly lower, none
-   higher; mean −0.015), and equicorrelated ≈ MVR. The atom costs power only for weak
-   interaction signals (amplitude 0.5, k = 10: 0.233 vs 0.497) and at a stronger penalty
-   (λ = 0.05, §5). The follow-up at v1's p = 2,048 (§9) reproduces v1's low power in 36 of 36
-   cells and rules out v1's solver and row choice. Most of the loss appears on the Gaussian
-   control too, so it comes from p = 2,048 (n/p ≈ 10) together with near-copy equicorrelated
-   knockoffs; these two cannot be separated there. The zero atom adds a smaller loss on top
-   at p = 2,048 (11 of 36 cells, mean −0.073), so its cost grows with the number of latents.
-   **The factorial in §12 separates them: the near-copy S matrix is the main driver.**
-   Replacing equicorrelated with block-diagonal MVR knockoffs at p = 2,048 raises real-latent
-   power by 0.12 (significant in 39 of 72 cells), against 0.06 for 3.4 times more rows;
-   together they lift power at q = 0.10 from 0.45 to 0.69 with FDR still controlled.
-4. **v1's "zero power at k = 10, q = 0.05" is arithmetic.** Knockoff+ needs ≥ 1/q = 20
+| Setting | Arm | Mean FDR at q = 0.10, fixed λ | Mean FDR at q = 0.10, CV λ | Cells above q after Benjamini–Yekutieli, CV λ |
+|---|---|---|---|---|
+| 10–30 strong signals, p = 512 (amplitudes 1, 5, 20) | real latents | 0.012 → 0.086 | 0.094 → 0.143 | **7 of 54** (all amplitude 20, interaction) |
+| | Gaussian control | 0.004–0.008 | 0.077–0.083 | 0 |
+| 100–300 weak signals, p = 2,048, designs matched to real labels (§14) | real latents | 0.048–0.098 | 0.098–0.357 | **12 of 24** (all interaction) |
+| | Gaussian control | 0.025–0.069 | 0.088–0.118 | 0 |
+
+The benchmark plants a known set S of latents in synthetic labels Y = f(X_S) + noise, keeps the real
+activations, and runs Gaussian knockoff+ at q ∈ {0.05, 0.10, 0.20}, always next to a **Gaussian
+control** (N(0, Σ) with the real covariance) on which Gaussian knockoffs are valid, so real-vs-control
+isolates the non-Gaussian structure of the latents (the zero atom and co-firing).
+
+1. **At the fixed penalty, no cell exceeds q after correction.** The two amplitude-20 cells
+   reported in §10 (0.083 ± 0.016, 0.076 ± 0.011 at q = 0.05) do not survive Holm,
+   Benjamini–Hochberg or Benjamini–Yekutieli correction across the 126 cells (§13).
+2. **The margin erodes with signal strength, robustly.** Real-latent FDR exceeds the control's
+   (Holm-significant in 47 of 126 cells; BY 63) and rises with amplitude: per-replicate slope of
+   FDR on log amplitude +0.024 ± 0.001 (t = 18.7) for real latents, −0.001 for the control (§13).
+3. **Why (§11):** null latents correlated with the signal latents beat their Gaussian knockoffs
+   73% of the time at amplitude ≥ 5, against 47% on the control at the same correlations; nulls
+   with correlation below 0.05 never became false discoveries. The pre-registered rule (R2) is
+   formally unmet because one of its three checks could not be computed (see §11).
+4. **Real labels sit where the benchmark had not looked (§14).** A probe on the real SST-2 labels
+   reaches held-out AUC 0.972, as predictable as planted signals at amplitude 5 to over 50, but its
+   top-k coefficients are as small as planted amplitudes 1 to 3: real sentiment is many weak
+   signals that add up. With 100–300 weak planted latents (§15), at the fixed penalty FDR stays below
+   q (no breach after correction) but the margin is already small (0.06–0.09 at q = 0.10 on the
+   realistic designs, 0.03–0.07 on the control); under CV λ it is exceeded (table above).
+5. **The p = 2,048 power collapse is mostly the S matrix (§12).** Block-diagonal MVR knockoffs
+   instead of equicorrelated ones raise real-latent power by 0.12 (pooled p = 8 × 10⁻¹³); 3.4× more
+   rows by 0.05 (no single cell Holm-significant). Together: 0.45 → 0.69 at q = 0.10. The zero atom
+   costs 0.11–0.14 power with near-copy (equicorrelated) knockoffs but 0.05–0.06 with MVR.
+6. **At p = 512 the zero atom's power cost is small** (−0.015 on average), larger for interaction
+   than linear signals (−0.023 vs −0.008; difference p = 0.006), concentrated at amplitudes ≤ 2. No
+   individual cell is significant after correction (the "9 of 54 vs 2 of 54" in earlier versions
+   were uncorrected counts; §13).
+7. **v1's "zero power at k = 10, q = 0.05" is arithmetic.** Knockoff+ needs ≥ 1/q = 20
    discoveries; with the +1 offset removed the same cells have power 0.985.
-5. **Marginal screening with multiplicity correction fails the conditional target; knockoffs
-   do not.** A Westfall–Young marginal scan at α = q finds 150–210 latents with FDR
-   0.78–0.93 against the planted conditional truth; Knockoff+ finds ≈ k with FDR 0.02–0.04.
+8. **Marginal screening fails the conditional target; knockoffs do not.** A Westfall–Young
+   marginal scan finds 150–210 latents with FDR 0.78–0.93 against the planted conditional truth;
+   Knockoff+ finds ≈ k with FDR 0.02–0.04 (fixed λ).
 
-**What this establishes:** in the tested range Gaussian knockoffs do not visibly inflate
-FDR on zero-inflated latents, yet they measurably lose the finite-sample conservatism a valid
-construction has, and the loss grows with signal strength until, at amplitude 20, it is used
-up (§10). The rise is tied to null latents that co-vary with the signal and is reduced by
-modelling the zero atom (§11); the p = 2,048 power collapse is mostly the near-copy S matrix
-(§12). **What it does not:** FDR at p = 2,048 above amplitude 1 (§9 and §12 test 0.5 and 1
-only), other penalties (two tried), real rather than planted labels, or other statistics;
-which non-Gaussian feature (the atom, co-firing, heavy tails) drives the bias in §11 is not
-isolated; and block-diagonal MVR is an approximation to MVR at p = 2,048.
+**What this establishes:** Gaussian knockoffs do not control FDR on SAE latents under standard
+practice (cross-validated penalty), in planted designs matched to real labels, with the violation
+concentrated in interaction signals; a conservative fixed penalty hides it. The bias comes from null
+latents that co-vary with the signal beyond linear correlation. **What it does not:** behaviour on
+real (unplanted) labels; which non-Gaussian feature (atom, co-firing, tails) drives the bias; the
+large-k CV results rest on 10 replicates and 26% of CV choices at the smallest grid value (§16); and
+block-diagonal MVR is an approximation to MVR at p = 2,048. Planted signals are random latents with
+equal weights; a teammate's separate experiment plants them on clusters of related latents.
 
 ## 1. Design
 
@@ -139,7 +147,9 @@ the pre-registered λ = 0.02 and not at λ = 0.05. λ was fixed in advance and n
 - The pre-registered conclusion for Stage 3 is the proposal's first outcome — "robustness
   despite misspecification" — **with an erosion caveat**: FDR control is empirical, the
   margin the valid construction has is largely consumed at high SNR, and the sweep did not
-  reach a violation but did not leave the margin either.
+  reach a violation but did not leave the margin either. **Superseded (§16):** that conclusion
+  holds only at the fixed λ = 0.02. Under the cross-validated penalty the outcome is the
+  proposal's second one, FDR inflation, in both the strong-signal and the realistic designs.
 - A plausible mechanism is that null real latents depend on the signal latents in ways
   (co-firing, sparsity) that Gaussian knockoffs cannot copy, so their W statistics are
   biased positive as the signal sharpens. This was untested when v2 was written; §11 tests
@@ -247,6 +257,9 @@ visible in about a third of the cells at p = 2,048. Practically, fewer latents (
 matrix, if one can be computed at scale) recovers most of the power.
 
 ## 10. Follow-up: does FDR ever cross q? (amplitudes to 20)
+
+> **Correction (§13):** the two amplitude-20 cells reported below as significantly above q do
+> not survive correction for the 126 cells tested (0 under Holm, BH and BY). The rising trend does.
 
 Design fixed in `stage3_amendment_3` and committed (`0a58f29`) before the run. The v2 data,
 S matrices, solver and λ, with amplitudes 1, 2, 3, 5, 8, 12, 20 (both forms, k = 10/20/30,
@@ -398,7 +411,129 @@ zero atom's remaining cost is then about 0.05. Block MVR took about 40 s per S l
 12–15 min on pkgpu's CPU. Its knockoffs (corr ~0.76) are less decorrelated than exact MVR's
 at p = 512 (0.50), so there may be more power to gain.
 
-## 13. Reproduction
+## 13. Multiplicity reanalysis of the cell counts
+
+Earlier sections count cells with mean − 1.96 SE beyond a target, across 36–126 cells, without
+correction. `src/reanalysis_multiplicity.py` (committed with its output in `fef5773`) recomputes them
+with Holm, Benjamini–Hochberg (BH) and Benjamini–Yekutieli (BY, valid under arbitrary dependence; the
+cells share one activation matrix) within each family of cells, and replaces cell counts by one test
+per claim where the claim is about an average or a trend: per-replicate means over the cells
+(pooled test), or per-replicate slopes of FDR on log amplitude tested against 0.
+
+| Claim | Uncorrected | Holm / BH / BY | One test per claim | Status |
+|---|---|---|---|---|
+| FDR above q at amplitude 20 (§10) | 2 of 126 | 0 / 0 / 0 | — | **withdrawn** |
+| Real FDR above the control (v2) | 48 of 108 | 19 / 42 / 30 | — | holds |
+| Real FDR above the control (amplitudes 1–20) | 80 of 126 | 47 / 76 / 63 | slope +0.025 per log-amplitude (real − control), t = 19.3 | holds |
+| Zero atom costs power at p = 512 (§3) | 11 of 108 | 0 / 0 / 0 | −0.015; interaction −0.023 vs linear −0.008, difference p = 0.006 | average holds; cell counts withdrawn |
+| Hurdle lowers FDR at amplitude ≥ 5 (§11, R3) | 40 of 72 | 4 / 27 / 0 | −0.019, p = 7 × 10⁻¹¹ | average holds; R3's cell criterion fails |
+| S matrix drives power at p = 2,048 (§12) | 20, 19 of 36 | 10–12 / 18 / 15 | +0.125, p = 8 × 10⁻¹³ | holds |
+| More rows raise power at p = 2,048 (§12) | 6, 10 of 36 | 0 / 0 / 0 | +0.053, p = 4 × 10⁻⁸ | average holds |
+
+The control's FDR slope on log amplitude is −0.001 (p = 0.01): flat or slightly falling.
+
+## 14. Calibration: where the real labels sit on the amplitude axis
+
+Design `stage3_amendment_4` (committed `e0bb169` before the run; results `5a335e5`); script
+`src/amplitude_calibration.py`; 2 min. A ridge-logistic probe (ridge chosen on validation log-loss)
+is fitted to the real SST-2 labels and, with the same ridge and the same 60/20/20 split, to planted
+labels at amplitudes 0.25–50 (3 draws each). Two placements: the amplitude at which the planted
+labels give the same held-out probe AUC as the real labels, and the amplitude at which the probe's
+top-k coefficient norm matches (the linear generator's coefficient vector has L2 norm = amplitude).
+The ridge and amplitude grids were widened after a smoke test showed both choices at their edges
+(recorded in the amendment).
+
+Real labels: held-out AUC **0.972** (all 2,048 latents, 67,349 rows) and 0.933 (the Stage 3 subset).
+
+| Planted design | AUC-matched amplitude (p = 2,048 / 512) | Norm-matched amplitude (p = 2,048 / 512) |
+|---|---|---|
+| linear, k = 10 / 20 / 30 | ≥ 50 / 37, 28 / 6.4, 11 / 5.2 | 1.2 / 1.6, 1.4 / 1.9, 1.5 / 2.0 |
+| interaction, k = 10 / 20 / 30 | ≥ 50 / ≥ 50, ≥ 50 / 10.6, ≥ 50 / 8.0 | 2.0 / 2.7, 2.2 / 3.1, 2.4 / 3.2 |
+
+The two placements differ by 5–30×: the real labels are as predictable as strong planted signals,
+but no single latent carries much of it. The 10–30-signal benchmark of §1–§12 therefore never tested
+the regime the real labels are in. The AUC match is imprecise near the top, where the planted curves
+flatten (0.95–0.99); a linear probe cannot represent the interaction part of a label, so interaction
+placements are lower bounds.
+
+## 15. Many weak signals (k = 100–300), fixed penalty
+
+Design `stage3_amendment_5` (committed `34ef131` before the run; results `f026ded`); run on pkgpu,
+57 min. All 2,048 latents and 67,349 rows; seeded block-diagonal MVR knockoffs (mean s = 0.253,
+corr(X_j, X̃_j) = 0.748) for the real latents and the Gaussian control; k = 100, 200, 300 ×
+amplitudes 1–32 × both forms × q; 30 replicates; λ = 0.02. Amplitude 32 was added after a
+diagnose run showed the interaction designs below the real labels' AUC at every amplitude up to 16
+(recorded in the amendment).
+
+- **K1 (control valid):** holds. **K3 (breach):** no cell, real or control, above q after BY.
+- **K2 (erosion extends):** the real-minus-control FDR slope on log amplitude is positive for every
+  k after Holm over the three k (p = 0.003, 0.047, 0.047), but about a quarter of the strong-signal
+  slope (+0.005 to +0.007 against +0.025).
+- Real-latent FDR exceeds the control's by +0.015, +0.014, +0.010 at k = 100, 200, 300 (pooled,
+  p ≤ 3 × 10⁻⁴).
+- With many signals the control itself uses much more of the budget than in §1–§12 (FDR 0.03–0.07
+  at q = 0.10, against 0.004), and power falls with k at the fixed penalty (about 0.95, 0.7, 0.45 at
+  k = 100, 200, 300 at strong signals).
+
+FDR at q = 0.10 at the AUC-matched (realistic) amplitude:
+
+| Design | k = 100 | k = 200 | k = 300 |
+|---|---|---|---|
+| linear (amplitude ≈ 8), real / control | 0.056 / 0.029 | 0.062 / 0.042 | 0.077 / 0.061 |
+| interaction (amplitude ≥ 32, bound), real / control | 0.062 / 0.036 | 0.082 / 0.054 | 0.086 / 0.067 |
+
+## 16. The cross-validated penalty
+
+Design `stage3_amendment_6` (committed `4d9165e` before either full run; results `d06eaf7`); script
+`src/stage3_followups.py --experiment cvlambda`; run on pkgpu (stress part 88 min, large-k part
+292 min). Each saved cell is regenerated with the saved run's seeds (identical labels and knockoff
+draws; reproduction check L0 exact for every arm) and refitted with λ chosen by 5-fold
+cross-validation over λ_max × {0.5 … 0.0025} of [X, X̃] (lowest held-out log-loss), so cross-validated
+and fixed λ are paired. The grid was extended down to 0.0025 after a smoke test put 17–28% of choices
+at the old bottom edge (recorded in the amendment). Parts: the strong-signal cells of §10
+(amplitudes 1, 5, 20, k = 10–30, 30 replicates) and the realistic designs of §15 (amplitudes 8 and
+32, k = 100 and 300, 10 replicates, set from timing).
+
+**Cross-validated λ:** median 0.0026 in the strong-signal part (0.02 × λ_max; 2–3% at a grid edge)
+and 0.0005–0.0007 in the large-k part (0.005–0.01 × λ_max; 26% at the smallest value, just above the
+pre-registered 25% limit and stated as a limitation, rule L3). If anything, a smaller λ would push
+FDR higher.
+
+**Strong-signal part (p = 512):**
+
+| Amplitude | Real, fixed λ | Real, CV λ | Control, fixed λ | Control, CV λ |
+|---|---|---|---|---|
+| 1 | 0.012 | 0.094 | 0.008 | 0.077 |
+| 5 | 0.041 | 0.115 | 0.004 | 0.081 |
+| 20 | 0.086 | 0.143 | 0.004 | 0.083 |
+
+(mean FDR at q = 0.10.) **L1:** 7 real-latent cells above q after BY, all at amplitude 20 with
+interaction signals (largest 0.345 ± 0.024 at q = 0.20 and 0.207 ± 0.020 at q = 0.10); the control
+none (largest cell 0.103 at q = 0.10). **L2:** real minus control at CV λ +0.035 (p = 3 × 10⁻⁹); the
+amplitude trend persists (slope +0.013, p = 3 × 10⁻⁵; +0.023 at fixed λ). Power rises by +0.025.
+
+**Realistic designs (p = 2,048, all rows):**
+
+| Design (mean FDR at q = 0.10) | Real, fixed λ | Real, CV λ | Control, fixed λ | Control, CV λ |
+|---|---|---|---|---|
+| linear, amplitude 8, k = 100 / 300 | 0.067 / 0.059 | 0.098 / 0.111 | 0.025 / 0.060 | 0.095 / 0.088 |
+| interaction, amplitude 8, k = 100 / 300 | 0.048 / 0.092 | **0.183 / 0.220** | 0.038 / 0.065 | 0.093 / 0.092 |
+| linear, amplitude 32, k = 100 / 300 | 0.053 / 0.063 | 0.133 / 0.080 | 0.027 / 0.055 | 0.118 / 0.090 |
+| interaction, amplitude 32, k = 100 / 300 | 0.059 / 0.098 | **0.357 / 0.277** | 0.035 / 0.069 | 0.090 / 0.105 |
+
+**L1:** 12 of 24 real-latent cells above q after BY, every one an interaction design (largest 0.357
+at q = 0.10, 0.531 at q = 0.20); linear designs sit at or slightly above q without a significant
+breach; the control has none. **L2:** real minus control at CV λ +0.086 (p = 2 × 10⁻¹¹). Cross-validation
+raises power from about 0.68 to about 1.0 for both arms.
+
+**Interpretation.** With valid knockoffs a cross-validated penalty leaves FDR near but below q, as
+the control shows. On real latents the invalid Gaussian knockoffs then produce real excess false
+discoveries, concentrated where the label depends on products of latents. The fixed λ = 0.02 of the
+earlier sections was legitimate but unusually conservative; it is why §1–§12 found only an eroding
+margin. A follow-up testing the Stage 4 repairs under the cross-validated penalty in these realistic
+designs (`stage4_amendment_4`) is running.
+
+## 17. Reproduction
 
 ```bash
 python src/planted_fdr_controls.py --config config/default.yaml --device cuda --stage diagnose  # ~4 min
@@ -428,3 +563,16 @@ Both checkpoint after each replicate and resume when rerun. Artefacts: `results/
 `fig19_stage3_boundary.png`, `fig20_stage3_mechanism.png`; `results/stage3_dims.json`,
 `results/stage3_dims_records.npz`, `fig21_stage3_dims.png`. A `--stage diagnose` run of each
 gives timing, sampler checks and a one-cell pilot in minutes.
+
+§13–§16:
+```bash
+python src/reanalysis_multiplicity.py --config config/default.yaml                     # seconds; reads saved records
+python src/amplitude_calibration.py --config config/default.yaml --device cuda         # ~2 min
+python src/stage3_followups.py --config config/default.yaml --device cuda --experiment largek --stage full              # ~1 h (pkgpu)
+python src/stage3_followups.py --config config/default.yaml --device cuda --experiment cvlambda --part stress --stage full   # ~1.5 h
+python src/stage3_followups.py --config config/default.yaml --device cuda --experiment cvlambda --part largek --stage full   # ~5 h
+```
+The cvlambda parts need the saved `stage3_stress_records.npz` and `stage3_largek_records.npz`, which they
+pair with; largek needs `stage3_calibration.json`. Artefacts: `results/multiplicity_reanalysis.json`,
+`stage3_calibration.json` + `fig23`, `stage3_largek.json` + records + `fig24`, `stage3_cvlambda_{stress,largek}.json`
++ records.

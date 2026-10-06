@@ -20,7 +20,12 @@ All numbers below come from the committed result files and can be re-derived fro
 | `01f1a4a` | Stage 3: pre-register (Amendment 2) and add the p = 2,048 follow-up |
 | `fd6b528`, `5e7b0cb` | Stage 3: p = 2,048 results (committed by a teammate who ran it) |
 | `0a58f29` | Stage 3: pre-register (Amendment 3) and add the mechanism, boundary and p = 2,048 factorial follow-ups |
-| next commit | Stage 3: follow-up results and findings §10–§12 |
+| `e82ea55`, `c589371` | Stage 3: follow-up results and findings §10–§12; this file |
+| `e9fd8b7`, `22882ff`, `fef5773` | Stage 4: block-MVR baseline (design, seed fix, results); multiplicity reanalysis |
+| `e0bb169`, `5a335e5` | Stage 3: amplitude calibration (design, results) |
+| `34ef131`, `f026ded` | Stage 3: many-weak-signal (large-k) follow-up (design, results) |
+| `4d9165e`, `d06eaf7` | Stage 3: cross-validated penalty (design, results) |
+| `a022006` | Stage 4: repairs under the cross-validated penalty (design; running) |
 
 **Headline results**
 
@@ -35,7 +40,18 @@ All numbers below come from the committed result files and can be re-derived fro
   highest-signal cells. v1's "power collapse" is real at p = 2,048, but it comes mostly from
   the high-dimensional setting (n/p ≈ 10 with near-copy knockoffs), not the zero atom. The
   atom adds a smaller loss there, and none at p = 512.
-- **Stage 3 follow-ups:** extended to amplitude 20, FDR does exceed q (2 cells at q = 0.05).
+- **Stage 3, cross-validated penalty (6 Oct, the current headline):** with λ chosen by
+  cross-validation, as in standard practice, Gaussian knockoffs on real latents exceed the FDR
+  target after Benjamini–Yekutieli correction (7 of 54 strong-signal cells; 12 of 24 cells in the
+  designs matched to the real labels, all interaction, up to 0.36 at q = 0.10); the Gaussian control
+  does not. The fixed λ = 0.02 used earlier was conservative enough to hide this.
+- **Stage 4, block-MVR baseline:** hurdle knockoffs trail block-MVR Gaussian knockoffs on power
+  (−0.045, p = 5 × 10⁻⁷) while making fewer false discoveries (−0.011); the earlier "77% of the gap"
+  came from a weak equicorrelated baseline.
+- **Statistics:** most per-cell counts in the findings were uncorrected; averages and trends hold
+  under correction, individual-cell claims at the fixed penalty mostly do not (the amplitude-20
+  breach is withdrawn).
+- **Stage 3 follow-ups (superseded in part):** extended to amplitude 20, FDR does exceed q (2 cells at q = 0.05; withdrawn after correction).
   The rise comes from null latents that co-vary with the signal beating their Gaussian
   knockoffs ~75% of the time; hurdle knockoffs cut it by 30–45% but overshoot. At p = 2,048
   the power collapse is mainly the near-copy S matrix: block-diagonal MVR plus all rows lifts
@@ -300,6 +316,30 @@ in 100 min):
   - The zero atom costs 0.11–0.14 with equicorrelated knockoffs, but 0.05–0.06 with MVR.
   - No dims cell is FDR-inflated.
 
+## 4d. Corrections, calibration, many weak signals and the cross-validated penalty (5–6 Oct)
+
+All pre-registered before their runs (`stage4_amendment_3`, `stage3_amendment_4`–`6`,
+`stage4_amendment_4`); changes made after smoke tests are recorded in each amendment.
+
+- **Block-MVR baseline for Stage 4** (`e9fd8b7`, `22882ff`, `fef5773`). New arms reuse Stage 4's
+  labels; the original Gaussian arm reproduced exactly (M0). Hurdle − block MVR: power −0.045,
+  FDR −0.011. Rule M1: the hurdle trails a well-chosen Gaussian baseline. The first full run was
+  stopped because knockpy's MVR solver was unseeded (not reproducible); the solve is now seeded, here
+  and in the Stage 3 dims script (whose committed results came from an unseeded solve).
+- **Multiplicity reanalysis** (`src/reanalysis_multiplicity.py`, `fef5773`). Holm, BH and BY within
+  each family of cells; pooled and trend tests for average claims; the interaction-versus-linear
+  power claim as one direct test (p = 0.006). Stage 3 §13 and Stage 4 §7 list what changes.
+- **Amplitude calibration** (`src/amplitude_calibration.py`, `e0bb169`, `5a335e5`). Real SST-2
+  labels: probe AUC 0.972, matched by planted amplitudes 5 to over 50, but top-k coefficient norms
+  matched by amplitudes 1–3: many weak signals. Stage 3 §14.
+- **Large-k benchmark** (`34ef131`, `f026ded`; pkgpu, 57 min). 100–300 weak signals, all rows and
+  latents, block MVR. At λ = 0.02: no breach after correction; real minus control +0.010 to +0.015;
+  the control itself at 0.03–0.07. Stage 3 §15.
+- **Cross-validated penalty** (`4d9165e`, `d06eaf7`; pkgpu). Paired with the saved fixed-λ runs
+  (identical labels and knockoffs, reproduction exact). FDR breaches on real latents only (7 and 12
+  cells after BY); real minus control +0.035 and +0.086. Stage 3 §16.
+- **Stage 4 under the cross-validated penalty** (`a022006`; running on pkgpu). Stage 4 §8.
+
 ## 5. Other files
 
 - `config/default.yaml`: new `stage1` keys, plus `stage1_validate` and `stage3_v2` blocks.
@@ -328,9 +368,10 @@ for Stage 1. They need the activation cache `data/cache/d33d210c5acb.npz`.
 
 1. Stage 1: add a null-intervention reference (matched random latents) to get a calibrated
    false-certification rate. This needs Amendment 3.
-2. Stage 3: done in §4c. Still open: FDR at p = 2,048 above amplitude 1, and which
-   non-Gaussian feature (atom, co-firing, tails) carries the bias.
-3. Paper: a "deviations from the proposal" section. Ablation is on a probe, not the model;
+2. Stage 3: which non-Gaussian feature (atom, co-firing, tails) carries the bias (a zero-atom-only
+   synthetic control would separate the atom); real (unplanted) labels.
+3. Stage 4: the repairs under the cross-validated penalty (running).
+4. Paper: a "deviations from the proposal" section. Ablation is on a probe, not the model;
    the scope is SST-2 / Gemma only; thresholds were fixed through post-hoc amendments; and
    the Stage 1 false-certification rate is incomplete.
 
