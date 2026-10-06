@@ -378,6 +378,27 @@ stage3_cvlambda:
   diagnose:
     pilot_replicates: 1
 
+# Stage 4 under the cross-validated penalty (config/preregistration.yaml stage4_amendment_4): the
+# repairs in the realistic many-weak-signal regime where Gaussian knockoffs break FDR at CV lambda.
+# Data, S settings and knockoff draws are Stage 4's (stage4_repairs, stage4_mvr); every fit is done at
+# the fixed lambda and at the CV lambda (paired).
+stage4_cv:
+  signal_amplitudes: [8.0, 32.0]  # the probe-AUC-matched (realistic) designs from stage3_largek
+  functional_forms: [linear, interaction]
+  signal_sizes: [100, 300]
+  replicates: 10
+  cv:                             # as stage3_cvlambda
+    folds: 5
+    lambda_ratios: [0.5, 0.3, 0.2, 0.1, 0.06, 0.04, 0.02, 0.01, 0.005, 0.0025]
+    lasso:
+      max_iter: 1000
+      tol: 1.0e-4
+  arm_groups:                     # run separately (e.g. on two GPUs), then --stage analyse
+    hurdle: [hurdle]
+    gauss: [gauss_real, gauss_mvr, gauss_ceiling_mvr]
+  diagnose:
+    pilot_replicates: 1
+
 paths:
   cache_dir: data/cache
   results_dir: results

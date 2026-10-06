@@ -48,6 +48,8 @@ STREAMS = [
     "s3k_planted",           # Stage 3 largek: planted signals and labels (per-cell streams)
     "s3k_knockoff",          # Stage 3 largek: knockoff draws (per-cell streams)
     "s3cv_folds",            # Stage 3 cvlambda: cross-validation folds (per-cell streams)
+    "s4cv_planted",          # Stage 4 cv: planted signals and labels (per-cell streams)
+    "s4cv_folds",            # Stage 4 cv: cross-validation folds (per-cell streams)
 ]
 
 

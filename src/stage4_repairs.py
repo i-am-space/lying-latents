@@ -542,14 +542,18 @@ def main() -> None:
     ap.add_argument("--config", default="config/default.yaml")
     ap.add_argument("--cache", default=None)
     ap.add_argument("--device", default=None)
-    ap.add_argument("--stage", default="diagnose", choices=["diagnose", "full"])
+    ap.add_argument("--stage", default="diagnose", choices=["diagnose", "full", "analyse"])
     ap.add_argument("--limit-reps", type=int, default=None)
     ap.add_argument("--skip-exchangeability", action="store_true")
-    ap.add_argument("--experiment", default="repairs", choices=["repairs", "mvr"],
+    ap.add_argument("--arm-group", default="gauss", help="cv only: which arm group to run")
+    ap.add_argument("--experiment", default="repairs", choices=["repairs", "mvr", "cv"],
                     help="repairs: the five pre-registered arms; mvr: add block-MVR Gaussian arms (stage4_amendment_3)")
     args = ap.parse_args()
     if args.experiment == "mvr":
         main_mvr(args)
+        return
+    if args.experiment == "cv":
+        main_cv(args)
         return
 
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
@@ -628,6 +632,183 @@ def main() -> None:
     for f in (ckpt, ckpt.with_suffix(".npz"), ckpt.with_suffix(".pt")):
         f.unlink(missing_ok=True)
     print(f"\nwrote {rd}/stage4_repairs.json, stage4_repairs_records.npz, fig18 ({out['minutes']} min)")
+
+
+# ---------------------------------------------------------------------------
+# repairs under the cross-validated penalty (config/preregistration.yaml stage4_amendment_4)
+# ---------------------------------------------------------------------------
+
+def run_cv(cfg, sec, D, device, R, arms, arm_ids, checkpoint=None):
+    """Every fit twice: at the fixed lambda and at the 5-fold CV lambda (same knockoff draw, same
+    labels), so the two are paired. Knockoff draws: Stage 4's (s4r_knockoff, Stage 4 arm ids)."""
+    from stage3_followups import cv_lasso
+    qs, amps, forms, ks = sec["nominal_fdr_targets"], sec["signal_amplitudes"], sec["functional_forms"], sec["signal_sizes"]
+    names = [a for a, _ in arms]
+    shape = (len(amps), len(forms), len(ks), R)
+    M = {f"{m}_{lam}": {a: np.full(shape + (len(qs),), np.nan, dtype=np.float32) for a in names}
+         for m in ("ko_fdr", "ko_pow", "ko_nd") for lam in ("fixed", "cv")}
+    LAM = {a: np.zeros(shape + (3,), dtype=np.float32) for a in names}
+    corr, dinfo = {a: [] for a in names}, {a: [] for a in names}
+    key = {"shape": list(shape), "arms": names}
+    start = 0
+    if checkpoint is not None and checkpoint.exists():
+        meta = json.loads(checkpoint.read_text())
+        if all(meta.get(k) == v for k, v in key.items()):
+            z = np.load(checkpoint.with_suffix(".npz"))
+            for m in M:
+                for a in names:
+                    M[m][a] = z[f"{m}__{a}"]
+            for a in names:
+                LAM[a] = z[f"lam__{a}"]
+            corr, dinfo, start = meta["corr"], meta["draw_info"], meta["reps_done"]
+            if checkpoint.with_suffix(".pt").exists():
+                for k_, v in torch.load(checkpoint.with_suffix(".pt"), map_location=device).items():
+                    D["scip"][k_].warm = v
+            print(f"  resuming from checkpoint: {start}/{R} replicates done", flush=True)
+    t0 = time.time()
+    no_thr = {q: float("inf") for q in qs}
+    for rep in range(start, R):
+        for name, method in arms:
+            seed = int(cell_rng(cfg, "s4r_knockoff", arm_ids[name], rep).integers(2**31))
+            Dm, Dk, info = data_and_knockoffs(method, D, seed)
+            corr[name].append(mean_corr(Dm, Dk)); dinfo[name].append(info)
+            Phi = torch.from_numpy(np.hstack([Dm, Dk]).astype(np.float32)).to(device)
+            del Dk
+            p = Dm.shape[1]
+            label_Z = D["Zg"] if method in CONTROL_METHODS else D["Z"]
+            for ia, amp in enumerate(amps):
+                for jf, form in enumerate(forms):
+                    for kk, k in enumerate(ks):
+                        rng = cell_rng(cfg, "s4cv_planted", ia, jf, kk, rep)
+                        S_idx = np.sort(rng.choice(p, size=k, replace=False))
+                        truth = set(S_idx.tolist())
+                        y_np, _ = generate_planted_labels(label_Z, S_idx, form, amp, rng)
+                        y_t = torch.from_numpy(y_np.astype(np.float32)).to(device)
+                        w, _, _, _ = fit_lasso_checked(Phi, y_t, sec["lasso"]["lambda"], sec["lasso"]["max_iter"], sec["lasso"]["tol"])
+                        wcv, _, li = cv_lasso(Phi, y_t, sec["cv"], cell_rng(cfg, "s4cv_folds", ia, jf, kk, rep))
+                        for lam, ww in (("fixed", w), ("cv", wcv)):
+                            w_np = ww.cpu().numpy()
+                            sc = score_fit(np.abs(w_np[:p]) - np.abs(w_np[p:]), np.zeros(p), no_thr, qs, truth)
+                            for m in ("ko_fdr", "ko_pow", "ko_nd"):
+                                M[f"{m}_{lam}"][name][ia, jf, kk, rep] = sc[m]
+                        LAM[name][ia, jf, kk, rep] = (li["lambda"], li["lambda"] / li["lambda_max"], float(li["edge"]))
+            del Phi
+        if checkpoint is not None:
+            np.savez(checkpoint.with_suffix(".npz"), **{f"{m}__{a}": M[m][a] for m in M for a in names},
+                     **{f"lam__{a}": LAM[a] for a in names})
+            torch.save({k_: smp.warm for k_, smp in D["scip"].items()}, checkpoint.with_suffix(".pt"))
+            checkpoint.write_text(json.dumps({**key, "reps_done": rep + 1, "corr": corr, "draw_info": dinfo}, default=float))
+        el = time.time() - t0
+        print(f"  rep {rep + 1:>2}/{R}  elapsed {el / 60:.1f}m  ETA {el / (rep + 1 - start) * (R - rep - 1) / 60:.1f}m", flush=True)
+    return M, LAM, corr, dinfo
+
+
+def analyse_cv(cfg, sec, rd: Path) -> dict:
+    """Combine the arm groups' records and apply rules C1-C3 (corrected statistics only)."""
+    from reanalysis_multiplicity import by_adjust, cells, one_sided_exceed, two_sided_diff
+    qs, amps, forms, ks = sec["nominal_fdr_targets"], sec["signal_amplitudes"], sec["functional_forms"], sec["signal_sizes"]
+    d = {"amplitudes": amps, "forms": forms, "signal_sizes": ks, "nominal_fdr_targets": qs}
+    z = {}
+    for g in sec["arm_groups"]:
+        f = rd / f"stage4_cv_{g}_records.npz"
+        if not f.exists():
+            raise SystemExit(f"{f} missing: run --arm-group {g} first")
+        z.update(dict(np.load(f)))
+    arms = sorted({k.split("__", 1)[1] for k in z if k.startswith("ko_fdr_cv__")})
+    out = {"arms": arms, "by_lambda": {}}
+    for lam in ("fixed", "cv"):
+        res = {}
+        for a in arms:
+            F = z[f"ko_fdr_{lam}__{a}"]
+            pv = np.array([one_sided_exceed(F[ia, jf, kk, :, iq], c["q"])[2] for (ia, jf, kk, iq), c in cells(d)])
+            res[a] = {"n_breach_BY": int((by_adjust(pv) < 0.05).sum()),
+                      "mean_fdr": float(F.mean()), "mean_fdr_q0.10": float(F[..., qs.index(0.10)].mean()),
+                      "max_cell_fdr_q0.10": float(F[..., qs.index(0.10)].mean(axis=3).max()),
+                      "mean_power": float(z[f"ko_pow_{lam}__{a}"].mean())}
+        out["by_lambda"][lam] = res
+
+    def pooled(a, b, metric, lam):
+        va = z[f"{metric}_{lam}__{a}"].mean(axis=(0, 1, 2, 4))
+        vb = z[f"{metric}_{lam}__{b}"].mean(axis=(0, 1, 2, 4))
+        m, se, p = two_sided_diff(va, vb, True)
+        return {"mean_diff": m, "se": se, "p_two_sided": p}
+
+    h, g, ctrl = "hurdle", "gauss_mvr", "gauss_ceiling_mvr"
+    out["C1_control_valid_cv"] = bool(out["by_lambda"]["cv"].get(ctrl, {}).get("n_breach_BY", 1) == 0)
+    if h in arms and g in arms:
+        out["hurdle_minus_mvr"] = {lam: {m: pooled(h, g, m, lam) for m in ("ko_fdr", "ko_pow")} for lam in ("fixed", "cv")}
+        hf = out["hurdle_minus_mvr"]["cv"]["ko_fdr"]
+        out["C3_hurdle_restores_control"] = bool(out["by_lambda"]["cv"][h]["n_breach_BY"] == 0
+                                                 and hf["mean_diff"] < 0 and hf["p_two_sided"] < 0.05)
+    out["C2_gaussian_breaches_cv"] = {a: out["by_lambda"]["cv"][a]["n_breach_BY"] for a in arms if a.startswith("gauss")}
+    lamz = {k.split("__", 1)[1]: v for k, v in z.items() if k.startswith("lam__")}
+    out["cv_lambda"] = {a: {"median_ratio_to_lambda_max": float(np.median(v[..., 1])), "share_at_grid_edge": float(v[..., 2].mean())}
+                        for a, v in lamz.items()}
+    out["cells_q0.10"] = {lam: {a: {f"{amp}|{form}|{k}": float(z[f"ko_fdr_{lam}__{a}"][ia, jf, kk, :, qs.index(0.10)].mean())
+                                    for ia, amp in enumerate(amps) for jf, form in enumerate(forms) for kk, k in enumerate(ks)}
+                                for a in arms} for lam in ("fixed", "cv")}
+    return out
+
+
+def main_cv(args) -> None:
+    device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
+    cfg = load_config(args.config)
+    rd = results_dir(cfg)
+    ext = cfg["stage4_cv"]
+    sec = {**cfg["stage4_repairs"], **{k: v for k, v in cfg["stage4_mvr"].items() if k == "mvr_max_block"},
+           **{k: v for k, v in ext.items() if k not in ("arm_groups",)}, "arm_groups": ext["arm_groups"]}
+    if args.stage == "analyse":
+        out = analyse_cv(cfg, sec, rd)
+        (rd / "stage4_cv.json").write_text(json.dumps(out, indent=2, default=float))
+        for lam, res in out["by_lambda"].items():
+            for a, r in res.items():
+                print(f"  [{lam:5s}] {a:18s} FDR(q=.1) {r['mean_fdr_q0.10']:.3f}  max cell {r['max_cell_fdr_q0.10']:.3f}  "
+                      f"BY breaches {r['n_breach_BY']}  power {r['mean_power']:.3f}")
+        for k in ("C1_control_valid_cv", "C2_gaussian_breaches_cv", "C3_hurdle_restores_control", "hurdle_minus_mvr", "cv_lambda"):
+            print(f"  {k}: {json.dumps(out.get(k), default=float)}")
+        print(f"\nwrote {rd}/stage4_cv.json")
+        return
+    group = args.arm_group
+    all_arms = [tuple(a) for a in cfg["stage4_repairs"]["arms"]] + [tuple(a) for a in cfg["stage4_mvr"]["arms"]]
+    arm_ids = {n: i for i, (n, _) in enumerate(all_arms)}
+    arms = [(n, m) for n, m in all_arms if n in ext["arm_groups"][group]]
+    cp = Path(args.cache) if args.cache else cache_path(cfg)
+    if not cp.exists():
+        raise SystemExit(f"Cache not found at {cp}. Run src/cache_activations.py first.")
+    d = np.load(cp, allow_pickle=True)
+    X_all = d[f"X_{cfg['aggregation']['primary']}"].astype(np.float32, copy=False)
+    print(f"device: {device} | cache {d['config_hash']} | experiment: cv | group: {group} | stage: {args.stage}")
+    t0 = time.time()
+    print("\n=== data and samplers ===")
+    D = build(cfg, sec, X_all, device, methods=[m for _, m in arms])
+    del X_all
+    R = args.limit_reps or (ext["diagnose"]["pilot_replicates"] if args.stage == "diagnose" else ext["replicates"])
+    print(f"\n=== {args.stage}: arms {[a for a, _ in arms]}, {R} replicate(s) ===")
+    ckpt = None if args.stage == "diagnose" else rd / f"stage4_cv_{group}_checkpoint.json"
+    t = time.time()
+    M, LAM, corr, dinfo = run_cv(cfg, sec, D, device, R, arms, arm_ids, checkpoint=ckpt)
+    if args.stage == "diagnose":
+        per_rep = (time.time() - t) / R
+        iq = sec["nominal_fdr_targets"].index(0.10)
+        for a, _ in arms:
+            print(f"  {a:18s} CV lambda / lambda_max median {np.median(LAM[a][..., 1]):.4f}  edge {LAM[a][..., 2].mean():.0%}")
+        est = ext["replicates"] * per_rep / 60
+        print(f"  {per_rep:.0f}s per replicate -> projected full run ~{est:.0f} min on this machine")
+        (rd / f"stage4_cv_{group}_diagnose.json").write_text(json.dumps(
+            {"info": D["info"], "seconds_per_replicate": per_rep, "projected_full_minutes": est,
+             "cv_lambda": {a: {"median_ratio": float(np.median(LAM[a][..., 1])), "edge": float(LAM[a][..., 2].mean())}
+                           for a, _ in arms}, "draw_info": dinfo}, indent=2, default=float))
+        print(f"\nwrote {rd}/stage4_cv_{group}_diagnose.json")
+        return
+    np.savez(rd / f"stage4_cv_{group}_records.npz", **{f"{m}__{a}": M[m][a] for m in M for a, _ in arms},
+             **{f"lam__{a}": LAM[a] for a, _ in arms})
+    (rd / f"stage4_cv_{group}_info.json").write_text(json.dumps(
+        {"info": D["info"], "mean_corr_X_Xk": {a: float(np.mean(v)) for a, v in corr.items() if v}, "draw_info": dinfo,
+         "replicates": R, "minutes": round((time.time() - t0) / 60, 1)}, indent=2, default=float))
+    for f in (ckpt, ckpt.with_suffix(".npz"), ckpt.with_suffix(".pt")):
+        f.unlink(missing_ok=True)
+    print(f"\nwrote {rd}/stage4_cv_{group}_records.npz ({(time.time() - t0) / 60:.1f} min); "
+          f"run --stage analyse once every group is done")
 
 
 # ---------------------------------------------------------------------------

@@ -1262,3 +1262,44 @@ stage3_amendment_6:
     power were seen only as averages printed by the pilot (power 1.0 at q = 0.10 for both arms) and
     played no part in the change. A large-k diagnose run on a laptop did not finish its first replicate
     before the machine overheated; it produced no results.
+
+# ===========================================================================
+# AMENDMENT 4 - Stage 4 repairs under the cross-validated penalty (written BEFORE it ran)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+stage4_amendment_4:
+  meta:
+    date_written: "2026-10-06"
+    status: written_before_run
+    trigger: >
+      Under the cross-validated lasso penalty (stage3_amendment_6), Gaussian knockoffs on real latents
+      exceeded the FDR target after Benjamini-Yekutieli correction in the realistic many-weak-signal
+      designs (12 cells, all interaction; the control none). Every Stage 4 comparison used the fixed
+      penalty, where nothing breached, so FDR could not separate the repairs. Hurdle knockoffs had lower
+      FDR than block-MVR Gaussian knockoffs at the fixed penalty (0.013 vs 0.023) but less power.
+  design:
+    data: "Stage 4's: p = 2048, n = 20,000 (stage3_p2048 rows), Ledoit-Wolf, seeded block-MVR S (stage4_amendment_3)."
+    cells: "The realistic designs from stage3_largek: k = 100, 300 x amplitudes 8, 32 x linear/interaction x q .05/.10/.20; 10 replicates; labels from a new stream (s4cv_planted)."
+    arms: >
+      hurdle (SCIP, the stage4_repairs settings), gauss_real (equicorrelated), gauss_mvr (block MVR),
+      gauss_ceiling_mvr (Gaussian control, block MVR). Knockoff draws use Stage 4's stream and arm ids;
+      the hurdle runs in its own group (one SCIP draw per replicate, about 14 min on the server).
+    penalty: >
+      Every fit is done twice on the same knockoff draw and labels: at the fixed lambda (0.02) and at the
+      5-fold CV lambda of stage3_amendment_6 (same grid relative to lambda_max of [X, X~], lowest held-out
+      log-loss; folds from s4cv_folds). Fixed and CV results are therefore paired.
+  decision_rules:
+    - id: C1
+      rule: "The block-MVR Gaussian control must show no FDR breach after Benjamini-Yekutieli at CV lambda; otherwise the run is investigated before interpretation."
+    - id: C2
+      rule: "Breaches (Benjamini-Yekutieli, per arm over its 24 cells) are reported for every arm at both penalties."
+    - id: C3
+      rule: >
+        Hurdle knockoffs are said to restore FDR control under the CV penalty only if, at CV lambda, the
+        hurdle arm has no Benjamini-Yekutieli breach and its FDR is significantly below gauss_mvr's (paired
+        pooled test, p < 0.05). The paired power difference (hurdle - gauss_mvr) is reported either way.
+    - id: C4
+      rule: "No tuning after seeing results; the CV-lambda grid-edge share is reported (above 25% is a stated limitation)."
+  interpretation_constraints:
+    - "Same planted-signal benchmark and dataset as Stages 3-4; 10 replicates (timing)."
