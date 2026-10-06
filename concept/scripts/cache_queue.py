@@ -21,6 +21,20 @@ running = {}                                   # gpu -> (key, Popen)
 done = {k for k in order if (cdir / f"lat_{k}.json").exists()}
 failed = set()
 attempts = {}
+
+
+def free_mb(g):
+    """Free memory on GPU g (other users share these cards)."""
+    try:
+        out = subprocess.run(["nvidia-smi", "-i", str(g), "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
+                             capture_output=True, text=True).stdout
+        return int(out.strip().splitlines()[0])
+    except Exception:
+        return 0
+
+
+def need_mb(k):
+    return 24000 if cc["saes"][k]["width"] >= 524288 else 9000
 print(time.strftime("%T"), "start; already done:", sorted(done), flush=True)
 while len(done | failed) < len(order):
     for g, (k, pr) in list(running.items()):
@@ -35,16 +49,17 @@ while len(done | failed) < len(order):
             else:
                 log = (logs / f"lat_{k}.log").read_text()[-3000:]
                 attempts[k] = attempts.get(k, 0) + 1
-                if (pr.returncode == 75 or "CUDA driver initialization failed" in log) and attempts[k] < 30:
-                    print(time.strftime("%T"), "CUDA init failure, requeue", k, attempts[k], flush=True)
+                if (pr.returncode == 75 or "CUDA driver initialization failed" in log or "OutOfMemoryError" in log) and attempts[k] < 30:
+                    print(time.strftime("%T"), "CUDA init/OOM failure, requeue", k, attempts[k], flush=True)
                 else:
                     failed.add(k); print(time.strftime("%T"), "FAILED", k, "rc", pr.returncode, flush=True)
     busy = {k for k, _ in running.values()}
     ready = [k for k in order if k not in done | failed | busy and resid_ready(cc["saes"][k]["layer"])
              and (cdir / "sae" / cc["saes"][k]["path"] / ".verified").exists()]
-    for g in gpus:
-        if g not in running and ready:
-            k = ready.pop(0)
+    for g in sorted(gpus, key=free_mb, reverse=True):          # emptiest card first
+        fits = [k for k in ready if free_mb(g) >= need_mb(k)]
+        if g not in running and fits:
+            k = fits[0]; ready.remove(k)
             env = dict(os.environ, CUDA_VISIBLE_DEVICES=str(g))
             pr = subprocess.Popen([sys.executable, "-u", str(ROOT / "concept/src/cache_sparse_latents.py"), "--key", k],
                                   env=env, stdout=open(logs / f"lat_{k}.log", "w"), stderr=subprocess.STDOUT)

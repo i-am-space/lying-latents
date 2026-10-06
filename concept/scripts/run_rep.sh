@@ -4,7 +4,7 @@ cd "$(dirname "$0")/../.."
 C=data/cache/concept; LOG=$C/logs; R=concept/results
 stamp() { echo "$(date '+%F %T') $*" | tee -a $LOG/STATUS_REP; }
 gpu_pair() {  # run "$1" with keys split across GPU 0 and 1; wait for both
-  local script=$1; shift; local tag=$1; shift; local a=() b=() i=0
+  local script=$1; shift; local tag=$1; shift; local a=() b=() i=0 pids=()
   for k in "$@"; do if (( i % 2 == 0 )); then a+=("$k"); else b+=("$k"); fi; i=$((i+1)); done
   for g in 0 1; do
     local ks; [ $g = 0 ] && ks="${a[*]}" || ks="${b[*]}"
@@ -12,14 +12,15 @@ gpu_pair() {  # run "$1" with keys split across GPU 0 and 1; wait for both
     ( for t in $(seq 30); do
         CUDA_VISIBLE_DEVICES=$g python3 -u $script $ks >> $LOG/${tag}_gpu$g.log 2>&1 && break
         echo "retry $t" >> $LOG/${tag}_gpu$g.log; sleep 20; done ) &
-  done; wait
+    pids+=($!)
+  done; wait "${pids[@]}"             # only this stage's GPU jobs, not the detached cache scheduler
 }
 ARMS="latent group group_sum group_lasso mkf_c1 mkf_c1.93"
 PL="concept/src/planted_concept.py --tag rep --designs A B C D --arms $ARMS"
 REAL="concept/src/width_sweep_real.py run --tag rep --arms latent group group_sum group_lasso"
 keys() { python3 -c "import sys;sys.path.insert(0,'concept/src');from cseeds import load_concept_config,layer_keys;print(' '.join(layer_keys(load_concept_config()['concept'],$1)))"; }
 
-pgrep -f "concept/scripts/cache_queue.py" >/dev/null || { setsid nohup python3 -u concept/scripts/cache_queue.py >> $LOG/queue.log 2>&1 < /dev/null & }
+# the cache scheduler is started separately (concept/scripts/cache_queue.py), never as a child of this script
 if [ ! -f $R/toy_glasso.json ]; then stamp "toy: group lasso validity (T1G)"
   for t in $(seq 10); do CUDA_VISIBLE_DEVICES=1 python3 -u concept/src/toy_sumstat.py --stat glasso > $LOG/toy_glasso.log 2>&1 && break; sleep 20; done; fi
 
