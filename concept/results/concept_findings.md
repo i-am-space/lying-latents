@@ -232,3 +232,106 @@ All recorded in the pre-registration file before the runs they affect:
 
 `concept/README.md`. Full pipeline: `concept/scripts/run_all.sh` (≈ 90 min on two L40S after
 caches). Caches: ≈ 2 h, bound by the ~40 GB SAE download on this host's ≈ 5 MB/s link.
+
+---
+
+# Replication of the fix (`concept_amendment_3`, run 2026-10-06)
+
+Pre-registered and committed (`d0abe0f`) before any run. Primary statistic: **group-sum** (lasso on
+within-family sums). Challenger: **unweighted group lasso** on [Z, Z̃], with each family and its
+knockoff family as groups. Both use the group arm's knockoff draws. Independent replication at
+**layer 19** (primary) and **layer 5** (secondary), 16k / 65k / 1M; layer 12 rerun for consistency
+only. Four label designs:
+
+- **A:** sum of children.
+- **B:** 16k parent activation (approximate truth).
+- **C:** unequal positive weights.
+- **D:** mixed-sign weights.
+
+30 replicates per width, 100% convergence. Results: `replication.json`, `fig_r1_replication.png`,
+`fig_r2_effects.png`, `fig_r3_extent_stability.png`.
+
+## Verdict: **success** (pre-registered), not strong success
+
+**Primary endpoint:** concept power, design A, weak signals (amplitudes 0.5–2), q = 0.1, group-sum
+minus per-latent.
+
+| layer | R1: gap at 1M | R2: gap slope per doubling | R3: FDR | rule |
+|---|---|---|---|---|
+| **19 (primary)** | **+0.066 ± 0.007**, Holm p = 2×10⁻¹⁰ | **+0.011**, Holm p = 8×10⁻¹⁰ | 0 BY breaches / 84 | **PASS** |
+| 5 (secondary) | +0.017 ± 0.008, Holm p = 0.047 | +0.002, Holm p = 0.12 | 7 / 84 | FAIL (R4) |
+| 12 (consistency) | +0.073 ± 0.006, p = 5×10⁻¹⁴ | +0.012, p = 1×10⁻¹⁶ | 0 / 196 | PASS |
+
+Group-sum is valid but **fragile**:
+- **Mixed signs (design D):** it loses 37–41 points to per-latent at every layer, as predicted
+  (signed children cancel).
+- **Realistic design (B):** it is no better than per-latent (−0.02 to −0.07).
+
+## The group lasso does what group-sum was meant to do
+
+Pre-registered secondary contrasts. Group lasso minus per-latent concept power at 1M (weak signals,
+q = 0.1); every entry is BY-significant at p < 10⁻¹⁴:
+
+| design | layer 19 | layer 5 | layer 12 |
+|---|---|---|---|
+| A sum of children | **+0.29** | +0.20 | +0.20 |
+| B parent activation | **+0.25** | +0.15 | +0.22 |
+| C unequal weights | **+0.29** | +0.17 | +0.23 |
+| D mixed signs | **+0.27** | +0.17 | +0.22 |
+
+- **Robustness:** the gain is positive and roughly constant across all four designs, mixed signs
+  included. It grows with width at every layer (slopes +0.023 to +0.048 per doubling).
+- **Against group-sum:** it beats group-sum in every design and layer (+0.13 to +0.67).
+- **Plain group knockoffs** (lasso W) show **no** gain anywhere, as before.
+
+**Concept extent.** Share of a planted concept's latents certified at 1M (design A, weak signals):
+
+| layer | per-latent | plain group knockoffs | group-sum | group lasso |
+|---|---|---|---|---|
+| 19 | 0.07 | 0.52 | 0.64 | **0.90** |
+| 5 | 0.08 | 0.51 | 0.58 | **0.81** |
+| 12 | 0.10 | 0.55 | 0.69 | **0.84** |
+
+**FDR (designs A, C, D, exact truth).**
+- **Layer 19:** the group lasso has 0 BY breaches in 756 cells, with mean concept FDR 0.033–0.036 at
+  q = 0.1. Per-latent has 6.
+- **Layer 5:** FDR erodes for **every** method, including per-latent (28 breaches). Breaches
+  concentrate at q = 0.05 with strong signals, the zero-atom erosion seen in Stage 3. The group lasso
+  (31) is comparable to per-latent; group-sum under mixed signs is worst (27 in design D alone,
+  mean 0.092 at q = 0.1).
+- **Validity on the toy:** the group lasso passed T1G there (0 breaches in 288 Gaussian cells).
+
+## What did not improve: real-label stability
+
+On real SST-2 labels, the stable discovered concepts at 16k and 1M still barely overlap:
+
+| layer | per-latent | group-sum | group lasso |
+|---|---|---|---|
+| 19 | 0.08 | 0.12 | 0.05 |
+| 5 | 0.16 | 0.20 | 0.13 |
+| 12 | 0.12 | 0.14 | 0.08 |
+
+The group lasso finds **more** concepts on real labels (79 vs 49 at layer 19, 1M), but **which**
+concepts it finds still changes with width. Pooling fixes power and extent, not cross-width identity.
+
+## Interpretation
+
+1. **The pre-registered fix replicates at layer 19 but not at layer 5.** Layer 5 passed R1 only
+   marginally and failed R2. The effect is small (about 7 points at 1M) and does not survive mixed
+   signs.
+2. **The group lasso is the method that works.** It was registered before these runs as a
+   secondary comparison, so its results at layers 19 and 5 are confirmatory secondary evidence, not
+   post hoc. It was not the primary hypothesis, which should be stated plainly if it becomes the
+   headline method.
+3. **Why the group lasso works and group-sum does not.** The group lasso decides whether to keep a
+   family on the combined evidence of all its children (the norm of their coefficients). Then each
+   child keeps its own weight and sign. Diluted children pool, and opposite signs cannot cancel.
+   Group-sum pools by adding raw activations, so signs cancel. The plain lasso never pools at all.
+4. **Still open:** real-label instability is not a power problem, and none of these methods
+   addresses it.
+
+## Suggested next step
+
+Pre-register the **unweighted group lasso** as the primary statistic. Confirm it on one more
+held-out setting, ideally a different model (Llama Scope 32k vs 128k), plus layer 19's real-label
+analysis with a stability-oriented design.

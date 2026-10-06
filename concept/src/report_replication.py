@@ -232,8 +232,8 @@ def figures(plot, res):
                                    ("Real SST-2: stable concepts at 16k vs 1M", "Jaccard (parents in both candidate sets)"))):
         ax[k].set_xticks(np.arange(len(layers)) + 0.4 - w / 2, [f"layer {l}" for l in layers])
         ax[k].set(ylim=(0, 1.02), title=ttl, ylabel=yl); ax[k].grid(axis="y", alpha=0.3)
-    ax[0].legend(fontsize=8)
-    fig.tight_layout(); fig.savefig(rd / "fig_r3_extent_stability.png", dpi=130); plt.close(fig)
+    fig.legend(*ax[0].get_legend_handles_labels(), loc="lower center", ncol=5, fontsize=9, bbox_to_anchor=(0.5, -0.02))
+    fig.tight_layout(rect=(0, 0.07, 1, 1)); fig.savefig(rd / "fig_r3_extent_stability.png", dpi=130); plt.close(fig)
 
 
 if __name__ == "__main__":
