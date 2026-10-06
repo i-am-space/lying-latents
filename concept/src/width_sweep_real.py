@@ -40,13 +40,15 @@ def main():
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--draws", type=int, default=None)
     ap.add_argument("--tag", default="real")
+    ap.add_argument("--arms", nargs="+", default=None)
     args = ap.parse_args()
     cfg = load_concept_config(); cc = cfg["concept"]; qs = cc["nominal_fdr_targets"]
     cdir = ROOT / cc["cache_dir"]; rd = ROOT / "concept" / "results"
     if args.phase == "run":
         all_keys = layer_keys(cc, args.layer)
         dev = init_cuda(args.device); torch.set_num_threads(8)
-        real_sweep(cfg, args.layer, args.keys, all_keys, ARMS, args.draws or cc["real"]["draws"], qs, dev, args.tag)
+        real_sweep(cfg, args.layer, args.keys, all_keys, args.arms or [a for a in ARMS if a != "group_lasso"],
+                   args.draws or cc["real"]["draws"], qs, dev, args.tag)
         print("DONE", flush=True)
         return
     res = {}

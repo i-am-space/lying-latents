@@ -12,7 +12,10 @@ cfg = load_concept_config()
 cc = cfg["concept"]
 cdir = ROOT / cc["cache_dir"]
 logs = cdir / "logs"
-order = ["L20_16k", "L12_16k", "L12_32k", "L12_65k", "L20_65k", "L12_131k", "L12_262k", "L12_524k", "L12_1m"]
+order = sorted(cc["saes"], key=lambda k: cc["saes"][k]["width"])          # every SAE in the config, narrowest first
+def resid_ready(layer):
+    f = cdir / "resid.done"
+    return f.exists() and layer in __import__("json").loads(f.read_text())["layers"] and (cdir / f"resid_L{layer}.npy").exists()
 gpus = [int(g) for g in os.environ.get("GPUS", "0,1").split(",")]
 running = {}                                   # gpu -> (key, Popen)
 done = {k for k in order if (cdir / f"lat_{k}.json").exists()}
@@ -37,7 +40,7 @@ while len(done | failed) < len(order):
                 else:
                     failed.add(k); print(time.strftime("%T"), "FAILED", k, "rc", pr.returncode, flush=True)
     busy = {k for k, _ in running.values()}
-    ready = [k for k in order if k not in done | failed | busy and (cdir / "resid.done").exists()
+    ready = [k for k in order if k not in done | failed | busy and resid_ready(cc["saes"][k]["layer"])
              and (cdir / "sae" / cc["saes"][k]["path"] / ".verified").exists()]
     for g in gpus:
         if g not in running and ready:
