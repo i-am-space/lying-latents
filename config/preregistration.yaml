@@ -1347,3 +1347,102 @@ stage4_amendment_5:
     values were printed (e.g. block MVR CV FDR 0.33 on the size cell, one replicate) and changed nothing.
   interpretation_constraints:
     - "A breach-free design shows the hurdle held there, not that it holds everywhere; a breach locates a limit."
+
+# ===========================================================================
+# PRE-REGISTRATION — SAEBench amendment 1: Stages 1 and 2 on the sparse-probing tasks
+# ===========================================================================
+
+saebench_amendment_1:
+  meta:
+    date_written: "2026-10-07"
+    status: written_before_run
+    ordering_note: >
+      Committed before any SAEBench text, cache or result exists, so git history shows the design
+      preceding its results. Everything before this amendment used one dataset (SST-2); these runs are
+      confirmatory in the sense that the pipeline is frozen and the datasets were not used to develop it.
+    trigger: >
+      All results so far use Gemma-2-2B / Gemma Scope layer 20 (16k) on SST-2. The ARR paper needs to show
+      that the Stage 1 and Stage 2 findings are not specific to that dataset. SAEBench's sparse-probing
+      suite (Karvonen et al. 2025) is the standard set of labelled tasks for SAE evaluation.
+    questions:
+      - "Q1: Does same-data validation certify noise on the SAEBench tasks as on SST-2, and does held-out validation exceed its nominal level?"
+      - "Q2: Does the naive per-latent scan pass about alpha * p latents on noise, and do Bonferroni / Westfall-Young control it?"
+      - "Q3: Is the zero-atom premise met on every dataset, and are Gaussian knockoffs detectably non-exchangeable there, against a Gaussian control that stays null?"
+
+  design:
+    model_and_sae: "Unchanged: google/gemma-2-2b, blocks.20.hook_resid_post, gemma-scope-2b-pt-res-canonical layer_20/width_16k/canonical."
+    texts: >
+      SAEBench 0.6.0's own dataset_utils.get_multi_label_train_test_data and filter_dataset, with its
+      defaults (probe_train_set_size 4000, probe_test_set_size 1000, random_seed 42, chosen classes from
+      dataset_info): 8 datasets (bias_in_bios class sets 1-3, Amazon category, Amazon sentiment, GitHub
+      code, AG News, EuroParl), 2,000 train and 500 test texts per class. Built in a separate environment
+      because the GitHub-code loader needs datasets < 4. File hashes in results/saebench/tasks_manifest.json.
+    encoding: >
+      cache_activations.encode_texts, unchanged: max 128 tokens, BOS / EOS / padding excluded, mean over
+      the remaining tokens. One cache per dataset over all its texts.
+    latents: >
+      Retained per dataset by the latent_filter rule (firing rate >= 1% on that dataset's rows, top 2048
+      by firing rate), because the latents that fire depend on the domain.
+    tasks: >
+      SAEBench's one-vs-rest construction (probe_training.prepare_probe_data) on the train and test pools
+      separately: positives = the class's texts; negatives = ceil(n_pos / n_other) from each other class,
+      then n_pos at random (our stream sb_tasks). Amazon sentiment has two mirror-image tasks; the first is
+      used. 35 tasks of 4,000 + 1,000 rows.
+    stage1: >
+      Per task, on its 5,000 rows pooled: calibrate_validation.run_one unchanged (fresh 70/30 split, L2 probe,
+      top-10 by mean difference / AUROC / probe weight, joint-ablation one-sided paired log-loss test at
+      alpha 0.05, same-data and held-out regimes), under 500 label permutations plus the real labels; and the
+      naive Welch |t| scan on all 5,000 rows (uncorrected at 0.05, Bonferroni, Westfall-Young at 0.05 from the
+      permutation null of max |t|). Planted-signal power gate per dataset on its first task's rows: 20
+      replicates, k = 10, amplitude 3, linear.
+    stage2: >
+      Per dataset, on all its rows: zero-mass premise; second-order Gaussian knockoffs with equicorrelated S
+      on standardised latents (covariance: sample unless condition number > 1e4, then Ledoit-Wolf);
+      knockoff_audit.run_suite unchanged (1{x = 0} rule, swap classifier AUC and MMD at |S| in
+      {0, 1, 10, 50, all}, 3 replicates for 1 / 10 / 50); a 10-permutation label null band for the AUC; and a
+      Gaussian control (N(0, Sigma) at the same n, covariance re-estimated by the same rule) through
+      |S| in {0, 1, 10, all}. The synthetic oracle harness of Stage 2 is not repeated; the estimated-covariance
+      control is the stronger check and is run on every dataset.
+    seeds: "New streams sb_tasks, sb_validate_permutation, sb_validate_planted, sb_knockoff, sb_row_partition, sb_synthetic_null, appended to common.STREAMS (earlier streams unchanged), indexed by dataset and task."
+
+  decision_rules:
+    - id: SB1-B
+      rule: >
+        Power gate. A dataset's validate-step FWERs are interpreted, per regime, only if the joint test
+        certifies in >= 80% of planted replicates for at least one scoring method. Otherwise they are
+        reported as uninformative for that dataset and regime. Nothing is tuned to pass.
+    - id: SB1-R
+      rule: >
+        Replication of the SST-2 same-data result, per scoring method: replicates if the same-data FWER is
+        >= 0.5 in at least two thirds of the tasks that pass the gate.
+    - id: SB1-H
+      rule: >
+        Held-out excess, per scoring method: the number of gate-passing tasks whose Wilson 95% interval for
+        the held-out FWER lies entirely above 0.05 is reported, with the number of tasks. No threshold is
+        set; this is descriptive.
+    - id: SB1-S
+      rule: >
+        Search: per task, the mean number of naive passes under the null is compared with alpha * p, and the
+        Bonferroni FWER is reported; Westfall-Young FWER is in-sample by construction and is reported only
+        for completeness.
+    - id: SB2-P
+      rule: "Premise per dataset: median Pr(X_j = 0) over retained latents >= 0.80, as in Stage 2."
+    - id: SB2-V
+      rule: >
+        Diagnostic validity per dataset: every Gaussian-control swap AUC (mean over replicates at each |S|)
+        must be at or below the 97.5th percentile of the dataset's label-permutation null. Otherwise that
+        dataset's violation result is not interpreted.
+    - id: SB2-R
+      rule: >
+        Violation per dataset: detected if the 1{x = 0} rule's median accuracy exceeds 0.55 and the mean
+        swap AUC at |S| = 1 exceeds the null's 97.5th percentile. The SST-2 result replicates if the
+        violation is detected on every dataset that passes SB2-P and SB2-V.
+    - id: SB-T
+      rule: "No change to tasks, latents, thresholds, seeds or permutation counts after seeing any SAEBench result."
+
+  interpretation_constraints:
+    - "Same model, layer and SAE throughout; this tests generality across text domains, not across models."
+    - "Stage 1 ablates a probe's inputs on cached latents, not the language model, as on SST-2."
+    - "Exchangeability diagnostics can falsify but not confirm a violation on the (unknown) null latents."
+    - "Task texts are SAEBench's; negatives are sampled with our seed rather than SAEBench's torch global RNG, so per-task rows match SAEBench's procedure but not its exact draws."
+    - "35 tasks are not independent: bias_in_bios class sets share a source, and tasks within a dataset share texts."

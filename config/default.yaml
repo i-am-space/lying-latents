@@ -425,6 +425,41 @@ stage4_stress:
   diagnose:
     pilot_replicates: 1
 
+# SAEBench sparse-probing tasks (config/preregistration.yaml saebench_amendment_1). Same model, layer,
+# SAE, pooling and latent filter as the SST-2 work (model / sae / aggregation / latent_filter blocks
+# above); only the text source changes. Texts are built with SAEBench's own dataset_utils.
+saebench:
+  sae_bench_version: "0.6.0"     # pip package; installed --no-deps in a separate data env (needs datasets<4)
+  datasets:                      # SAEBench SparseProbingEvalConfig.dataset_names, in its order
+    - LabHC/bias_in_bios_class_set1
+    - LabHC/bias_in_bios_class_set2
+    - LabHC/bias_in_bios_class_set3
+    - canrager/amazon_reviews_mcauley_1and5
+    - canrager/amazon_reviews_mcauley_1and5_sentiment
+    - codeparrot/github-code
+    - fancyzhx/ag_news
+    - Helsinki-NLP/europarl
+  probe_train_set_size: 4000     # SAEBench defaults: per binary task, train and test
+  probe_test_set_size: 1000
+  text_seed: 42                  # SAEBench's random_seed; controls only which texts are sampled
+  data_dir: data/saebench        # task texts (JSON) and per-dataset activation caches
+  aggregation: mean              # only the primary aggregator is cached
+  stage1:                        # probe, scoring, top-k, alpha and regimes are the stage1 / stage1_validate blocks
+    n_permutations: 500
+    planted_gate:                # power gate per dataset (rule SB1-B), as stage1_validate.planted_check
+      replicates: 20
+      k: 10
+      amplitude: 3.0
+      form: linear
+      min_detect_fraction: 0.8
+  stage2:
+    swap_sizes: [0, 1, 10, 50, all]
+    swap_replicates: 3
+    control_swap_sizes: [0, 1, 10, all]
+    n_label_permutations: 10
+    covariance_rule: v2_rule     # sample covariance unless cond > covariance.ill_conditioned_cond_number, then Ledoit-Wolf
+    s_method: equicorrelated     # the construction being audited (Enkhbayar 2025), as in Stage 2
+
 paths:
   cache_dir: data/cache
   results_dir: results

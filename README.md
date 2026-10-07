@@ -32,6 +32,7 @@ src/planted_fdr.py            Stage 3 v1: planted-signal FDR benchmark (supersed
 src/planted_fdr_controls.py   Stage 3 v2: same benchmark with a Gaussian control, MVR S, WY baseline
 src/stage3_followups.py       Stage 3 follow-ups: mechanism of the FDR rise, failure boundary, p = 2048 factorial
 src/stage4_repairs.py         Stage 4: hurdle (SCIP), binarised and e-value repairs vs Gaussian knockoffs
+src/saebench/                 SAEBench sparse-probing tasks: build_tasks, cache, stage1, stage2 (saebench_amendment_1)
 src/common.py                 config loading, seed derivation, cache hashing
 scripts/                      one-off verification of reference-code behaviour
 NOTES_reference.md            what the audited pipeline actually does
@@ -85,3 +86,23 @@ knockoffs are provably valid.
 This **voids the FDR guarantee**. It does not show that realised FDR exceeds the
 nominal target; that is Stage 3 and was not run. Full writeup with the interpretation
 constraints in [results/stage2_findings.md](results/stage2_findings.md).
+
+## SAEBench (Stages 1-2 on the 35 sparse-probing tasks)
+
+Design: `config/preregistration.yaml` `saebench_amendment_1`; settings: `config/default.yaml` `saebench`.
+Same model, layer, SAE and pooling as the SST-2 work; only the texts change.
+
+```bash
+# 1. texts, with SAEBench's own code, in a small separate env (its GitHub-code loader needs datasets<4)
+conda create -n saebench-data python=3.12 -y && conda activate saebench-data
+pip install "datasets>=3,<4" pandas tqdm transformers einops pyyaml && pip install sae-bench==0.6.0 --no-deps
+python src/saebench/build_tasks.py --config config/default.yaml          # writes data/saebench/tasks/, results/saebench/tasks_manifest.json
+
+# 2-4. main env
+conda activate lying-latents
+python src/saebench/cache.py  --config config/default.yaml               # GPU, one cache per dataset
+python src/saebench/stage1.py --config config/default.yaml --device cuda  # GPU, per task, resumable
+python src/saebench/stage2.py --config config/default.yaml               # CPU, per dataset, resumable
+python src/saebench/stage1.py --config config/default.yaml --aggregate
+python src/saebench/stage2.py --config config/default.yaml --aggregate
+```

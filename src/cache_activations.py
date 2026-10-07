@@ -24,34 +24,8 @@ from common import cache_config, cache_path, config_hash, load_config
 AGGS = ("mean", "max", "last")
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default="config/default.yaml")
-    ap.add_argument("--limit", type=int, default=None, help="debug: cap sentences")
-    ap.add_argument("--out", default=None, help="debug: override output path")
-    args = ap.parse_args()
-
-    cfg = load_config(args.config)
-    torch.manual_seed(np.random.SeedSequence(cfg["master_seed"]).spawn(7)[1].generate_state(1)[0])
-    torch.set_grad_enabled(False)
-
-    out = cache_path(cfg) if args.out is None else Path(args.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    print(f"config hash : {config_hash(cache_config(cfg))}")
-    print(f"output      : {out}")
-
-    # ---- data -------------------------------------------------------------
-    dc = cfg["data"]
-    ds = load_dataset(dc["dataset"], dc["dataset_config"], split=dc["split"])
-    if args.limit:
-        ds = ds.select(range(args.limit))
-    sents = list(ds[dc["text_column"]])
-    labels = np.asarray(ds[dc["label_column"]], dtype=np.int8)
-    sent_ids = np.asarray(ds["idx"], dtype=np.int64)
-    n = len(sents)
-    print(f"sentences   : {n}")
-
-    # ---- model + SAE ------------------------------------------------------
+def load_model_and_sae(cfg: dict):
+    """Tokenizer, model and SAE as configured (shared with src/saebench/cache.py)."""
     mc, sc = cfg["model"], cfg["sae"]
     dtype = getattr(torch, mc["dtype"])
     tok = AutoTokenizer.from_pretrained(mc["name"])
@@ -64,10 +38,19 @@ def main() -> None:
     loaded = SAE.from_pretrained(release=sc["release"], sae_id=sc["sae_id"], device="cuda")
     sae = loaded[0] if isinstance(loaded, (tuple, list)) else loaded
     sae = sae.to(dtype).eval()
+    print(f"d_sae       : {sae.cfg.d_sae}   layer {mc['layer']} resid_post")
+    return tok, model, sae
+
+
+def encode_texts(sents: list[str], tok, model, sae, mc: dict):
+    """SAE latents for every text, aggregated (mean, max, last) over non-special tokens.
+
+    Returns (acc {agg: (n, d_sae)}, n_tokens, SAE explained variance, mean L0, seconds).
+    Shared with src/saebench/cache.py, so both pipelines encode text identically.
+    """
+    n = len(sents)
     d_sae = sae.cfg.d_sae
     hook_layer = mc["layer"]
-    print(f"d_sae       : {d_sae}   layer {hook_layer} resid_post")
-
     special = {i for i in (tok.pad_token_id, tok.bos_token_id, tok.eos_token_id) if i is not None}
     print(f"special ids : {sorted(special)}")
 
@@ -91,8 +74,10 @@ def main() -> None:
         ids = batch["input_ids"].to("cuda")
         am = batch["attention_mask"].to("cuda")
 
-        hs = model(input_ids=ids, attention_mask=am, output_hidden_states=True
-                   ).hidden_states[hook_layer + 1]          # resid_post of `layer`
+        # model.model is the decoder without the LM head: same hidden states, but it skips the
+        # (B, T, 256k-vocab) logits, which alone take ~8 GB at batch 64 and are never used
+        hs = model.model(input_ids=ids, attention_mask=am, output_hidden_states=True
+                         ).hidden_states[hook_layer + 1]    # resid_post of `layer`
         z = sae.encode(hs)                                   # (B, T, d_sae)
 
         keep = am.bool()
@@ -132,6 +117,39 @@ def main() -> None:
     elapsed = time.time() - t0
     ev = 1.0 - recon_num / recon_den
     mean_l0 = l0_num / l0_den
+    return acc, n_tokens, ev, mean_l0, elapsed
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--config", default="config/default.yaml")
+    ap.add_argument("--limit", type=int, default=None, help="debug: cap sentences")
+    ap.add_argument("--out", default=None, help="debug: override output path")
+    args = ap.parse_args()
+
+    cfg = load_config(args.config)
+    torch.manual_seed(np.random.SeedSequence(cfg["master_seed"]).spawn(7)[1].generate_state(1)[0])
+    torch.set_grad_enabled(False)
+
+    out = cache_path(cfg) if args.out is None else Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    print(f"config hash : {config_hash(cache_config(cfg))}")
+    print(f"output      : {out}")
+
+    # ---- data -------------------------------------------------------------
+    dc = cfg["data"]
+    ds = load_dataset(dc["dataset"], dc["dataset_config"], split=dc["split"])
+    if args.limit:
+        ds = ds.select(range(args.limit))
+    sents = list(ds[dc["text_column"]])
+    labels = np.asarray(ds[dc["label_column"]], dtype=np.int8)
+    sent_ids = np.asarray(ds["idx"], dtype=np.int64)
+    n = len(sents)
+    print(f"sentences   : {n}")
+
+    # ---- model + SAE ------------------------------------------------------
+    tok, model, sae = load_model_and_sae(cfg)
+    acc, n_tokens, ev, mean_l0, elapsed = encode_texts(sents, tok, model, sae, cfg["model"])
     print(f"elapsed {elapsed/60:.1f} min | SAE explained variance {ev:.4f} | mean L0 {mean_l0:.1f}")
 
     # ---- high-activity filter --------------------------------------------

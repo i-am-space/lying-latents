@@ -52,7 +52,21 @@ STREAMS = [
     "s4cv_folds",            # Stage 4 cv: cross-validation folds (per-cell streams)
     "s4st_planted",          # Stage 4 stress: planted signals and labels (per-cell streams)
     "s4st_folds",            # Stage 4 stress: cross-validation folds (per-cell streams)
+    "sb_tasks",              # SAEBench: negative-class sampling for the one-vs-rest tasks (per task)
+    "sb_validate_permutation",  # SAEBench Stage 1: label permutations and splits (per task)
+    "sb_validate_planted",   # SAEBench Stage 1: planted-signal power gate (per dataset)
+    "sb_knockoff",           # SAEBench Stage 2: knockoff draw seeds (per dataset)
+    "sb_row_partition",      # SAEBench Stage 2: swap-test row partitions and classifiers (per dataset)
+    "sb_synthetic_null",     # SAEBench Stage 2: Gaussian control data (per dataset)
 ]
+
+
+def stream_rng(cfg: dict, stream: str, *idx: int) -> np.random.Generator:
+    """Child generator of a pre-registered stream, indexed by e.g. (dataset, task). Same
+    derivation as planted_fdr_controls.cell_rng, kept here so scripts need not import that module."""
+    base = np.random.SeedSequence(cfg["master_seed"]).spawn(len(STREAMS))[STREAMS.index(stream)]
+    return np.random.default_rng(np.random.SeedSequence(
+        entropy=base.entropy, spawn_key=base.spawn_key + tuple(int(i) for i in idx)))
 
 
 def load_config(path: str | Path) -> dict:
