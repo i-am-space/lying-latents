@@ -12,6 +12,28 @@ Nothing outside `concept/` is edited on this branch, so the merge is a pure addi
 main repo's `src/` (standardisation, Ledoit–Wolf, the FISTA lasso, Knockoff+ thresholds, planted
 labels, multiplicity corrections) rather than copying it.
 
+## Results — start here
+
+1. **`results/concept_findings.md`** — the full write-up. Sections 1–10 cover the original study
+   (does per-latent discovery degrade with SAE width?); the final section, *Replication of the fix*,
+   covers the follow-up that tests pooled group statistics on held-out layers.
+2. **Key figures** (`results/`):
+   - `fig_c0_headline.png` — original study in one picture (concept splitting, extent, real labels)
+   - `fig_r2_effects.png` — replication in one picture (pooled minus per-latent power, every layer/design)
+   - `fig_r1_replication.png` — power vs width per method, layers 19/5/12, designs A–D
+   - `fig_r3_extent_stability.png` — share of a concept's latents certified; real-label stability
+   - `fig_c1_toy.png` — toy proposition (dilution vs redundancy)
+3. **Pre-registration** — `config/preregistration_concept.yaml` (amendments 1–3, each committed before
+   its runs; the git history shows the order).
+4. **Machine-readable results** — `results/replication.json` (rules R1–R5 and secondary contrasts),
+   `results/planted_concept.json`, `results/real_sweep.json`, `results/census_L*.json`, `results/toy_report.json`.
+
+Short version: wider SAEs split concepts (mostly by *dilution*); per-latent knockoffs then certify only
+7–18% of a concept's latents at 1M. Plain group knockoffs do not help; the pre-registered primary fix
+(group-sum) helps modestly and fails with mixed-sign children; the unweighted **group lasso**
+(pre-registered challenger) keeps power flat with width and certifies 81–90% of a concept's latents
+with FDR controlled. Real-label concept identity remains unstable across widths for every method.
+
 ## Layout
 
 ```
