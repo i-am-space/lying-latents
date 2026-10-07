@@ -531,7 +531,8 @@ the control shows. On real latents the invalid Gaussian knockoffs then produce r
 discoveries, concentrated where the label depends on products of latents. The fixed λ = 0.02 of the
 earlier sections was legitimate but unusually conservative; it is why §1–§12 found only an eroding
 margin. A follow-up testing the Stage 4 repairs under the cross-validated penalty in these realistic
-designs (`stage4_amendment_4`) is running.
+designs (`stage4_amendment_4`) found that hurdle knockoffs keep FDR at the target there; see Stage 4
+findings §8–§9.
 
 ## 17. Reproduction
 

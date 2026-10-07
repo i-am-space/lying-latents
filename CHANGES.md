@@ -25,7 +25,9 @@ All numbers below come from the committed result files and can be re-derived fro
 | `e0bb169`, `5a335e5` | Stage 3: amplitude calibration (design, results) |
 | `34ef131`, `f026ded` | Stage 3: many-weak-signal (large-k) follow-up (design, results) |
 | `4d9165e`, `d06eaf7` | Stage 3: cross-validated penalty (design, results) |
-| `a022006` | Stage 4: repairs under the cross-validated penalty (design; running) |
+| `a022006` | Stage 4: repairs under the cross-validated penalty (design) |
+| `e8816e7` | Stage 4: hurdle stress tests (design) |
+| next commit | Stage 4: CV and stress-test results; findings updated |
 
 **Headline results**
 
@@ -45,6 +47,10 @@ All numbers below come from the committed result files and can be re-derived fro
   target after Benjamini–Yekutieli correction (7 of 54 strong-signal cells; 12 of 24 cells in the
   designs matched to the real labels, all interaction, up to 0.36 at q = 0.10); the Gaussian control
   does not. The fixed λ = 0.02 used earlier was conservative enough to hide this.
+- **Stage 4, cross-validated penalty and stress tests (7 Oct):** hurdle knockoffs keep FDR at the
+  target where both Gaussian constructions (including Enkhbayar's equicorrelated one) exceed it
+  (0 breaches vs 3 and 8; power −0.015). In stress tests the hurdle breached once (1 of 42), in
+  labels driven by activation magnitude, against 6 and 16 for the Gaussian constructions.
 - **Stage 4, block-MVR baseline:** hurdle knockoffs trail block-MVR Gaussian knockoffs on power
   (−0.045, p = 5 × 10⁻⁷) while making fewer false discoveries (−0.011); the earlier "77% of the gap"
   came from a weak equicorrelated baseline.
@@ -338,7 +344,11 @@ All pre-registered before their runs (`stage4_amendment_3`, `stage3_amendment_4`
 - **Cross-validated penalty** (`4d9165e`, `d06eaf7`; pkgpu). Paired with the saved fixed-λ runs
   (identical labels and knockoffs, reproduction exact). FDR breaches on real latents only (7 and 12
   cells after BY); real minus control +0.035 and +0.086. Stage 3 §16.
-- **Stage 4 under the cross-validated penalty** (`a022006`; running on pkgpu). Stage 4 §8.
+- **Stage 4 under the cross-validated penalty** (`a022006`; pkgpu). Rule C3 met: the hurdle has no
+  breach where equicorrelated (3) and block-MVR (8) Gaussian knockoffs do. Stage 4 §8.
+- **Hurdle stress tests** (`e8816e7`; pkgpu). One hurdle breach, in magnitude-driven labels (the size
+  model); 6 and 16 for the Gaussian constructions; the control none. Stage 4 §9.
+- **`scripts/run_when_gpu_free.sh`**: starts a command once a GPU is completely free.
 
 ## 5. Other files
 
@@ -370,7 +380,8 @@ for Stage 1. They need the activation cache `data/cache/d33d210c5acb.npz`.
    false-certification rate. This needs Amendment 3.
 2. Stage 3: which non-Gaussian feature (atom, co-firing, tails) carries the bias (a zero-atom-only
    synthetic control would separate the atom); real (unplanted) labels.
-3. Stage 4: the repairs under the cross-validated penalty (running).
+3. Stage 4: the hurdle's size model (its one failure mode in the stress tests); comparison with the
+   teammate's concept-level method at the cross-validated penalty.
 4. Paper: a "deviations from the proposal" section. Ablation is on a probe, not the model;
    the scope is SST-2 / Gemma only; thresholds were fixed through post-hoc amendments; and
    the Stage 1 false-certification rate is incomplete.
