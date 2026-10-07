@@ -1,0 +1,55 @@
+{
+  "dataset": "canrager/amazon_reviews_mcauley_1and5_sentiment",
+  "task_rows_from": "canrager__amazon_reviews_mcauley_1and5_sentiment__1.0",
+  "replicates": 20,
+  "k": 10,
+  "amplitude": 3.0,
+  "form": "linear",
+  "min_detect_fraction": 0.8,
+  "by_method": {
+    "mean_diff": {
+      "mean_recall_at_k": 0.04,
+      "same_data": {
+        "joint": 1.0,
+        "any_uncorrected": 0.7,
+        "any_bonferroni": 0.55
+      },
+      "held_out": {
+        "joint": 0.5,
+        "any_uncorrected": 0.75,
+        "any_bonferroni": 0.4
+      }
+    },
+    "auroc": {
+      "mean_recall_at_k": 0.575,
+      "same_data": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      },
+      "held_out": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      }
+    },
+    "probe_weight": {
+      "mean_recall_at_k": 0.9899999999999999,
+      "same_data": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      },
+      "held_out": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      }
+    }
+  },
+  "criterion_has_power": {
+    "same_data": true,
+    "held_out": true
+  },
+  "criterion_has_power_both": true
+}

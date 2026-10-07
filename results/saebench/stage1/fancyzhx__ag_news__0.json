@@ -1,0 +1,247 @@
+{
+  "task": "fancyzhx__ag_news__0",
+  "dataset": "fancyzhx/ag_news",
+  "class": "0",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.802,
+          "n_certified": 401,
+          "ci95": [
+            0.7648252982841597,
+            0.8345694321231747
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.36,
+          "n_certified": 180,
+          "ci95": [
+            0.31914070629947555,
+            0.4029941868891773
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.152,
+          "n_certified": 76,
+          "ci95": [
+            0.12319191165756974,
+            0.186114822839939
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.512,
+          "n_certified": 256,
+          "ci95": [
+            0.4682614535997027,
+            0.5555555555555556
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.154,
+          "n_certified": 77,
+          "ci95": [
+            0.12501019573842537,
+            0.18826604028495975
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.978,
+          "n_certified": 489,
+          "ci95": [
+            0.9610387448516022,
+            0.9876721198328542
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.58,
+          "n_certified": 290,
+          "ci95": [
+            0.5362886484411069,
+            0.6224914125939485
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.104,
+          "n_certified": 52,
+          "ci95": [
+            0.08019382152134363,
+            0.13384487635513181
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.322,
+          "n_certified": 161,
+          "ci95": [
+            0.28253539670832967,
+            0.3641789674886719
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.054,
+          "n_certified": 27,
+          "ci95": [
+            0.03737409848513375,
+            0.07742706124443205
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.076,
+          "n_certified": 38,
+          "ci95": [
+            0.05586871073410857,
+            0.10259696578009747
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.494,
+          "n_certified": 247,
+          "ci95": [
+            0.4503893365060508,
+            0.5377021589163201
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.102,
+          "n_certified": 51,
+          "ci95": [
+            0.07843397139617729,
+            0.1316352249544218
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 6.793017259809631e-10,
+        "joint_mean_d": 0.002523008966818452,
+        "single_p_min": 2.5707226996019017e-06,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.23771698772907257,
+        "joint_mean_d": 0.0010457724565640092,
+        "single_p_min": 0.0030056380201131105,
+        "joint": false,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 5.916382189421681e-20,
+        "joint_mean_d": 0.008581120520830154,
+        "single_p_min": 7.037512114038691e-05,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.12798114120960236,
+        "joint_mean_d": 0.004120051860809326,
+        "single_p_min": 0.24469013512134552,
+        "joint": false,
+        "any_uncorrected": false,
+        "any_bonferroni": false
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 2.606238855884405e-24,
+        "joint_mean_d": 0.01135158445686102,
+        "single_p_min": 9.937033382811933e-07,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.012744871899485588,
+        "joint_mean_d": 0.0077475132420659065,
+        "single_p_min": 0.004004725255072117,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.108029484748839,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 101.758,
+    "null_mean_n_bonferroni": 0.038,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.034,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1637,
+    "real_n_bonferroni": 1232,
+    "real_n_wy": 1259
+  },
+  "cache_config_hash": "6f00c7f7f493",
+  "minutes": 0.8454347650210062
+}

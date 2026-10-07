@@ -1,0 +1,247 @@
+{
+  "task": "LabHC__bias_in_bios_class_set1__0",
+  "dataset": "LabHC/bias_in_bios_class_set1",
+  "class": "0",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.95,
+          "n_certified": 475,
+          "ci95": [
+            0.9272313499731688,
+            0.965906493349018
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.562,
+          "n_certified": 281,
+          "ci95": [
+            0.5182021184950548,
+            0.6048524288071132
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.164,
+          "n_certified": 82,
+          "ci95": [
+            0.13412841862886243,
+            0.19899532502390466
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.076,
+          "n_certified": 38,
+          "ci95": [
+            0.05586871073410857,
+            0.10259696578009747
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.538,
+          "n_certified": 269,
+          "ci95": [
+            0.4941760408295009,
+            0.5812444881621506
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.154,
+          "n_certified": 77,
+          "ci95": [
+            0.12501019573842537,
+            0.18826604028495975
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.974,
+          "n_certified": 487,
+          "ci95": [
+            0.9560280989556288,
+            0.9847437626770749
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.486,
+          "n_certified": 243,
+          "ci95": [
+            0.4424642011735621,
+            0.5297492881453032
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.082,
+          "n_certified": 41,
+          "ci95": [
+            0.06101875732494105,
+            0.10935542376689417
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.342,
+          "n_certified": 171,
+          "ci95": [
+            0.3017647943001571,
+            0.3846445851556084
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.084,
+          "n_certified": 42,
+          "ci95": [
+            0.06274379952220428,
+            0.11159988309550732
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.162,
+          "n_certified": 81,
+          "ci95": [
+            0.13230129007093688,
+            0.19685295205595382
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.578,
+          "n_certified": 289,
+          "ci95": [
+            0.534276169564903,
+            0.6205343899442761
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.132,
+          "n_certified": 66,
+          "ci95": [
+            0.10511627994905025,
+            0.16449543928969462
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 7.314610928923932e-31,
+        "joint_mean_d": 0.006905110087245703,
+        "single_p_min": 5.045050464890382e-25,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 1.1373706421125007e-09,
+        "joint_mean_d": 0.011771729215979576,
+        "single_p_min": 2.0369229781071023e-14,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 1.6815581571897805e-44,
+        "joint_mean_d": 0.018678996711969376,
+        "single_p_min": 5.045050464890382e-25,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 3.541644408300293e-12,
+        "joint_mean_d": 0.027903618291020393,
+        "single_p_min": 2.0369229781071023e-14,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 0.0,
+        "joint_mean_d": 0.018972348421812057,
+        "single_p_min": 5.045050464890382e-25,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 2.51178100540983e-09,
+        "joint_mean_d": 0.024510549381375313,
+        "single_p_min": 2.0369229781071023e-14,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.119618678092957,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 101.336,
+    "null_mean_n_bonferroni": 0.034,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.034,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1596,
+    "real_n_bonferroni": 1115,
+    "real_n_wy": 1131
+  },
+  "cache_config_hash": "193043882023",
+  "minutes": 0.17192637125651042
+}

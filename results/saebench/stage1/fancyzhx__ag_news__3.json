@@ -1,0 +1,247 @@
+{
+  "task": "fancyzhx__ag_news__3",
+  "dataset": "fancyzhx/ag_news",
+  "class": "3",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.992,
+          "n_certified": 496,
+          "ci95": [
+            0.9796126401630988,
+            0.9968847352024922
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.816,
+          "n_certified": 408,
+          "ci95": [
+            0.7796701866722183,
+            0.8475110544162506
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.344,
+          "n_certified": 172,
+          "ci95": [
+            0.3036922516120669,
+            0.3866866293695749
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.124,
+          "n_certified": 62,
+          "ci95": [
+            0.09794566312958619,
+            0.15578805000565316
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.532,
+          "n_certified": 266,
+          "ci95": [
+            0.48818530469160204,
+            0.5753267197224201
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.138,
+          "n_certified": 69,
+          "ci95": [
+            0.11051755348949738,
+            0.17100267032687666
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.972,
+          "n_certified": 486,
+          "ci95": [
+            0.9535531794154484,
+            0.9832491806913788
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.562,
+          "n_certified": 281,
+          "ci95": [
+            0.5182021184950548,
+            0.6048524288071132
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.082,
+          "n_certified": 41,
+          "ci95": [
+            0.06101875732494105,
+            0.10935542376689417
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.316,
+          "n_certified": 158,
+          "ci95": [
+            0.2767829376901094,
+            0.358022921929263
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.048,
+          "n_certified": 24,
+          "ci95": [
+            0.03246497509125218,
+            0.07042768006068446
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.098,
+          "n_certified": 49,
+          "ci95": [
+            0.07492354740061163,
+            0.1272066458982347
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.504,
+          "n_certified": 252,
+          "ci95": [
+            0.4603113571655595,
+            0.5476276458861933
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.098,
+          "n_certified": 49,
+          "ci95": [
+            0.07492354740061163,
+            0.1272066458982347
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 7.045789429983265e-23,
+        "joint_mean_d": 0.014734593220055103,
+        "single_p_min": 9.53392367223499e-14,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 8.621616143500432e-05,
+        "joint_mean_d": 0.02035728096961975,
+        "single_p_min": 9.267837413062807e-06,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 1.5820510120675145e-27,
+        "joint_mean_d": 0.021449297666549683,
+        "single_p_min": 1.6309195747382654e-12,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 9.920050069922581e-05,
+        "joint_mean_d": 0.02620573900640011,
+        "single_p_min": 0.0003068577207159251,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 1.6016106121849852e-32,
+        "joint_mean_d": 0.024666674435138702,
+        "single_p_min": 1.6309195747382654e-12,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 2.37113272305578e-06,
+        "joint_mean_d": 0.032940007746219635,
+        "single_p_min": 0.0003068577207159251,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.188714528083801,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 103.316,
+    "null_mean_n_bonferroni": 0.048,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.044,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1631,
+    "real_n_bonferroni": 1194,
+    "real_n_wy": 1197
+  },
+  "cache_config_hash": "6f00c7f7f493",
+  "minutes": 0.2628787040710449
+}

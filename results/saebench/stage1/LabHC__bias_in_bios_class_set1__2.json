@@ -1,0 +1,247 @@
+{
+  "task": "LabHC__bias_in_bios_class_set1__2",
+  "dataset": "LabHC/bias_in_bios_class_set1",
+  "class": "2",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.844,
+          "n_certified": 422,
+          "ci95": [
+            0.8095845658230334,
+            0.8731696966277049
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.908,
+          "n_certified": 454,
+          "ci95": [
+            0.8794606777802376,
+            0.9303176334985452
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.602,
+          "n_certified": 301,
+          "ci95": [
+            0.5584738043043082,
+            0.6439707735153876
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.142,
+          "n_certified": 71,
+          "ci95": [
+            0.1141288975465133,
+            0.17533032932161352
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.58,
+          "n_certified": 290,
+          "ci95": [
+            0.5362886484411069,
+            0.6224914125939485
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.202,
+          "n_certified": 101,
+          "ci95": [
+            0.16914066023346225,
+            0.2394036124109562
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.992,
+          "n_certified": 496,
+          "ci95": [
+            0.9796126401630988,
+            0.9968847352024922
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.826,
+          "n_certified": 413,
+          "ci95": [
+            0.790317702710052,
+            0.856711046007799
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.156,
+          "n_certified": 78,
+          "ci95": [
+            0.12683030337229503,
+            0.19041543417696646
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.426,
+          "n_certified": 213,
+          "ci95": [
+            0.38338181137240096,
+            0.4697466321701727
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.1,
+          "n_certified": 50,
+          "ci95": [
+            0.07667718662472012,
+            0.1294225082000026
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.168,
+          "n_certified": 84,
+          "ci95": [
+            0.13778772464256234,
+            0.20327502206195752
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.588,
+          "n_certified": 294,
+          "ci95": [
+            0.5443457835435591,
+            0.6303122835950018
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.146,
+          "n_certified": 73,
+          "ci95": [
+            0.11774829657860897,
+            0.1796499333412706
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 1.819386914598413e-36,
+        "joint_mean_d": 0.009506131522357464,
+        "single_p_min": 4.300023170535799e-26,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 1.6423395846412725e-12,
+        "joint_mean_d": 0.014324681833386421,
+        "single_p_min": 1.3477979843301569e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 0.0,
+        "joint_mean_d": 0.03366534411907196,
+        "single_p_min": 4.300023170535799e-26,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 2.3699971276263483e-16,
+        "joint_mean_d": 0.04234067723155022,
+        "single_p_min": 1.3477979843301569e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 0.0,
+        "joint_mean_d": 0.03233148157596588,
+        "single_p_min": 4.300023170535799e-26,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 2.0873218152727666e-21,
+        "joint_mean_d": 0.04551967233419418,
+        "single_p_min": 1.3477979843301569e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.246138048171996,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 102.048,
+    "null_mean_n_bonferroni": 0.066,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.056,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1671,
+    "real_n_bonferroni": 1204,
+    "real_n_wy": 1200
+  },
+  "cache_config_hash": "193043882023",
+  "minutes": 0.7868718942006429
+}

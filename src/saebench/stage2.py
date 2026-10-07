@@ -135,9 +135,12 @@ def aggregate(cfg: dict) -> None:
                                            "diagnostics_valid": r["SB2_V_diagnostics_valid"],
                                            "covariance": r["covariance"]["estimator"]} for r in res}}
     valid = [r for r in res if r["SB2_V_diagnostics_valid"]]
+    eligible = [r for r in valid if r["SB2_P_premise_holds"]]   # SB2-R: datasets passing SB2-P and SB2-V
+    # with no eligible dataset the rule is vacuous, so it is reported as None rather than True
     summ["SB2_R_violation_replicates"] = {
         "n_valid": len(valid), "n_violation_among_valid": int(sum(r["SB2_violation_detected"] for r in valid)),
-        "replicates": bool(valid and all(r["SB2_violation_detected"] for r in valid if r["SB2_P_premise_holds"]))}
+        "n_eligible": len(eligible),
+        "replicates": bool(all(r["SB2_violation_detected"] for r in eligible)) if eligible else None}
     (results_dir(cfg) / "stage2_summary.json").write_text(json.dumps(summ, indent=2))
     print(json.dumps(summ, indent=2))
     print(f"\nwrote {results_dir(cfg)}/stage2_summary.json")

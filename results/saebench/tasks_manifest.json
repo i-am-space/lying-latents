@@ -1,0 +1,262 @@
+{
+  "fancyzhx/ag_news": {
+    "file": "data/saebench/tasks/fancyzhx__ag_news.json",
+    "sha256": "484dfc10cd6c39a96b4107089414dca887bc92b61172e7e58f971ec10369624f",
+    "classes": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "train_test_counts": {
+      "0": [
+        2000,
+        500
+      ],
+      "1": [
+        2000,
+        500
+      ],
+      "2": [
+        2000,
+        500
+      ],
+      "3": [
+        2000,
+        500
+      ]
+    },
+    "sae_bench_version": "0.6.0",
+    "text_seed": 42
+  },
+  "LabHC/bias_in_bios_class_set1": {
+    "file": "data/saebench/tasks/LabHC__bias_in_bios_class_set1.json",
+    "sha256": "2cfa37c1340305229075b6989ecbf8e18a6ec228c5e305ea2652cf07ac7e1d82",
+    "classes": [
+      "0",
+      "1",
+      "2",
+      "6",
+      "9"
+    ],
+    "train_test_counts": {
+      "0": [
+        2000,
+        500
+      ],
+      "1": [
+        2000,
+        500
+      ],
+      "2": [
+        2000,
+        500
+      ],
+      "6": [
+        2000,
+        500
+      ],
+      "9": [
+        2000,
+        500
+      ]
+    },
+    "sae_bench_version": "0.6.0",
+    "text_seed": 42
+  },
+  "LabHC/bias_in_bios_class_set2": {
+    "file": "data/saebench/tasks/LabHC__bias_in_bios_class_set2.json",
+    "sha256": "1f8651b7db11bacabc36756041da2c33bf3fd628cb8f11044cba9a0c7657cc93",
+    "classes": [
+      "11",
+      "13",
+      "14",
+      "18",
+      "19"
+    ],
+    "train_test_counts": {
+      "11": [
+        2000,
+        500
+      ],
+      "13": [
+        2000,
+        500
+      ],
+      "14": [
+        2000,
+        500
+      ],
+      "18": [
+        2000,
+        500
+      ],
+      "19": [
+        2000,
+        500
+      ]
+    },
+    "sae_bench_version": "0.6.0",
+    "text_seed": 42
+  },
+  "LabHC/bias_in_bios_class_set3": {
+    "file": "data/saebench/tasks/LabHC__bias_in_bios_class_set3.json",
+    "sha256": "f6f54dae1f1eb9c32f1b747d46ac1e4b2ce0d44eb680dbbbbc61f1423d018196",
+    "classes": [
+      "20",
+      "21",
+      "22",
+      "25",
+      "26"
+    ],
+    "train_test_counts": {
+      "20": [
+        2000,
+        500
+      ],
+      "21": [
+        2000,
+        500
+      ],
+      "22": [
+        2000,
+        500
+      ],
+      "25": [
+        2000,
+        500
+      ],
+      "26": [
+        2000,
+        500
+      ]
+    },
+    "sae_bench_version": "0.6.0",
+    "text_seed": 42
+  },
+  "canrager/amazon_reviews_mcauley_1and5": {
+    "file": "data/saebench/tasks/canrager__amazon_reviews_mcauley_1and5.json",
+    "sha256": "420b29ae450da0737f199bf4629a4b0a68ed243f84705aa15e1fb488332522cd",
+    "classes": [
+      "1",
+      "2",
+      "3",
+      "5",
+      "6"
+    ],
+    "train_test_counts": {
+      "1": [
+        2000,
+        500
+      ],
+      "2": [
+        2000,
+        500
+      ],
+      "3": [
+        2000,
+        500
+      ],
+      "5": [
+        2000,
+        500
+      ],
+      "6": [
+        2000,
+        500
+      ]
+    },
+    "sae_bench_version": "0.6.0",
+    "text_seed": 42
+  },
+  "canrager/amazon_reviews_mcauley_1and5_sentiment": {
+    "file": "data/saebench/tasks/canrager__amazon_reviews_mcauley_1and5_sentiment.json",
+    "sha256": "d65588866015a5c258b1c7c1758d07ac0a526097ee6b1824f80e62de28fdfeb4",
+    "classes": [
+      "1.0",
+      "5.0"
+    ],
+    "train_test_counts": {
+      "1.0": [
+        2000,
+        500
+      ],
+      "5.0": [
+        2000,
+        500
+      ]
+    },
+    "sae_bench_version": "0.6.0",
+    "text_seed": 42
+  },
+  "codeparrot/github-code": {
+    "file": "data/saebench/tasks/codeparrot__github-code.json",
+    "sha256": "d6d151c66ebc3056a71d567d326a95c10517e5ec9d799ca7f0a2a95125911067",
+    "classes": [
+      "C",
+      "Python",
+      "HTML",
+      "Java",
+      "PHP"
+    ],
+    "train_test_counts": {
+      "C": [
+        2000,
+        500
+      ],
+      "Python": [
+        2000,
+        500
+      ],
+      "HTML": [
+        2000,
+        500
+      ],
+      "Java": [
+        2000,
+        500
+      ],
+      "PHP": [
+        2000,
+        500
+      ]
+    },
+    "sae_bench_version": "0.6.0",
+    "text_seed": 42
+  },
+  "Helsinki-NLP/europarl": {
+    "file": "data/saebench/tasks/Helsinki-NLP__europarl.json",
+    "sha256": "9bfd117c735be53fd4d9b5583806ad108c0199ba330509c0de455e9b59cf4ca6",
+    "classes": [
+      "en",
+      "fr",
+      "de",
+      "es",
+      "nl"
+    ],
+    "train_test_counts": {
+      "en": [
+        2000,
+        500
+      ],
+      "fr": [
+        2000,
+        500
+      ],
+      "de": [
+        2000,
+        500
+      ],
+      "es": [
+        2000,
+        500
+      ],
+      "nl": [
+        2000,
+        500
+      ]
+    },
+    "sae_bench_version": "0.6.0",
+    "text_seed": 42
+  }
+}

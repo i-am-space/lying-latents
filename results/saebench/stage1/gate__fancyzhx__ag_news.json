@@ -1,0 +1,55 @@
+{
+  "dataset": "fancyzhx/ag_news",
+  "task_rows_from": "fancyzhx__ag_news__0",
+  "replicates": 20,
+  "k": 10,
+  "amplitude": 3.0,
+  "form": "linear",
+  "min_detect_fraction": 0.8,
+  "by_method": {
+    "mean_diff": {
+      "mean_recall_at_k": 0.06000000000000001,
+      "same_data": {
+        "joint": 0.95,
+        "any_uncorrected": 0.9,
+        "any_bonferroni": 0.65
+      },
+      "held_out": {
+        "joint": 0.55,
+        "any_uncorrected": 0.65,
+        "any_bonferroni": 0.45
+      }
+    },
+    "auroc": {
+      "mean_recall_at_k": 0.515,
+      "same_data": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      },
+      "held_out": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      }
+    },
+    "probe_weight": {
+      "mean_recall_at_k": 0.99,
+      "same_data": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      },
+      "held_out": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      }
+    }
+  },
+  "criterion_has_power": {
+    "same_data": true,
+    "held_out": true
+  },
+  "criterion_has_power_both": true
+}

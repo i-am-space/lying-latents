@@ -1,0 +1,247 @@
+{
+  "task": "LabHC__bias_in_bios_class_set3__26",
+  "dataset": "LabHC/bias_in_bios_class_set3",
+  "class": "26",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.958,
+          "n_certified": 479,
+          "ci95": [
+            0.9366479487604386,
+            0.9723679006652538
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.628,
+          "n_certified": 314,
+          "ci95": [
+            0.5848081115127891,
+            0.6692399861432997
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.194,
+          "n_certified": 97,
+          "ci95": [
+            0.16172591779703405,
+            0.2309403487438788
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.066,
+          "n_certified": 33,
+          "ci95": [
+            0.04737823802541255,
+            0.09123993085941157
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.532,
+          "n_certified": 266,
+          "ci95": [
+            0.48818530469160204,
+            0.5753267197224201
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.134,
+          "n_certified": 67,
+          "ci95": [
+            0.1069145540979546,
+            0.16666666666666669
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.958,
+          "n_certified": 479,
+          "ci95": [
+            0.9366479487604386,
+            0.9723679006652538
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.482,
+          "n_certified": 241,
+          "ci95": [
+            0.43850579699662956,
+            0.5257686892704829
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.11,
+          "n_certified": 55,
+          "ci95": [
+            0.08549101658817662,
+            0.140456185865928
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.404,
+          "n_certified": 202,
+          "ci95": [
+            0.3618784697205358,
+            0.44758545703739777
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.082,
+          "n_certified": 41,
+          "ci95": [
+            0.06101875732494105,
+            0.10935542376689417
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.126,
+          "n_certified": 63,
+          "ci95": [
+            0.09973485690292784,
+            0.1579683577581879
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.542,
+          "n_certified": 271,
+          "ci95": [
+            0.4981733601090301,
+            0.5851861719343742
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.14,
+          "n_certified": 70,
+          "ci95": [
+            0.11232220101564047,
+            0.17316752432660995
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 7.474192808565838e-24,
+        "joint_mean_d": 0.009102205745875835,
+        "single_p_min": 8.642992432861263e-10,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.00021046939946245402,
+        "joint_mean_d": 0.010442600585520267,
+        "single_p_min": 0.0011430121958255768,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 2.479397647413288e-32,
+        "joint_mean_d": 0.014854177832603455,
+        "single_p_min": 1.8396152157151846e-08,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 1.2875671018264256e-06,
+        "joint_mean_d": 0.018705006688833237,
+        "single_p_min": 0.0011430121958255768,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 5.127911600350236e-41,
+        "joint_mean_d": 0.023206869140267372,
+        "single_p_min": 1.3757951444759442e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 6.175970952426724e-07,
+        "joint_mean_d": 0.025002507492899895,
+        "single_p_min": 0.0011430121958255768,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.186268997192383,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 101.43,
+    "null_mean_n_bonferroni": 0.046,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.04,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1671,
+    "real_n_bonferroni": 1278,
+    "real_n_wy": 1285
+  },
+  "cache_config_hash": "792600273491",
+  "minutes": 1.281670085589091
+}

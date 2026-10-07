@@ -1,0 +1,247 @@
+{
+  "task": "fancyzhx__ag_news__1",
+  "dataset": "fancyzhx/ag_news",
+  "class": "1",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.994,
+          "n_certified": 497,
+          "ci95": [
+            0.9825094361891064,
+            0.9979574407023611
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.83,
+          "n_certified": 415,
+          "ci95": [
+            0.7945876062593026,
+            0.8603801455103012
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.408,
+          "n_certified": 204,
+          "ci95": [
+            0.3657816336552564,
+            0.4516212961544298
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.146,
+          "n_certified": 73,
+          "ci95": [
+            0.11774829657860897,
+            0.1796499333412706
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.534,
+          "n_certified": 267,
+          "ci95": [
+            0.4901815185143591,
+            0.5773000074255396
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.15,
+          "n_certified": 75,
+          "ci95": [
+            0.12137548023138253,
+            0.1839617527402498
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.978,
+          "n_certified": 489,
+          "ci95": [
+            0.9610387448516022,
+            0.9876721198328542
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.528,
+          "n_certified": 264,
+          "ci95": [
+            0.4841949689615891,
+            0.5713780524006803
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.082,
+          "n_certified": 41,
+          "ci95": [
+            0.06101875732494105,
+            0.10935542376689417
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.304,
+          "n_certified": 152,
+          "ci95": [
+            0.2653013836201453,
+            0.3456874668439688
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.052,
+          "n_certified": 26,
+          "ci95": [
+            0.03573001990962654,
+            0.07510163829406287
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.096,
+          "n_certified": 48,
+          "ci95": [
+            0.07317313790557156,
+            0.12498755386739835
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.476,
+          "n_certified": 238,
+          "ci95": [
+            0.4325734008661452,
+            0.5197925808233381
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.118,
+          "n_certified": 59,
+          "ci95": [
+            0.09259259259259259,
+            0.14923261596501758
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 0.049276843667030334,
+        "joint_mean_d": 0.0007353831897489727,
+        "single_p_min": 5.4359774459555865e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.6543324589729309,
+        "joint_mean_d": -0.0004664144944399595,
+        "single_p_min": 0.04853518307209015,
+        "joint": false,
+        "any_uncorrected": true,
+        "any_bonferroni": false
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 0.0012633114820346236,
+        "joint_mean_d": 0.0026884526014328003,
+        "single_p_min": 2.187950667575933e-05,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.49113360047340393,
+        "joint_mean_d": 6.0499191022245213e-05,
+        "single_p_min": 0.3049027621746063,
+        "joint": false,
+        "any_uncorrected": false,
+        "any_bonferroni": false
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 4.614290113847753e-29,
+        "joint_mean_d": 0.022953012958168983,
+        "single_p_min": 1.1274849150252245e-18,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 1.1118294729328682e-08,
+        "joint_mean_d": 0.03557649627327919,
+        "single_p_min": 7.84573785495013e-07,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.127964615821838,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 100.872,
+    "null_mean_n_bonferroni": 0.04,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.038,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1747,
+    "real_n_bonferroni": 1414,
+    "real_n_wy": 1439
+  },
+  "cache_config_hash": "6f00c7f7f493",
+  "minutes": 0.8372550845146179
+}

@@ -1,0 +1,150 @@
+{
+  "fancyzhx/ag_news": {
+    "cache": "6f00c7f7f493__fancyzhx__ag_news.npz",
+    "config_hash": "6f00c7f7f493",
+    "n": 10000,
+    "classes": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "sae_explained_variance": 0.7641330516926695,
+    "sae_mean_l0": 75.94931588663265,
+    "n_latents_firing_1pct": 12624,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.6687,
+    "mean_tokens": 51.5704,
+    "minutes": 3.2899200916290283
+  },
+  "LabHC/bias_in_bios_class_set1": {
+    "cache": "193043882023__LabHC__bias_in_bios_class_set1.npz",
+    "config_hash": "193043882023",
+    "n": 12500,
+    "classes": [
+      "0",
+      "1",
+      "2",
+      "6",
+      "9"
+    ],
+    "sae_explained_variance": 0.7971498564053112,
+    "sae_mean_l0": 70.51496077131183,
+    "n_latents_firing_1pct": 12297,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.5904,
+    "mean_tokens": 73.95608,
+    "minutes": 6.598697658379873
+  },
+  "LabHC/bias_in_bios_class_set2": {
+    "cache": "e9cff054e273__LabHC__bias_in_bios_class_set2.npz",
+    "config_hash": "e9cff054e273",
+    "n": 12500,
+    "classes": [
+      "11",
+      "13",
+      "14",
+      "18",
+      "19"
+    ],
+    "sae_explained_variance": 0.7717086251310264,
+    "sae_mean_l0": 74.24437155017408,
+    "n_latents_firing_1pct": 13190,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.5898399999999999,
+    "mean_tokens": 73.94576,
+    "minutes": 6.170762880643209
+  },
+  "LabHC/bias_in_bios_class_set3": {
+    "cache": "792600273491__LabHC__bias_in_bios_class_set3.npz",
+    "config_hash": "792600273491",
+    "n": 12500,
+    "classes": [
+      "20",
+      "21",
+      "22",
+      "25",
+      "26"
+    ],
+    "sae_explained_variance": 0.7877710797919297,
+    "sae_mean_l0": 71.71341073026959,
+    "n_latents_firing_1pct": 12985,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.58124,
+    "mean_tokens": 77.84632,
+    "minutes": 7.159640622138977
+  },
+  "canrager/amazon_reviews_mcauley_1and5": {
+    "cache": "bdbf1f3e1030__canrager__amazon_reviews_mcauley_1and5.npz",
+    "config_hash": "bdbf1f3e1030",
+    "n": 12500,
+    "classes": [
+      "1",
+      "2",
+      "3",
+      "5",
+      "6"
+    ],
+    "sae_explained_variance": 0.7879206556078476,
+    "sae_mean_l0": 78.9208722757168,
+    "n_latents_firing_1pct": 11902,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.30435999999999996,
+    "mean_tokens": 126.70856,
+    "minutes": 9.899372502168019
+  },
+  "canrager/amazon_reviews_mcauley_1and5_sentiment": {
+    "cache": "bb75498a000f__canrager__amazon_reviews_mcauley_1and5_sentiment.npz",
+    "config_hash": "bb75498a000f",
+    "n": 5000,
+    "classes": [
+      "1.0",
+      "5.0"
+    ],
+    "sae_explained_variance": 0.7909431406559908,
+    "sae_mean_l0": 78.95288415862991,
+    "n_latents_firing_1pct": 12228,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.3187,
+    "mean_tokens": 126.7302,
+    "minutes": 3.3175798575083415
+  },
+  "codeparrot/github-code": {
+    "cache": "83bdeacf389d__codeparrot__github-code.npz",
+    "config_hash": "83bdeacf389d",
+    "n": 12500,
+    "classes": [
+      "C",
+      "Python",
+      "HTML",
+      "Java",
+      "PHP"
+    ],
+    "sae_explained_variance": 0.7092841604104849,
+    "sae_mean_l0": 81.39986832330413,
+    "n_latents_firing_1pct": 16162,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.48960000000000004,
+    "mean_tokens": 126.85616,
+    "minutes": 10.003953683376313
+  },
+  "Helsinki-NLP/europarl": {
+    "cache": "aabcf0399b3b__Helsinki-NLP__europarl.npz",
+    "config_hash": "aabcf0399b3b",
+    "n": 12500,
+    "classes": [
+      "en",
+      "fr",
+      "de",
+      "es",
+      "nl"
+    ],
+    "sae_explained_variance": 0.7804192437792473,
+    "sae_mean_l0": 71.44970345725444,
+    "n_latents_firing_1pct": 9689,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.73004,
+    "mean_tokens": 35.9476,
+    "minutes": 4.8149590770403545
+  }
+}
