@@ -34,7 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))       # src/saebench/
 from common import load_config, stream_rng                                      # noqa: E402
 from knockoff_audit import (estimate_cov, label_permutation_null, make_knockoffs,  # noqa: E402
                             run_suite, standardise)
-from sbutil import load_cache, results_dir, slug                                  # noqa: E402
+from sbutil import cache_path, load_cache, results_dir, slug                      # noqa: E402
 
 
 def choose_covariance(Z: np.ndarray, cfg: dict):
@@ -74,7 +74,7 @@ def run_dataset(cfg: dict, name: str) -> dict:
     out["premise"] = premise(X_raw)
     out["SB2_P_premise_holds"] = bool(out["premise"]["median_p_zero"] >= 0.80)
     print(f"  premise: median Pr(X=0) {out['premise']['median_p_zero']:.3f} -> "
-          f"{'holds' if out['SB2_P_premise_holds'] else 'FAILS'}", flush=True)
+          f"{'holds (>= 0.80)' if out['SB2_P_premise_holds'] else 'below 0.80 (SB2-P not met; tests continue)'}", flush=True)
 
     Z, mu, sd = standardise(X_raw)
     Sigma, est, cond, eigmin = choose_covariance(Z, cfg)
@@ -164,6 +164,9 @@ def main() -> None:
         path = rd / f"{slug(name)}.json"
         if path.exists():
             print(f"{name}: done, skipping")
+            continue
+        if not cache_path(cfg, name).exists():
+            print(f"{name}: no cache, SKIPPED", flush=True)
             continue
         t = time.time()
         out = run_dataset(cfg, name)

@@ -37,7 +37,7 @@ from calibrate_pipeline import to_gpu, welch_abs_t                      # noqa: 
 from calibrate_validation import REGIMES, VARIANTS, certified, run_one, wilson   # noqa: E402
 from common import load_config, stream_rng                               # noqa: E402
 from planted_fdr import generate_planted_labels                         # noqa: E402
-from sbutil import binary_tasks, load_cache, results_dir, slug           # noqa: E402
+from sbutil import binary_tasks, cache_path, load_cache, results_dir, slug   # noqa: E402
 
 
 def welch_counts(X: torch.Tensor, y: torch.Tensor, z_naive: float, z_bonf: float) -> dict:
@@ -208,6 +208,9 @@ def main() -> None:
     names = [args.dataset] if args.dataset else cfg["saebench"]["datasets"]
     print(f"device {device} | B = {B} | writing to {rd}")
     for name in names:
+        if not cache_path(cfg, name).exists():
+            print(f"\n=== {name}: no cache, SKIPPED ===", flush=True)
+            continue
         C = load_cache(cfg, name)
         tasks = binary_tasks(cfg, name, C)
         print(f"\n=== {name}: n = {len(C['X'])}, p = {C['X'].shape[1]}, {len(tasks)} task(s), cache {C['config_hash']} ===",
