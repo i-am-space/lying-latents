@@ -460,6 +460,25 @@ saebench:
     covariance_rule: v2_rule     # sample covariance unless cond > covariance.ill_conditioned_cond_number, then Ledoit-Wolf
     s_method: equicorrelated     # the construction being audited (Enkhbayar 2025), as in Stage 2
 
+# Stages 3-4 on SAEBench (config/preregistration.yaml saebench_amendment_2): the Stage 4 cross-validated
+# benchmark (stage4_cv: CV procedure, arms, realistic designs) on each SAEBench dataset's cached latents.
+stage4_saebench:
+  replicates: 10
+  cells:                          # [design, amplitude, form, k]: stage4_cv's realistic designs
+    - [realistic, 8.0, linear, 100]
+    - [realistic, 8.0, linear, 300]
+    - [realistic, 8.0, interaction, 100]
+    - [realistic, 8.0, interaction, 300]
+    - [realistic, 32.0, linear, 100]
+    - [realistic, 32.0, linear, 300]
+    - [realistic, 32.0, interaction, 100]
+    - [realistic, 32.0, interaction, 300]
+  arm_groups:
+    hurdle: [hurdle]
+    gauss: [gauss_real, gauss_mvr, gauss_ceiling_mvr]
+  diagnose:
+    pilot_replicates: 1
+
 paths:
   cache_dir: data/cache
   results_dir: results

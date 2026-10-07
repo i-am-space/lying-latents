@@ -1446,3 +1446,51 @@ saebench_amendment_1:
     - "Exchangeability diagnostics can falsify but not confirm a violation on the (unknown) null latents."
     - "Task texts are SAEBench's; negatives are sampled with our seed rather than SAEBench's torch global RNG, so per-task rows match SAEBench's procedure but not its exact draws."
     - "35 tasks are not independent: bias_in_bios class sets share a source, and tasks within a dataset share texts."
+
+# ===========================================================================
+# SAEBench AMENDMENT 2 - Stages 3-4 on the SAEBench datasets (written BEFORE any run)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+saebench_amendment_2:
+  meta:
+    date_written: "2026-10-08"
+    status: written_before_run
+    trigger: >
+      Stages 1-2 replicate on SAEBench (saebench_amendment_1): Gaussian knockoffs are non-exchangeable on
+      all 8 datasets although their zero atoms are smaller than SST-2's (median Pr(X = 0) 0.30-0.73). On
+      SST-2, under the cross-validated penalty, Gaussian knockoffs exceed the FDR target in the realistic
+      many-weak designs while hurdle knockoffs do not (stage3_amendment_6, stage4_amendment_4). Whether
+      that holds on other domains, and whether it weakens as the zero atom shrinks, is untested.
+  design:
+    data: >
+      Each of the 8 SAEBench datasets' cached latents (saebench_amendment_1 caches: all texts, the dataset's
+      2,048 retained latents), standardised; Ledoit-Wolf covariance; a Gaussian control with the same
+      covariance and n (stream sb34_data, per dataset). No task labels are used; signals are planted.
+    procedure: >
+      As stage4_amendment_4: arms hurdle (SCIP), gauss_real (equicorrelated), gauss_mvr (seeded block MVR)
+      and gauss_ceiling_mvr (control); every fit at the fixed lambda 0.02 and at the 5-fold CV lambda;
+      the realistic designs (amplitudes 8, 32 x linear/interaction x k = 100, 300 x q .05/.10/.20);
+      10 replicates. Seeds per dataset: sb34_knockoff (arm, replicate), sb34_planted and sb34_folds (cell,
+      replicate). Amazon sentiment has n = 5,000 (n/p = 2.4), the others 10,000-12,500.
+  decision_rules:
+    - id: SB3-V
+      rule: "Per dataset, the control must have no Benjamini-Yekutieli breach at CV lambda (over its 24 cell-q combinations); datasets failing this are reported but not interpreted."
+    - id: SB3-R
+      rule: >
+        The Stage 3 result (Gaussian knockoffs exceed the target at CV lambda) replicates if block-MVR
+        Gaussian knockoffs have at least one BY breach on at least half of the valid datasets. The same
+        count is reported for the equicorrelated construction.
+    - id: SB4-R
+      rule: >
+        Per valid dataset, hurdle knockoffs restore control if they have no BY breach at CV lambda and their
+        FDR is significantly below block MVR's (paired pooled test, p < 0.05), as rule C3. The number of
+        datasets meeting it is reported, with the paired power difference.
+    - id: SB-Z
+      rule: "Exploratory: Spearman correlation, across valid datasets, between median Pr(X = 0) and the pooled block-MVR minus control FDR at CV lambda."
+    - id: SB-T
+      rule: "No tuning of designs, penalties, replicates or datasets after seeing results."
+  smoke_test_before_commit: "The code path ran end to end on a synthetic zero-inflated matrix (no SAEBench data); no real result was seen."
+  interpretation_constraints:
+    - "Planted labels on each dataset's real latents; nothing is measured on SAEBench's own task labels."
+    - "Datasets differ in text length, zero atom and n at once; SB-Z is descriptive over 8 points."

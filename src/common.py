@@ -58,6 +58,10 @@ STREAMS = [
     "sb_knockoff",           # SAEBench Stage 2: knockoff draw seeds (per dataset)
     "sb_row_partition",      # SAEBench Stage 2: swap-test row partitions and classifiers (per dataset)
     "sb_synthetic_null",     # SAEBench Stage 2: Gaussian control data (per dataset)
+    "sb34_data",             # SAEBench Stages 3-4: Gaussian control data and block-MVR seed (per dataset)
+    "sb34_knockoff",         # SAEBench Stages 3-4: knockoff draw seeds (per dataset, arm, replicate)
+    "sb34_planted",          # SAEBench Stages 3-4: planted signals and labels (per dataset, cell)
+    "sb34_folds",            # SAEBench Stages 3-4: cross-validation folds (per dataset, cell)
 ]
 
 

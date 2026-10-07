@@ -292,6 +292,20 @@ def build(cfg: dict, sec: dict, X_all: np.ndarray, device, methods=None) -> dict
     rng = rng_for(cfg, "s4r_data")
     cols = np.arange(p_all) if sec["p"] >= p_all else np.sort(rng.choice(p_all, sec["p"], replace=False))
     X = X_all[np.ix_(rows, cols)].astype(np.float64)
+    out = build_from_X(cfg, sec, X, device, methods, rng,
+                       mvr_seed=int(cell_rng(cfg, "s4r_diagnostics", 900).integers(2**31)))
+    out["cols"] = cols
+    return out
+
+
+def build_from_X(cfg: dict, sec: dict, X: np.ndarray, device, methods, rng: np.random.Generator,
+                 mvr_seed: int) -> dict:
+    """Standardised data, Gaussian control (drawn from rng), S matrices and samplers for a raw
+    latent matrix X (rows x latents). build() calls it on the Stage 4 rows; the SAEBench run on each
+    dataset's cache."""
+    from knockpy import smatrix
+    from knockpy.knockoffs import GaussianSampler
+
     Z, mu, sd = standardise(X)
     n, p = Z.shape
     Sigma = estimate_cov(Z, sec["covariance"])
@@ -314,12 +328,11 @@ def build(cfg: dict, sec: dict, X_all: np.ndarray, device, methods=None) -> dict
         samplers["binary_scip"] = SCIPSampler(X, "binary", sec["scip"], device)
     mvr = {}
     if need & {"gaussian_mvr", "gaussian_control_mvr"}:
-        mvr = build_block_mvr(Z, Sigma, Zg, Sigma_g, sec, device,
-                              seed=int(cell_rng(cfg, "s4r_diagnostics", 900).integers(2**31)))
+        mvr = build_block_mvr(Z, Sigma, Zg, Sigma_g, sec, device, seed=mvr_seed)
     return {"X": X, "Z": Z, "mu": mu, "sd": sd, "Zg": Zg, "Zb": (Zb - mb) / sb, "mb": mb, "sb": sb,
             "gauss": GaussianSampler(Z, mu=Z.mean(0), Sigma=Sigma, S=S),
             "gauss_ctrl": GaussianSampler(Zg, mu=Zg.mean(0), Sigma=Sigma_g, S=S_g),
-            "scip": samplers, "cols": cols, **mvr,
+            "scip": samplers, **mvr,
             "info": {"n": n, "p": p, "s_equicorrelated": float(np.diag(S).mean()),
                      "median_zero_mass": float(np.median((X == 0).mean(0))),
                      "sampler_setup_seconds": time.time() - t,
@@ -545,8 +558,9 @@ def main() -> None:
     ap.add_argument("--stage", default="diagnose", choices=["diagnose", "full", "analyse"])
     ap.add_argument("--limit-reps", type=int, default=None)
     ap.add_argument("--skip-exchangeability", action="store_true")
-    ap.add_argument("--arm-group", default="gauss", help="cv only: which arm group to run")
-    ap.add_argument("--experiment", default="repairs", choices=["repairs", "mvr", "cv", "stress"],
+    ap.add_argument("--arm-group", default="gauss", help="cv / stress / saebench: which arm group to run")
+    ap.add_argument("--dataset", default=None, help="saebench only: one of config saebench.datasets")
+    ap.add_argument("--experiment", default="repairs", choices=["repairs", "mvr", "cv", "stress", "saebench"],
                     help="repairs: the five pre-registered arms; mvr: add block-MVR Gaussian arms (stage4_amendment_3)")
     args = ap.parse_args()
     if args.experiment == "mvr":
@@ -557,6 +571,9 @@ def main() -> None:
         return
     if args.experiment == "stress":
         main_stress(args)
+        return
+    if args.experiment == "saebench":
+        main_saebench(args)
         return
 
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
@@ -840,7 +857,8 @@ def size_labels(Xraw: np.ndarray, S_idx: np.ndarray, amp: float, rng: np.random.
     return y, prob
 
 
-def run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=None):
+def run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=None,
+              streams=("s4r_knockoff", "s4st_planted", "s4st_folds"), prefix=()):
     """Like run_cv, over an explicit list of (design, amplitude, form, k) cells. One knockoff draw per
     arm and replicate (Stage 4's stream and arm ids) serves every cell; each fit at fixed and CV lambda."""
     from stage3_followups import cv_lasso
@@ -871,7 +889,7 @@ def run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=None):
     no_thr = {q: float("inf") for q in qs}
     for rep in range(start, R):
         for name, method in arms:
-            seed = int(cell_rng(cfg, "s4r_knockoff", arm_ids[name], rep).integers(2**31))
+            seed = int(cell_rng(cfg, streams[0], *prefix, arm_ids[name], rep).integers(2**31))
             Dm, Dk, info = data_and_knockoffs(method, D, seed)
             corr[name].append(mean_corr(Dm, Dk)); dinfo[name].append(info)
             Phi = torch.from_numpy(np.hstack([Dm, Dk]).astype(np.float32)).to(device)
@@ -880,7 +898,7 @@ def run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=None):
             ctrl = method in CONTROL_METHODS
             label_Z, raw = (D["Zg"], D["Zg"]) if ctrl else (D["Z"], D["X"])
             for ci, (design, amp, form, k) in enumerate(cells):
-                rng = cell_rng(cfg, "s4st_planted", ci, rep)
+                rng = cell_rng(cfg, streams[1], *prefix, ci, rep)
                 S_idx = np.sort(rng.choice(p, size=k, replace=False))
                 truth = set(S_idx.tolist())
                 if form == "size":
@@ -889,7 +907,7 @@ def run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=None):
                     y_np, _ = generate_planted_labels(label_Z, S_idx, form, amp, rng)
                 y_t = torch.from_numpy(y_np.astype(np.float32)).to(device)
                 w, _, _, _ = fit_lasso_checked(Phi, y_t, sec["lasso"]["lambda"], sec["lasso"]["max_iter"], sec["lasso"]["tol"])
-                wcv, _, li = cv_lasso(Phi, y_t, sec["cv"], cell_rng(cfg, "s4st_folds", ci, rep))
+                wcv, _, li = cv_lasso(Phi, y_t, sec["cv"], cell_rng(cfg, streams[2], *prefix, ci, rep))
                 for lam, ww in (("fixed", w), ("cv", wcv)):
                     w_np = ww.cpu().numpy()
                     sc = score_fit(np.abs(w_np[:p]) - np.abs(w_np[p:]), np.zeros(p), no_thr, qs, truth)
@@ -907,14 +925,14 @@ def run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=None):
     return M, LAM, corr, dinfo
 
 
-def analyse_stress(cfg, sec, rd: Path) -> dict:
-    """Rules S1-S3 over the stress cells (corrected statistics only)."""
+def analyse_stress(cfg, sec, rd: Path, prefix: str = "stage4_stress") -> dict:
+    """Rules S1-S3 over the stress cells (corrected statistics only). Also used per SAEBench dataset."""
     from reanalysis_multiplicity import by_adjust, one_sided_exceed, two_sided_diff
     qs = sec["nominal_fdr_targets"]
     cells = [tuple(c) for c in sec["cells"]]
     z = {}
     for g in sec["arm_groups"]:
-        f = rd / f"stage4_stress_{g}_records.npz"
+        f = rd / f"{prefix}_{g}_records.npz"
         if not f.exists():
             raise SystemExit(f"{f} missing: run --arm-group {g} first")
         z.update(dict(np.load(f)))
@@ -1011,6 +1029,103 @@ def main_stress(args) -> None:
         f.unlink(missing_ok=True)
     print(f"\nwrote {rd}/stage4_stress_{group}_records.npz ({(time.time() - t0) / 60:.1f} min); "
           f"run --experiment stress --stage analyse once every group is done")
+
+
+# ---------------------------------------------------------------------------
+# Stages 3-4 on SAEBench (config/preregistration.yaml saebench_amendment_2)
+# ---------------------------------------------------------------------------
+
+def main_saebench(args) -> None:
+    """Per SAEBench dataset: the Stage 4 cross-validated benchmark (realistic designs) on that
+    dataset's cached latents. Arms and procedure as stage4_cv; dataset-specific seed streams."""
+    from scipy import stats as sstats
+    from saebench.sbutil import load_cache, slug
+
+    device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
+    cfg = load_config(args.config)
+    ext = cfg["stage4_saebench"]
+    sec = {**cfg["stage4_repairs"], "mvr_max_block": cfg["stage4_mvr"]["mvr_max_block"], "cv": cfg["stage4_cv"]["cv"],
+           **{k: v for k, v in ext.items()}}
+    datasets = cfg["saebench"]["datasets"]
+    rd = results_dir(cfg) / "saebench" / "stage34"
+    rd.mkdir(parents=True, exist_ok=True)
+    if args.stage == "analyse":
+        summary = {}
+        for name in datasets:
+            if not all((rd / f"{slug(name)}_{g}_records.npz").exists() for g in ext["arm_groups"]):
+                print(f"  {name}: records incomplete, skipped", flush=True)
+                continue
+            out = analyse_stress(cfg, sec, rd, prefix=slug(name))
+            info = json.loads((rd / f"{slug(name)}_gauss_info.json").read_text())["info"]
+            from reanalysis_multiplicity import two_sided_diff
+            z = {**dict(np.load(rd / f"{slug(name)}_gauss_records.npz")), **dict(np.load(rd / f"{slug(name)}_hurdle_records.npz"))}
+            ex = two_sided_diff(z["ko_fdr_cv__gauss_mvr"].mean(axis=(0, 2)), z["ko_fdr_cv__gauss_ceiling_mvr"].mean(axis=(0, 2)), False)
+            cv = out["by_lambda"]["cv"]
+            hm = out["S3_hurdle_minus_mvr_cv"]["realistic"]["ko_fdr"]
+            out["dataset"] = name
+            out["median_zero_mass"] = info["median_zero_mass"]
+            out["n"] = info["n"]
+            out["mvr_minus_control_fdr_cv"] = {"mean_diff": ex[0], "se": ex[1], "p_two_sided": ex[2]}
+            out["SB3_control_valid"] = out["S1_control_valid_cv"]
+            out["SB3_gaussian_breach"] = {a: cv[a]["n_breach_BY"] for a in ("gauss_real", "gauss_mvr")}
+            out["SB4_hurdle_restores"] = bool(cv["hurdle"]["n_breach_BY"] == 0 and hm["mean_diff"] < 0 and hm["p_two_sided"] < 0.05)
+            (rd / f"{slug(name)}.json").write_text(json.dumps(out, indent=2, default=float))
+            summary[name] = {k: out[k] for k in ("n", "median_zero_mass", "SB3_control_valid", "SB3_gaussian_breach",
+                                                 "SB4_hurdle_restores", "mvr_minus_control_fdr_cv")}
+            summary[name]["breaches_cv"] = {a: cv[a]["n_breach_BY"] for a in cv}
+            summary[name]["mean_fdr_q0.10_cv"] = {a: cv[a]["by_design"]["realistic"]["mean_fdr_q0.10"] for a in cv}
+            summary[name]["mean_power_cv"] = {a: cv[a]["by_design"]["realistic"]["mean_power"] for a in cv}
+            print(f"  {name:50s} zeros {out['median_zero_mass']:.2f}  breaches (BY) "
+                  + "  ".join(f"{a} {cv[a]['n_breach_BY']}" for a in ("gauss_real", "gauss_mvr", "hurdle", "gauss_ceiling_mvr"))
+                  + f"  | MVR-control FDR {ex[0]:+.3f}  hurdle restores {out['SB4_hurdle_restores']}", flush=True)
+        valid = [n for n, v in summary.items() if v["SB3_control_valid"]]
+        agg = {"n_datasets": len(summary), "n_valid": len(valid),
+               "SB3_R_gaussian_breach_datasets": sum(summary[n]["SB3_gaussian_breach"]["gauss_mvr"] > 0 for n in valid),
+               "SB3_R_equicorrelated_breach_datasets": sum(summary[n]["SB3_gaussian_breach"]["gauss_real"] > 0 for n in valid),
+               "SB4_R_hurdle_restores_datasets": sum(summary[n]["SB4_hurdle_restores"] for n in valid)}
+        agg["SB3_R_replicates"] = bool(valid and agg["SB3_R_gaussian_breach_datasets"] >= len(valid) / 2)
+        if len(valid) >= 3:
+            zm = [summary[n]["median_zero_mass"] for n in valid]
+            exc = [summary[n]["mvr_minus_control_fdr_cv"]["mean_diff"] for n in valid]
+            r = sstats.spearmanr(zm, exc)
+            agg["SBZ_spearman_zero_mass_vs_excess"] = {"rho": float(r.statistic), "p": float(r.pvalue)}
+        (rd.parent / "stage34_summary.json").write_text(json.dumps({"datasets": summary, "aggregate": agg}, indent=2, default=float))
+        print(f"\n  aggregate: {json.dumps(agg, default=float)}\nwrote {rd.parent}/stage34_summary.json")
+        return
+    if not args.dataset:
+        raise SystemExit("--dataset is required (one of config saebench.datasets)")
+    name = args.dataset
+    di = datasets.index(name)
+    group = args.arm_group
+    all_arms = [tuple(a) for a in cfg["stage4_repairs"]["arms"]] + [tuple(a) for a in cfg["stage4_mvr"]["arms"]]
+    arm_ids = {n: i for i, (n, _) in enumerate(all_arms)}
+    arms = [(n, m) for n, m in all_arms if n in ext["arm_groups"][group]]
+    cells = [tuple(c) for c in ext["cells"]]
+    C = load_cache(cfg, name)
+    print(f"device: {device} | SAEBench {name} (cache {C['config_hash']}) | group: {group} | stage: {args.stage}")
+    t0 = time.time()
+    print("\n=== data and samplers ===")
+    D = build_from_X(cfg, sec, C["X"].astype(np.float64), device, [m for _, m in arms], cell_rng(cfg, "sb34_data", di),
+                     mvr_seed=int(cell_rng(cfg, "sb34_data", di, 900).integers(2**31)))
+    del C
+    R = args.limit_reps or (ext["diagnose"]["pilot_replicates"] if args.stage == "diagnose" else ext["replicates"])
+    print(f"\n=== {args.stage}: arms {[a for a, _ in arms]}, {len(cells)} cells, {R} replicate(s) ===")
+    ckpt = None if args.stage == "diagnose" else rd / f"{slug(name)}_{group}_checkpoint.json"
+    t = time.time()
+    M, LAM, corr, dinfo = run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=ckpt,
+                                    streams=("sb34_knockoff", "sb34_planted", "sb34_folds"), prefix=(di,))
+    if args.stage == "diagnose":
+        per_rep = (time.time() - t) / R
+        print(f"  {per_rep:.0f}s per replicate -> projected full run ~{ext['replicates'] * per_rep / 60:.0f} min on this machine")
+        return
+    np.savez(rd / f"{slug(name)}_{group}_records.npz", **{f"{m}__{a}": M[m][a] for m in M for a, _ in arms},
+             **{f"lam__{a}": LAM[a] for a, _ in arms})
+    (rd / f"{slug(name)}_{group}_info.json").write_text(json.dumps(
+        {"dataset": name, "info": D["info"], "mean_corr_X_Xk": {a: float(np.mean(v)) for a, v in corr.items() if v},
+         "draw_info": dinfo, "replicates": R, "minutes": round((time.time() - t0) / 60, 1)}, indent=2, default=float))
+    for f in (ckpt, ckpt.with_suffix(".npz"), ckpt.with_suffix(".pt")):
+        f.unlink(missing_ok=True)
+    print(f"\nwrote {rd}/{slug(name)}_{group}_records.npz ({(time.time() - t0) / 60:.1f} min)")
 
 
 # ---------------------------------------------------------------------------
