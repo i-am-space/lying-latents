@@ -1,0 +1,61 @@
+{
+  "info": {
+    "n": 20000,
+    "p": 2048,
+    "s_equicorrelated": 0.05462699061136604,
+    "median_zero_mass": 0.8913,
+    "sampler_setup_seconds": 78.1981873512268,
+    "block_mvr": {
+      "mean_s": 0.23128495363855692,
+      "seconds": 55.611653089523315,
+      "control_S": "reused the real-latent S",
+      "control_seconds": 0.0,
+      "min_eig_2Sigma_minus_S": 0.023187251898960537
+    }
+  },
+  "mean_corr_X_Xk": {
+    "gauss_real": 0.9459917787568312,
+    "gauss_mvr": 0.7724350701085607,
+    "gauss_ceiling_mvr": 0.7726022732843012
+  },
+  "draw_info": {
+    "gauss_real": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ],
+    "gauss_mvr": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ],
+    "gauss_ceiling_mvr": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ]
+  },
+  "replicates": 10,
+  "minutes": 227.1
+}
