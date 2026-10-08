@@ -348,6 +348,8 @@ All pre-registered before their runs (`stage4_amendment_3`, `stage3_amendment_4`
   breach where equicorrelated (3) and block-MVR (8) Gaussian knockoffs do. Stage 4 §8.
 - **Hurdle stress tests** (`e8816e7`; pkgpu). One hurdle breach, in magnitude-driven labels (the size
   model); 6 and 16 for the Gaussian constructions; the control none. Stage 4 §9.
+- **E-value splitting under CV λ** (`4c616a3`; local, 9 min). No breach; FDR 0.001, power 0.952 vs the
+  hurdle's 0.974; the 500-latent cap binds. Stage 4 §10.
 - **`scripts/run_when_gpu_free.sh`**: starts a command once a GPU is completely free.
 
 ## 5. Other files

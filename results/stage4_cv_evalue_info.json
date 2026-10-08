@@ -1,0 +1,9 @@
+{
+  "replicates": 10,
+  "selected_on_A": {
+    "fixed_median": 121.0,
+    "cv_median": 891.0,
+    "share_at_cap_cv": 0.9625
+  },
+  "minutes": 8.7
+}

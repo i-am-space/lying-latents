@@ -17,7 +17,8 @@ in the realistic designs** (0 breaches against 3 and 8 for the two Gaussian cons
 breached once (1 of 42 conditions, against 6 and 16), in labels driven by activation magnitude, where
 its log-normal size model is weakest. At the fixed penalty used in the original runs below, nothing
 breaches, the hurdle trails block-MVR Gaussian knockoffs on power (§6), and most per-cell counts were
-uncorrected (§7).
+uncorrected (§7). **E-value splitting (§10)** also has no breach under CV λ but is very conservative
+(FDR 0.001, power 0.952 against the hurdle's 0.974).
 
 The proposal's three repairs were run on the Stage 3 planted-signal benchmark at p = 2,048 latents,
 n = 20,000 rows, against Gaussian knockoffs and a Gaussian control with no zero atom, at the fixed
@@ -265,7 +266,30 @@ magnitude. The size form is a construction made to stress the hurdle; it shows t
 that real labels look like it. A better size model (e.g. Gamma) or testing concepts rather than single
 latents are the natural next steps.
 
-## 10. Reproduction
+## 10. E-value splitting under the cross-validated penalty (stage4_amendment_6)
+
+Design committed `4c616a3` before the run: the §8 cells (same labels, 10 replicates), paired with the §8
+records. The rows are split in half; the lasso penalty is fixed (0.02) or chosen by 5-fold CV **within half A
+only**; at most 500 selected latents are tested on half B (e-values, BY). Run locally, 8.7 min.
+
+| arm | fixed λ: FDR (q = .10) / power | CV λ: FDR / power | breaches after BY (CV) |
+|---|---|---|---|
+| **E-value splitting** | 0.009 / 0.567 | **0.001** / 0.952 | **0** |
+| Hurdle | 0.040 / 0.549 | 0.096 / 0.974 | 0 |
+| Gaussian, block MVR | 0.074 / 0.616 | 0.125 / 0.990 | 8 |
+| Gaussian, equicorrelated | 0.047 / 0.508 | 0.100 / 0.965 | 3 |
+
+- **E1:** no e-value breach under CV λ.
+- **E2:** e-value minus hurdle at CV λ: FDR −0.114 (p = 4 × 10⁻¹⁰), power −0.023 (p = 2 × 10⁻⁷); at fixed λ,
+  power +0.019 (p = 0.015). Against block MVR at CV λ: FDR −0.142, power −0.038.
+- **E3: the 500 cap binds** under CV λ (median 891 latents selected on half A; 121 at fixed λ), so the
+  e-value power is that of the capped procedure.
+
+**Interpretation.** E-value splitting is valid but very conservative (FDR ≈ 0.001 at a 0.10 target); the
+hurdle uses the error budget and keeps more power under the standard penalty. It is the
+guarantee-backed fallback; the hurdle remains the more powerful repair.
+
+## 11. Reproduction
 
 ```bash
 python src/stage4_repairs.py --config config/default.yaml --device cuda --stage diagnose
@@ -291,4 +315,5 @@ python src/stage4_repairs.py --config config/default.yaml --experiment stress --
 3 checks 30 s apart).
 Artefacts: `results/stage4_mvr.json`, `stage4_mvr_records.npz`, `fig22_stage4_mvr.png`,
 `results/multiplicity_reanalysis.json`; `stage4_cv_{hurdle,gauss}_{records.npz,info.json}`, `stage4_cv.json`;
-`stage4_stress_{hurdle,gauss}_{records.npz,info.json}`, `stage4_stress.json`.
+`stage4_stress_{hurdle,gauss}_{records.npz,info.json}`, `stage4_stress.json`;
+`stage4_cv_evalue_{records.npz,info.json}` (§10: `--experiment cv --arm-group evalue --stage full`, ~9 min).
