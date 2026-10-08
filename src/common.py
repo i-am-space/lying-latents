@@ -75,8 +75,20 @@ def stream_rng(cfg: dict, stream: str, *idx: int) -> np.random.Generator:
         entropy=base.entropy, spawn_key=base.spawn_key + tuple(int(i) for i in idx)))
 
 
+def _deep_merge(base: dict, over: dict) -> dict:
+    out = dict(base)
+    for k, v in over.items():
+        out[k] = _deep_merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else v
+    return out
+
+
 def load_config(path: str | Path) -> dict:
-    return yaml.safe_load(Path(path).read_text())
+    """A config file, or an overlay with `inherit: <base file, relative to the overlay>` whose keys
+    replace the base's (dicts merged key by key; lists and scalars replaced whole)."""
+    path = Path(path)
+    cfg = yaml.safe_load(path.read_text())
+    base = cfg.pop("inherit", None)
+    return _deep_merge(load_config(path.parent / base), cfg) if base else cfg
 
 
 def rng_for(cfg: dict, stream: str) -> np.random.Generator:

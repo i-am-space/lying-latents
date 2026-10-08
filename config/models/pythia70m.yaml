@@ -1,0 +1,32 @@
+# SAEBench Stages 1-4 on Pythia-70M (config/preregistration.yaml saebench_amendment_3).
+# Overlay on config/default.yaml: only the keys below change; every stage setting is inherited.
+# Usage: any SAEBench script with --config config/models/pythia70m.yaml, or scripts/models_pipeline.sh.
+inherit: ../default.yaml
+
+model:
+  name: EleutherAI/pythia-70m-deduped     # the reference implementation's model
+  dtype: float32
+  layer: 4                                # resid_post; relative depth 5/6 = 0.83 (Gemma-2-2B L20: 21/26 = 0.81)
+  attn_implementation: eager
+  batch_size: 128                         # cost only; pooling is masked per text (not in the cache hash)
+  max_seq_len: 128                        # = the SAE's training context
+
+sae:
+  release: pythia-70m-deduped-res-sm      # the reference implementation's SAE release (Marks et al.; ReLU, 32,768 latents)
+  sae_id: blocks.4.hook_resid_post        # trained without BOS, as the Pythia tokenizer encodes
+
+stage4_saebench:
+  # Stages 3-4 run on the first N of these (N >= 3, in this order; scripts/models_pipeline.sh N34).
+  # Order fixed before any run: the first three span the Gemma-2 zero atom (0.73, 0.59, 0.30).
+  dataset_priority:
+    - Helsinki-NLP/europarl
+    - LabHC/bias_in_bios_class_set1
+    - canrager/amazon_reviews_mcauley_1and5
+    - fancyzhx/ag_news
+    - codeparrot/github-code
+    - LabHC/bias_in_bios_class_set2
+    - LabHC/bias_in_bios_class_set3
+    - canrager/amazon_reviews_mcauley_1and5_sentiment
+
+paths:
+  results_dir: results/models/pythia70m   # caches stay in data/saebench/cache (file names carry the config hash)

@@ -1528,3 +1528,92 @@ stage4_amendment_6:
       rule: "No tuning after seeing results."
   interpretation_constraints:
     - "E-value validity rests on the half-B logistic refit being correctly specified; it is not for the interaction designs."
+
+# ===========================================================================
+# SAEBench AMENDMENT 3 - Stages 1-4 on two more models and SAE families (written BEFORE any run)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+saebench_amendment_3:
+  meta:
+    date_written: "2026-10-08"
+    status: written_before_run
+    ordering_note: >
+      Committed before any cache, sanity number or result of either model exists. The Gemma-2 Stage 3-4
+      SAEBench run (saebench_amendment_2) is in progress and none of its results has been seen.
+    trigger: >
+      Every result so far uses one model and one SAE (Gemma-2-2B, Gemma Scope layer 20, 16k);
+      saebench_amendment_1 tested generality across text domains only. Whether the findings are
+      properties of SAE latents or of that model and SAE is the main open objection.
+    questions:
+      - "Q1: Do the Stage 1 validation results (SB1) and the Stage 2 non-exchangeability (SB2) hold for other models and SAE families?"
+      - "Q2: Under the cross-validated penalty, do Gaussian knockoffs breach FDR, and do hurdle knockoffs restore it (SB3, SB4), on those models' latents?"
+
+  design:
+    models_and_saes:
+      pythia70m: >
+        EleutherAI/pythia-70m-deduped, blocks.4.hook_resid_post, sae_lens release pythia-70m-deduped-res-sm
+        (Marks et al.; ReLU, 32,768 latents; trained without BOS, matching the Pythia tokenizer). The model
+        and SAE release of the reference implementation (docs/NOTES_reference.md section 1); its median
+        resid_pre layer is not reused, because that choice depends on the SAELens directory at run time.
+        Config: config/models/pythia70m.yaml.
+      gemma3_1b: >
+        google/gemma-3-1b-pt, blocks.22.hook_resid_post, sae_lens release gemma-scope-2-1b-pt-res,
+        layer_22_width_16k_l0_medium (Gemma Scope 2; JumpReLU, 16,384 latents, L0 about 60; trained with
+        BOS, which the Gemma tokenizer prepends). Config: config/models/gemma3_1b.yaml.
+    layer_and_sae_rule: >
+      Fixed before any run. Residual stream (resid_post) only. Layer: among the layers the SAE family
+      releases, the one whose relative depth (layer + 1) / n_layers is nearest Gemma-2-2B layer 20's
+      21 / 26 = 0.81 (Pythia: layer 4, 0.83; Gemma-3-1B, released layers 7 / 13 / 17 / 22: layer 22,
+      0.88). Width: 16k where released (Gemma Scope 2), else the release's only width (Pythia: 32k). L0:
+      the variant Neuronpedia lists as the default (Gemma Scope 2 "medium").
+    pipeline: >
+      Unchanged from saebench_amendment_1 and saebench_amendment_2: the same 8 datasets and task texts
+      (data/saebench/tasks, built once; texts do not depend on the model), encoding, latent filter
+      (firing rate >= 1% per dataset, top 2,048), one-vs-rest tasks, Stage 1, Stage 2 and Stage 3-4
+      procedures, thresholds, permutation counts, replicates and seed streams with the same indices.
+      Only the model block, the SAE block and the results directory change (results/models/<name>/).
+      Code changes: config overlays (common.load_config `inherit`), the decoder used for hidden states
+      (model.model, or model.base_model where absent: Pythia's gpt_neox), a pad token for tokenizers
+      without one, and fail-fast checks (SAE hook = configured layer; layer is not the last; cache not
+      written if the SAE's explained variance on the dataset's tokens is below 0.3). Gemma-2 caches and
+      results are unaffected (cache hashes unchanged).
+    stage34_datasets: >
+      Stages 3-4 run on the first N datasets of this order, N >= 3, fixed now: EuroParl, bias_in_bios set 1,
+      Amazon category (spanning the Gemma-2 zero atom: 0.73, 0.59, 0.30), then AG News, GitHub code,
+      bias_in_bios sets 2 and 3, Amazon sentiment. N is set by compute time only. Every dataset whose run
+      completes is reported; none is dropped or skipped after any of that model's results is seen.
+      Stages 1-2 run on all 8 datasets.
+    seeds: "No new streams. The SAEBench streams are reused with the same (dataset, task, cell, replicate) indices, so models share planted signals, folds and permutations (common random numbers)."
+
+  decision_rules:
+    - id: SBM-E
+      rule: >
+        Sanity, per model and dataset, reported before any result: SAE explained variance and mean L0 on
+        the pooled tokens, latents firing >= 1%, retained p, median Pr(X = 0). A dataset whose cache fails
+        the 0.3 explained-variance check is excluded for that model and reported as such.
+    - id: SBM-1
+      rule: "Per model, rules SB1-B, SB1-R, SB1-H and SB1-S of saebench_amendment_1, unchanged."
+    - id: SBM-2
+      rule: >
+        Per model, rules SB2-P, SB2-V and SB2-R of saebench_amendment_1, unchanged, with the number of
+        SB2-V-valid datasets on which the violation is detected. The Stage 2 violation generalises to a
+        model if it is detected on at least two thirds of that model's SB2-V-valid datasets, with at least
+        3 valid datasets (Gemma-2: 6 of 6).
+    - id: SBM-3
+      rule: >
+        Per model, rules SB3-V, SB3-R, SB4-R and SB-Z of saebench_amendment_2, unchanged, over the datasets
+        run (SB-Z only with at least 3 valid datasets, as the code requires).
+    - id: SBM-T
+      rule: "No change to model, layer, SAE, datasets, the Stage 3-4 order, thresholds or seeds after seeing any result for that model."
+
+  smoke_test_before_commit: >
+    Config inheritance and cache-path isolation checked without a GPU (overlays differ from default.yaml
+    only in model, sae, paths and the Stage 3-4 order; Gemma-2 cache hashes unchanged). The model code path
+    was not run before this commit (no GPU on the authoring machine); SBM-E's numbers are the first output.
+
+  interpretation_constraints:
+    - "Model and SAE architecture change together (Pythia: ReLU SAE, Gemma Scope 2: JumpReLU); a difference between models cannot be attributed to either alone."
+    - "Layers are matched by relative depth, not by function."
+    - "Pythia-70M is far smaller than the Gemma models; its latents are a stress case for the zero-atom question, not a scale study."
+    - "Common random numbers make the models' results correlated through the shared planted signals; they are not independent replications."

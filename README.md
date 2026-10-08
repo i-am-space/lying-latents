@@ -33,7 +33,8 @@ src/planted_fdr_controls.py   Stage 3 v2: same benchmark with a Gaussian control
 src/stage3_followups.py       Stage 3 follow-ups: mechanism of the FDR rise, failure boundary, p = 2048 factorial
 src/stage4_repairs.py         Stage 4: hurdle (SCIP), binarised and e-value repairs vs Gaussian knockoffs
 src/saebench/                 SAEBench sparse-probing tasks: build_tasks, cache, stage1, stage2 (saebench_amendment_1)
-src/common.py                 config loading, seed derivation, cache hashing
+src/common.py                 config loading (with `inherit` overlays), seed derivation, cache hashing
+config/models/                overlays for other models / SAEs: pythia70m, gemma3_1b (saebench_amendment_3)
 scripts/                      runners and one-off diagnostics (path-coupled; kept in place)
 docs/NOTES_reference.md       what the audited pipeline actually does
 docs/CHANGES.md               change log: what each change did, why, and what came out
@@ -110,4 +111,20 @@ python src/saebench/stage1.py --config config/default.yaml --device cuda  # GPU,
 python src/saebench/stage2.py --config config/default.yaml               # CPU, per dataset, resumable
 python src/saebench/stage1.py --config config/default.yaml --aggregate
 python src/saebench/stage2.py --config config/default.yaml --aggregate
+```
+
+## Other models (SAEBench Stages 1-4, saebench_amendment_3)
+
+Pythia-70M (`pythia-70m-deduped-res-sm`, layer 4) and Gemma-3-1B (Gemma Scope 2, layer 22, 16k). Each is an
+overlay on `config/default.yaml` (`config/models/*.yaml`: model, SAE, results directory, Stage 3-4 dataset
+order), so every script takes it as `--config`. Results go to `results/models/<name>/saebench/`. Caches share
+`data/saebench/cache` (file names carry the config hash) and need the task texts in `data/saebench/tasks/`
+(model-independent; copy them, or build them as above). Gemma 3 is gated on Hugging Face: accept the licence of
+`google/gemma-3-1b-pt` for the token on the machine.
+
+```bash
+scripts/models_pipeline.sh config/models/gemma3_1b.yaml all       # caches, then Stages 1-2 and 3-4 side by side
+scripts/models_pipeline.sh config/models/gemma3_1b.yaml status    # progress; rerunning any phase resumes
+# phases: cache | stage12 | stage34 | all | status
+# env: GPUS="0 1" (cache and Stage 1 use the first), N34=3 (Stage 3-4 datasets), S2_THREADS=4, S34_THREADS=3, BATCH
 ```

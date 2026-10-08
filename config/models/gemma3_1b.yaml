@@ -1,0 +1,34 @@
+# SAEBench Stages 1-4 on Gemma-3-1B with Gemma Scope 2 (config/preregistration.yaml saebench_amendment_3).
+# Overlay on config/default.yaml: only the keys below change; every stage setting is inherited.
+# Usage: any SAEBench script with --config config/models/gemma3_1b.yaml, or scripts/models_pipeline.sh.
+# google/gemma-3-1b-pt is gated: the Hugging Face token on the machine must have accepted its licence.
+inherit: ../default.yaml
+
+model:
+  name: google/gemma-3-1b-pt
+  dtype: float32
+  layer: 22                               # resid_post; relative depth 23/26 = 0.88, the released layer
+                                          # nearest Gemma-2-2B L20's 0.81 (layer 17: 0.69)
+  attn_implementation: eager
+  batch_size: 64                          # cost only; pooling is masked per text (not in the cache hash)
+  max_seq_len: 128
+
+sae:
+  release: gemma-scope-2-1b-pt-res        # Gemma Scope 2 (JumpReLU), sae_lens 6.37.6 directory
+  sae_id: layer_22_width_16k_l0_medium    # width as the Gemma-2 SAE; medium L0 (60) is Neuronpedia's default
+
+stage4_saebench:
+  # Stages 3-4 run on the first N of these (N >= 3, in this order; scripts/models_pipeline.sh N34).
+  # Order fixed before any run: the first three span the Gemma-2 zero atom (0.73, 0.59, 0.30).
+  dataset_priority:
+    - Helsinki-NLP/europarl
+    - LabHC/bias_in_bios_class_set1
+    - canrager/amazon_reviews_mcauley_1and5
+    - fancyzhx/ag_news
+    - codeparrot/github-code
+    - LabHC/bias_in_bios_class_set2
+    - LabHC/bias_in_bios_class_set3
+    - canrager/amazon_reviews_mcauley_1and5_sentiment
+
+paths:
+  results_dir: results/models/gemma3_1b   # caches stay in data/saebench/cache (file names carry the config hash)

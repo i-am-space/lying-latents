@@ -76,6 +76,11 @@ def main() -> None:
         if args.limit:
             print("  --limit given: debug run, cache not written")
             continue
+        min_ev = sb.get("min_explained_variance", 0.3)
+        if ev < min_ev:
+            # Gemma Scope L20 gives 0.71-0.80 on these texts; an SAE fed the wrong layer or hook gives far less
+            # (typically near zero or negative)
+            raise SystemExit(f"  SAE explained variance {ev:.3f} < {min_ev}: hook / layer / SAE mismatch? cache NOT written")
         out = cache_path(cfg, name)
         out.parent.mkdir(parents=True, exist_ok=True)
         cc = sb_cache_config(cfg, name)
@@ -88,7 +93,8 @@ def main() -> None:
                          "classes": tj["classes"], "sae_explained_variance": ev, "sae_mean_l0": l0,
                          "n_latents_firing_1pct": n_firing, "p_retained": int(retained.size),
                          "median_zero_mass_retained": p0, "mean_tokens": float(n_tokens.mean()),
-                         "minutes": secs / 60}
+                         "model": cfg["model"]["name"], "layer": cfg["model"]["layer"],
+                         "sae": f"{cfg['sae']['release']}/{cfg['sae']['sae_id']}", "minutes": secs / 60}
         summary_path.write_text(json.dumps(summary, indent=2))
         print(f"  wrote {out} ({out.stat().st_size / 1e9:.2f} GB)", flush=True)
 

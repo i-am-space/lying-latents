@@ -29,6 +29,8 @@ def load_model_and_sae(cfg: dict):
     mc, sc = cfg["model"], cfg["sae"]
     dtype = getattr(torch, mc["dtype"])
     tok = AutoTokenizer.from_pretrained(mc["name"])
+    if tok.pad_token is None:                  # Pythia: no pad token; pads are masked out of every statistic
+        tok.pad_token = tok.eos_token
     model = AutoModelForCausalLM.from_pretrained(
         mc["name"], dtype=dtype, attn_implementation=mc["attn_implementation"]
     ).to("cuda").eval()
@@ -39,6 +41,18 @@ def load_model_and_sae(cfg: dict):
     sae = loaded[0] if isinstance(loaded, (tuple, list)) else loaded
     sae = sae.to(dtype).eval()
     print(f"d_sae       : {sae.cfg.d_sae}   layer {mc['layer']} resid_post")
+    hook = getattr(getattr(sae.cfg, "metadata", None), "hook_name", None)
+    if hook is not None and hook != f"blocks.{mc['layer']}.hook_resid_post":
+        raise SystemExit(f"SAE hook {hook} does not match model.layer {mc['layer']} (resid_post)")
+    if mc["layer"] + 1 >= model.config.num_hidden_layers:
+        # hidden_states[-1] is after the final norm, not the last block's residual stream
+        raise SystemExit(f"model.layer {mc['layer']} is the last layer; its hidden state is post-norm")
+    # the tokenizer's own BOS behaviour is used; it should match how the SAE was trained
+    adds_bos = tok("a")["input_ids"][0] == tok.bos_token_id
+    sae_bos = getattr(getattr(sae.cfg, "metadata", None), "prepend_bos", None)
+    print(f"BOS         : tokenizer prepends {adds_bos}, SAE trained with prepend_bos {sae_bos}")
+    if sae_bos is not None and bool(sae_bos) != adds_bos:
+        print("WARNING     : tokenizer and SAE disagree on BOS; latents at the first position may be off-distribution")
     return tok, model, sae
 
 
@@ -74,10 +88,13 @@ def encode_texts(sents: list[str], tok, model, sae, mc: dict):
         ids = batch["input_ids"].to("cuda")
         am = batch["attention_mask"].to("cuda")
 
-        # model.model is the decoder without the LM head: same hidden states, but it skips the
-        # (B, T, 256k-vocab) logits, which alone take ~8 GB at batch 64 and are never used
-        hs = model.model(input_ids=ids, attention_mask=am, output_hidden_states=True
-                         ).hidden_states[hook_layer + 1]    # resid_post of `layer`
+        # the decoder without the LM head (model.model on Gemma 2 / 3, model.gpt_neox on Pythia): same
+        # hidden states, but it skips the (B, T, vocab) logits, which alone take ~8 GB at batch 64.
+        # (Not model.base_model: Gemma3ForCausalLM's prefix names an attribute it lacks, so that is the
+        # whole model.)
+        decoder = model.model if hasattr(model, "model") else model.base_model
+        hs = decoder(input_ids=ids, attention_mask=am, output_hidden_states=True
+                     ).hidden_states[hook_layer + 1]    # resid_post of `layer`
         z = sae.encode(hs)                                   # (B, T, d_sae)
 
         keep = am.bool()
