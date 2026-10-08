@@ -1042,6 +1042,10 @@ def main_saebench(args) -> None:
     from saebench.sbutil import load_cache, slug
 
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
+    if device.type == "cuda":
+        # create the CUDA context before the CPU-heavy setup: on the server, a first CUDA call made after
+        # build_from_X's CPU work failed with "CUDA driver initialization failed" (no numerical effect)
+        torch.zeros(1, device=device)
     cfg = load_config(args.config)
     ext = cfg["stage4_saebench"]
     sec = {**cfg["stage4_repairs"], "mvr_max_block": cfg["stage4_mvr"]["mvr_max_block"], "cv": cfg["stage4_cv"]["cv"],
