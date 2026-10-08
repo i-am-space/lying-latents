@@ -2,7 +2,7 @@
 
 Source: <https://github.com/WesternDundrey/Model-X-for-SAEs>, commit `d7beffa`,
 single file `modelx_knockoffs_experiment.py` (627 lines). An identical copy sits at
-`enkhbayar_model_x.py` in this repo root. Read-only reference; nothing is imported from it.
+`reference/enkhbayar_model_x.py`. Read-only reference; nothing is imported from it.
 
 Everything below is extracted from that file. Line numbers refer to it.
 

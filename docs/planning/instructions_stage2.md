@@ -290,7 +290,7 @@ The session is done when:
    figures, and the premise check has an explicit verdict
 3. The diagnostic suite returns null on synthetic Gaussian data (calibration figure)
 4. The diagnostic suite runs on real latents with results recorded as JSON plus figures
-5. `results/stage2_findings.md` states, in plain prose: whether exchangeability is
+5. `docs/findings/stage2_findings.md` states, in plain prose: whether exchangeability is
    violated, by how much, on what evidence, and what that does and does not establish
 
 Nothing beyond this. The next stage is decided by these numbers, not by anticipating

@@ -261,7 +261,7 @@ k = 10/20/30, and 30 replicates.
   on the number of latents and the near-copy S matrix (rule D3).
 
 **Results.** A teammate ran it (68 min). Its design commit (08:20 UTC, 27 Sep) precedes the
-result commits (08:40 and 10:57 UTC). Full write-up: `results/stage3_findings.md` §9.
+result commits (08:40 and 10:57 UTC). Full write-up: `docs/findings/stage3_findings.md` §9.
 - **v1 reproduced** in 36 of 36 conditions (rule D1): the collapse is real at p = 2,048.
 - **Solver:** no effect (largest power difference 0.014, none significant).
 - **Rows:** no effect (1 of 36 significant, about what chance gives).
@@ -301,7 +301,7 @@ real-data run. `src/stage3_followups.py` runs two experiments:
 - With more rows Ledoit–Wolf shrinks less, so equicorrelated knockoffs get closer to copies.
   The amendment records both.
 
-**Results** (`results/stage3_findings.md` §10–§12; stress ran locally in 96 min, dims on pkgpu
+**Results** (`docs/findings/stage3_findings.md` §10–§12; stress ran locally in 96 min, dims on pkgpu
 in 100 min):
 
 - **R4, boundary.** With MVR knockoffs FDR crosses q at amplitude 20: 0.083 ± 0.016 and
@@ -358,7 +358,7 @@ All pre-registered before their runs (`stage4_amendment_3`, `stage3_amendment_4`
   `s3p2048_knockoff`), later the Stage 4 streams, and then `s3s_hurdle`, `s3s_diagnostics`,
   `s3d_data`, `s3d_planted`, `s3d_knockoff` for §4c. Earlier streams are untouched, so earlier
   results stay reproducible.
-- `results/stage1_findings.md` and `results/stage3_findings.md` were rewritten from the
+- `docs/findings/stage1_findings.md` and `docs/findings/stage3_findings.md` were rewritten from the
   actual numbers, with sections listing the corrections to v1.
 - `README.md`: the new scripts, runtimes and Stage 3 status.
 - The v1 scripts and results are kept unchanged as history.

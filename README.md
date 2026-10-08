@@ -15,7 +15,7 @@ These are **necessary-condition** tests. Exchangeability is required only on nul
 latents, and the null set is unknown on real data, so the diagnostics are sufficient
 to *falsify* exchangeability, never to confirm it. A violation **voids the FDR
 guarantee**; it does not demonstrate that realised FDR exceeds the nominal target.
-That is Stage 3 (`results/stage3_findings.md`): no inflation beyond q was found in the tested
+That is Stage 3 (`docs/findings/stage3_findings.md`): no inflation beyond q was found in the tested
 range, but the margin a valid construction has erodes as signal strength grows.
 
 ## Layout
@@ -34,9 +34,14 @@ src/stage3_followups.py       Stage 3 follow-ups: mechanism of the FDR rise, fai
 src/stage4_repairs.py         Stage 4: hurdle (SCIP), binarised and e-value repairs vs Gaussian knockoffs
 src/saebench/                 SAEBench sparse-probing tasks: build_tasks, cache, stage1, stage2 (saebench_amendment_1)
 src/common.py                 config loading, seed derivation, cache hashing
-scripts/                      one-off verification of reference-code behaviour
-NOTES_reference.md            what the audited pipeline actually does
-results/                      figures, JSON summaries, per-stage findings
+scripts/                      runners and one-off diagnostics (path-coupled; kept in place)
+docs/NOTES_reference.md       what the audited pipeline actually does
+docs/CHANGES.md               change log: what each change did, why, and what came out
+docs/findings/                per-stage findings write-ups (stage1..stage4, and the SAEBench *_sae_ ones)
+docs/planning/                original task instructions
+reference/                    proposal, interim report, and the audited reference code (read-only)
+results/                      JSON/npz outputs read by the analysis scripts (paths fixed in code)
+results/figures/              all figures (moved from results/; reruns will regenerate them in results/)
 ```
 
 ## Reproducing
@@ -85,7 +90,7 @@ knockoffs are provably valid.
 
 This **voids the FDR guarantee**. It does not show that realised FDR exceeds the
 nominal target; that is Stage 3 and was not run. Full writeup with the interpretation
-constraints in [results/stage2_findings.md](results/stage2_findings.md).
+constraints in [docs/findings/stage2_findings.md](docs/findings/stage2_findings.md).
 
 ## SAEBench (Stages 1-2 on the 35 sparse-probing tasks)
 
