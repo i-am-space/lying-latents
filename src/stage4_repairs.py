@@ -215,14 +215,19 @@ class SCIPSampler:
 # ---------------------------------------------------------------------------
 
 def evalue_discoveries(Z: torch.Tensor, y: torch.Tensor, split: np.ndarray, ev: dict, lasso: dict,
-                       qs) -> dict:
+                       qs, w_sel: torch.Tensor | None = None) -> dict:
     """Select on half A with the lasso, test on half B with logistic Wald p-values, calibrate to
-    e-values e = kappa * p^(kappa - 1), and run e-BH at each q over all p latents."""
+    e-values e = kappa * p^(kappa - 1), and run e-BH at each q over all p latents. w_sel: selection
+    weights already fitted on half A (e.g. at a CV-chosen penalty); by default the lasso is fitted on A
+    at ev["selection_lambda"]."""
     n, p = Z.shape
     nA = int(n * ev["split_fraction"])
     A = torch.as_tensor(split[:nA], device=Z.device)
     B = torch.as_tensor(split[nA:], device=Z.device)
-    w, _, _, _ = fit_lasso_checked(Z[A], y[A], ev["selection_lambda"], lasso["max_iter"], lasso["tol"])
+    if w_sel is None:
+        w, _, _, _ = fit_lasso_checked(Z[A], y[A], ev["selection_lambda"], lasso["max_iter"], lasso["tol"])
+    else:
+        w = w_sel
     sel = torch.nonzero(w.abs() > 0).flatten()
     if sel.numel() > ev["max_selected"]:
         sel = sel[torch.argsort(w[sel].abs(), descending=True)[: ev["max_selected"]]]
@@ -320,7 +325,7 @@ def build_from_X(cfg: dict, sec: dict, X: np.ndarray, device, methods, rng: np.r
     print(f"  n={n} p={p} n/p={n / p:.1f}  median Pr(X=0)={np.median((X == 0).mean(0)):.3f}  "
           f"equicorrelated s={np.diag(S).mean():.4f}", flush=True)
     t = time.time()
-    need = set(methods) if methods else set(KNOCKOFF_METHODS)
+    need = set(methods) if methods is not None else set(KNOCKOFF_METHODS)
     samplers = {}
     if "hurdle_scip" in need:
         samplers["hurdle_scip"] = SCIPSampler(X, "hurdle", sec["scip"], device)
@@ -723,6 +728,62 @@ def run_cv(cfg, sec, D, device, R, arms, arm_ids, checkpoint=None):
     return M, LAM, corr, dinfo
 
 
+def run_evalue_cv(cfg, sec, D, device, R, checkpoint=None):
+    """E-value sample splitting on the stage4_cv cells (labels exactly as run_cv's real-latent arms),
+    with the selection penalty fixed (selection_lambda) and chosen by 5-fold CV within half A only, so
+    half B never informs selection and the e-values stay valid. Paired with stage4_cv's records."""
+    from stage3_followups import cv_lasso
+    qs, amps, forms, ks = sec["nominal_fdr_targets"], sec["signal_amplitudes"], sec["functional_forms"], sec["signal_sizes"]
+    ev = sec["evalue"]
+    shape = (len(amps), len(forms), len(ks), R)
+    M = {f"{m}_{lam}": {"evalue": np.full(shape + (len(qs),), np.nan, dtype=np.float32)}
+         for m in ("ko_fdr", "ko_pow", "ko_nd") for lam in ("fixed", "cv")}
+    LAM = {"evalue": np.zeros(shape + (3,), dtype=np.float32)}
+    NSEL = np.zeros(shape + (2,), dtype=np.float32)              # selected on A: fixed, cv
+    start = 0
+    if checkpoint is not None and checkpoint.exists():
+        meta = json.loads(checkpoint.read_text())
+        if meta.get("shape") == list(shape):
+            z = np.load(checkpoint.with_suffix(".npz"))
+            for m in M:
+                M[m]["evalue"] = z[f"{m}__evalue"]
+            LAM["evalue"], NSEL, start = z["lam__evalue"], z["nsel"], meta["reps_done"]
+            print(f"  resuming from checkpoint: {start}/{R} replicates done", flush=True)
+    Zt = torch.from_numpy(D["Z"].astype(np.float32)).to(device)
+    n, p = D["Z"].shape
+    nA = int(n * ev["split_fraction"])
+    t0 = time.time()
+    for rep in range(start, R):
+        split = cell_rng(cfg, "s4ev_split", rep).permutation(n)
+        A = torch.as_tensor(split[:nA], device=device)
+        for ia, amp in enumerate(amps):
+            for jf, form in enumerate(forms):
+                for kk, k in enumerate(ks):
+                    rng = cell_rng(cfg, "s4cv_planted", ia, jf, kk, rep)
+                    S_idx = np.sort(rng.choice(p, size=k, replace=False))
+                    truth = set(S_idx.tolist())
+                    y_np, _ = generate_planted_labels(D["Z"], S_idx, form, amp, rng)
+                    y_t = torch.from_numpy(y_np.astype(np.float32)).to(device)
+                    w_fix, _, _, _ = fit_lasso_checked(Zt[A], y_t[A], ev["selection_lambda"], sec["lasso"]["max_iter"], sec["lasso"]["tol"])
+                    w_cv, _, li = cv_lasso(Zt[A], y_t[A], sec["cv"], cell_rng(cfg, "s4ev_folds", ia, jf, kk, rep))
+                    for li_, (lam, w) in enumerate((("fixed", w_fix), ("cv", w_cv))):
+                        disc = evalue_discoveries(Zt, y_t, split, ev, sec["lasso"], qs, w_sel=w)
+                        NSEL[ia, jf, kk, rep, li_] = float((w.abs() > 0).sum())
+                        for iq, q in enumerate(qs):
+                            fdr, pw = evaluate_discoveries(disc[q], truth)
+                            M[f"ko_fdr_{lam}"]["evalue"][ia, jf, kk, rep, iq] = fdr
+                            M[f"ko_pow_{lam}"]["evalue"][ia, jf, kk, rep, iq] = pw
+                            M[f"ko_nd_{lam}"]["evalue"][ia, jf, kk, rep, iq] = len(disc[q])
+                    LAM["evalue"][ia, jf, kk, rep] = (li["lambda"], li["lambda"] / li["lambda_max"], float(li["edge"]))
+        if checkpoint is not None:
+            np.savez(checkpoint.with_suffix(".npz"), **{f"{m}__evalue": M[m]["evalue"] for m in M},
+                     lam__evalue=LAM["evalue"], nsel=NSEL)
+            checkpoint.write_text(json.dumps({"shape": list(shape), "reps_done": rep + 1}))
+        el = time.time() - t0
+        print(f"  rep {rep + 1:>2}/{R}  elapsed {el / 60:.1f}m  ETA {el / (rep + 1 - start) * (R - rep - 1) / 60:.1f}m", flush=True)
+    return M, LAM, NSEL
+
+
 def analyse_cv(cfg, sec, rd: Path) -> dict:
     """Combine the arm groups' records and apply rules C1-C3 (corrected statistics only)."""
     from reanalysis_multiplicity import by_adjust, cells, one_sided_exceed, two_sided_diff
@@ -760,6 +821,12 @@ def analyse_cv(cfg, sec, rd: Path) -> dict:
         hf = out["hurdle_minus_mvr"]["cv"]["ko_fdr"]
         out["C3_hurdle_restores_control"] = bool(out["by_lambda"]["cv"][h]["n_breach_BY"] == 0
                                                  and hf["mean_diff"] < 0 and hf["p_two_sided"] < 0.05)
+    if "evalue" in arms:
+        out["evalue_minus_mvr"] = {lam: {m: pooled("evalue", g, m, lam) for m in ("ko_fdr", "ko_pow")}
+                                   for lam in ("fixed", "cv")} if g in arms else None
+        out["evalue_minus_hurdle"] = {lam: {m: pooled("evalue", h, m, lam) for m in ("ko_fdr", "ko_pow")}
+                                      for lam in ("fixed", "cv")} if h in arms else None
+        out["E1_evalue_breaches_cv"] = out["by_lambda"]["cv"]["evalue"]["n_breach_BY"]
     out["C2_gaussian_breaches_cv"] = {a: out["by_lambda"]["cv"][a]["n_breach_BY"] for a in arms if a.startswith("gauss")}
     lamz = {k.split("__", 1)[1]: v for k, v in z.items() if k.startswith("lam__")}
     out["cv_lambda"] = {a: {"median_ratio_to_lambda_max": float(np.median(v[..., 1])), "share_at_grid_edge": float(v[..., 2].mean())}
@@ -784,7 +851,8 @@ def main_cv(args) -> None:
             for a, r in res.items():
                 print(f"  [{lam:5s}] {a:18s} FDR(q=.1) {r['mean_fdr_q0.10']:.3f}  max cell {r['max_cell_fdr_q0.10']:.3f}  "
                       f"BY breaches {r['n_breach_BY']}  power {r['mean_power']:.3f}")
-        for k in ("C1_control_valid_cv", "C2_gaussian_breaches_cv", "C3_hurdle_restores_control", "hurdle_minus_mvr", "cv_lambda"):
+        for k in ("C1_control_valid_cv", "C2_gaussian_breaches_cv", "C3_hurdle_restores_control", "hurdle_minus_mvr",
+                  "E1_evalue_breaches_cv", "evalue_minus_mvr", "evalue_minus_hurdle", "cv_lambda"):
             print(f"  {k}: {json.dumps(out.get(k), default=float)}")
         print(f"\nwrote {rd}/stage4_cv.json")
         return
@@ -792,6 +860,8 @@ def main_cv(args) -> None:
     all_arms = [tuple(a) for a in cfg["stage4_repairs"]["arms"]] + [tuple(a) for a in cfg["stage4_mvr"]["arms"]]
     arm_ids = {n: i for i, (n, _) in enumerate(all_arms)}
     arms = [(n, m) for n, m in all_arms if n in ext["arm_groups"][group]]
+    if group == "evalue":
+        arms = []                                  # no knockoffs: the Gaussian samplers are not needed
     cp = Path(args.cache) if args.cache else cache_path(cfg)
     if not cp.exists():
         raise SystemExit(f"Cache not found at {cp}. Run src/cache_activations.py first.")
@@ -803,6 +873,25 @@ def main_cv(args) -> None:
     D = build(cfg, sec, X_all, device, methods=[m for _, m in arms])
     del X_all
     R = args.limit_reps or (ext["diagnose"]["pilot_replicates"] if args.stage == "diagnose" else ext["replicates"])
+    if group == "evalue":
+        print(f"\n=== {args.stage}: e-value sample splitting, fixed and CV selection penalty, {R} replicate(s) ===")
+        ckpt = None if args.stage == "diagnose" else rd / "stage4_cv_evalue_checkpoint.json"
+        t = time.time()
+        M, LAM, NSEL = run_evalue_cv(cfg, sec, D, device, R, checkpoint=ckpt)
+        print(f"  {(time.time() - t) / R:.0f}s per replicate; selected on half A: fixed median {np.median(NSEL[..., 0]):.0f}, "
+              f"CV median {np.median(NSEL[..., 1]):.0f} (cap {sec['evalue']['max_selected']})", flush=True)
+        if args.stage == "diagnose":
+            return
+        np.savez(rd / "stage4_cv_evalue_records.npz", **{f"{m}__evalue": M[m]["evalue"] for m in M},
+                 lam__evalue=LAM["evalue"])
+        (rd / "stage4_cv_evalue_info.json").write_text(json.dumps(
+            {"replicates": R, "selected_on_A": {"fixed_median": float(np.median(NSEL[..., 0])), "cv_median": float(np.median(NSEL[..., 1])),
+                                                "share_at_cap_cv": float((NSEL[..., 1] > sec["evalue"]["max_selected"]).mean())},
+             "minutes": round((time.time() - t0) / 60, 1)}, indent=2, default=float))
+        for f in (ckpt, ckpt.with_suffix(".npz")):
+            f.unlink(missing_ok=True)
+        print(f"\nwrote {rd}/stage4_cv_evalue_records.npz ({(time.time() - t0) / 60:.1f} min)")
+        return
     print(f"\n=== {args.stage}: arms {[a for a, _ in arms]}, {R} replicate(s) ===")
     ckpt = None if args.stage == "diagnose" else rd / f"stage4_cv_{group}_checkpoint.json"
     t = time.time()

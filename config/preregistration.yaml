@@ -1494,3 +1494,37 @@ saebench_amendment_2:
   interpretation_constraints:
     - "Planted labels on each dataset's real latents; nothing is measured on SAEBench's own task labels."
     - "Datasets differ in text length, zero atom and n at once; SB-Z is descriptive over 8 points."
+
+# ===========================================================================
+# AMENDMENT 6 - Stage 4: e-value sample splitting under the cross-validated penalty (written BEFORE it ran)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+stage4_amendment_6:
+  meta:
+    date_written: "2026-10-08"
+    status: written_before_run
+    trigger: >
+      Under the cross-validated penalty, both Gaussian knockoff constructions exceed the FDR target in the
+      realistic designs while hurdle knockoffs do not (stage4_amendment_4). E-value sample splitting was
+      only run at the fixed selection penalty (lambda 0.02), where it was valid but conservative. The team
+      wants it compared under the same standard practice. Binarised knockoffs are not carried forward.
+  design:
+    cells: "Exactly stage4_amendment_4's: Stage 4 data (p = 2048, n = 20,000), k = 100, 300 x amplitudes 8, 32 x linear/interaction x q .05/.10/.20, 10 replicates; labels regenerated from s4cv_planted, identical to the knockoff arms' (paired)."
+    method: >
+      stage4_repairs evalue settings unchanged (split 0.5, max 500 selected, refit ridge 1e-6, calibrator
+      kappa 0.5, e-BH over all p). The selection lasso on half A uses either the fixed selection_lambda
+      (0.02) or a penalty chosen by 5-fold CV within half A only (stage3_amendment_6's grid relative to
+      lambda_max of half A's design, lowest held-out log-loss), so half B never informs selection and the
+      e-values remain valid whatever the penalty. Split: s4ev_split (replicate); folds: s4ev_folds (cell).
+  decision_rules:
+    - id: E1
+      rule: "E-value breaches (Benjamini-Yekutieli over its 24 cell-q combinations) are reported at both penalties."
+    - id: E2
+      rule: "Paired pooled differences e-values minus block MVR and e-values minus hurdle (FDR, power) are reported at both penalties."
+    - id: E3
+      rule: "The CV-chosen selection penalty, the number selected on half A and the share hitting the 500 cap are reported."
+    - id: E4
+      rule: "No tuning after seeing results."
+  interpretation_constraints:
+    - "E-value validity rests on the half-B logistic refit being correctly specified; it is not for the interaction designs."

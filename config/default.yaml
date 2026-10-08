@@ -396,6 +396,7 @@ stage4_cv:
   arm_groups:                     # run separately (e.g. on two GPUs), then --stage analyse
     hurdle: [hurdle]
     gauss: [gauss_real, gauss_mvr, gauss_ceiling_mvr]
+    evalue: [evalue]              # stage4_amendment_6: e-value splitting, fixed and CV selection penalty
   diagnose:
     pilot_replicates: 1
 

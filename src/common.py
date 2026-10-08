@@ -62,6 +62,8 @@ STREAMS = [
     "sb34_knockoff",         # SAEBench Stages 3-4: knockoff draw seeds (per dataset, arm, replicate)
     "sb34_planted",          # SAEBench Stages 3-4: planted signals and labels (per dataset, cell)
     "sb34_folds",            # SAEBench Stages 3-4: cross-validation folds (per dataset, cell)
+    "s4ev_split",            # Stage 4 cv, e-values: half-A / half-B split (per replicate)
+    "s4ev_folds",            # Stage 4 cv, e-values: CV folds within half A (per cell)
 ]
 
 
