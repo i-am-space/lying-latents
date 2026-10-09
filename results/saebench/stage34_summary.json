@@ -1,0 +1,280 @@
+{
+  "datasets": {
+    "LabHC/bias_in_bios_class_set1": {
+      "n": 12500,
+      "median_zero_mass": 0.5904,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 0
+      },
+      "SB4_hurdle_restores": true,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.014659348875284195,
+        "se": 0.0052966122139606955,
+        "p_two_sided": 0.012689578940093107
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 0,
+        "gauss_real": 0,
+        "hurdle": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.09298215806484222,
+        "gauss_mvr": 0.10869866609573364,
+        "gauss_real": 0.07686571776866913,
+        "hurdle": 0.09429293870925903
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.9326944351196289,
+        "gauss_mvr": 0.9432500004768372,
+        "gauss_real": 0.8603472113609314,
+        "hurdle": 0.9443472027778625
+      }
+    },
+    "LabHC/bias_in_bios_class_set2": {
+      "n": 12500,
+      "median_zero_mass": 0.5898399999999999,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 0
+      },
+      "SB4_hurdle_restores": false,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.011454243957996366,
+        "se": 0.0033883219779490144,
+        "p_two_sided": 0.00336953874242553
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 0,
+        "gauss_real": 0,
+        "hurdle": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.082903191447258,
+        "gauss_mvr": 0.09549117088317871,
+        "gauss_real": 0.04108605533838272,
+        "hurdle": 0.09071672707796097
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.9130415916442871,
+        "gauss_mvr": 0.9198611378669739,
+        "gauss_real": 0.7186805009841919,
+        "hurdle": 0.9312360882759094
+      }
+    },
+    "LabHC/bias_in_bios_class_set3": {
+      "n": 12500,
+      "median_zero_mass": 0.58124,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 0
+      },
+      "SB4_hurdle_restores": false,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.010856075584888464,
+        "se": 0.005187221006519411,
+        "p_two_sided": 0.05090950050416716
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 0,
+        "gauss_real": 0,
+        "hurdle": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.08843426406383514,
+        "gauss_mvr": 0.1022956371307373,
+        "gauss_real": 0.07656458020210266,
+        "hurdle": 0.09862150251865387
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.940416693687439,
+        "gauss_mvr": 0.9480277299880981,
+        "gauss_real": 0.8726944327354431,
+        "hurdle": 0.9488749504089355
+      }
+    },
+    "canrager/amazon_reviews_mcauley_1and5": {
+      "n": 12500,
+      "median_zero_mass": 0.30435999999999996,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 0
+      },
+      "SB4_hurdle_restores": false,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.011715091019868853,
+        "se": 0.00354284742439664,
+        "p_two_sided": 0.0042592530864011685
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 0,
+        "gauss_real": 0,
+        "hurdle": 1
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.08272726833820343,
+        "gauss_mvr": 0.09512332081794739,
+        "gauss_real": 0.054586537182331085,
+        "hurdle": 0.11315510421991348
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.9554305672645569,
+        "gauss_mvr": 0.9552500247955322,
+        "gauss_real": 0.8104583024978638,
+        "hurdle": 0.9686249494552612
+      }
+    },
+    "canrager/amazon_reviews_mcauley_1and5_sentiment": {
+      "n": 5000,
+      "median_zero_mass": 0.3187,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 0
+      },
+      "SB4_hurdle_restores": false,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.010994975268840787,
+        "se": 0.00409816949147659,
+        "p_two_sided": 0.015456204695569728
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 0,
+        "gauss_real": 0,
+        "hurdle": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.06438621133565903,
+        "gauss_mvr": 0.07522740215063095,
+        "gauss_real": 0.048825494945049286,
+        "hurdle": 0.06924711912870407
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.6869444251060486,
+        "gauss_mvr": 0.7364444732666016,
+        "gauss_real": 0.6309305429458618,
+        "hurdle": 0.7340972423553467
+      }
+    },
+    "codeparrot/github-code": {
+      "n": 12500,
+      "median_zero_mass": 0.48960000000000004,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 0
+      },
+      "SB4_hurdle_restores": false,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.02600175067782401,
+        "se": 0.005666956940161041,
+        "p_two_sided": 0.0002488087198339908
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 0,
+        "gauss_real": 0,
+        "hurdle": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.07027196139097214,
+        "gauss_mvr": 0.0966511145234108,
+        "gauss_real": 0.01966782473027706,
+        "hurdle": 0.10331551730632782
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.8414027690887451,
+        "gauss_mvr": 0.8580555319786072,
+        "gauss_real": 0.43740278482437134,
+        "hurdle": 0.8931666612625122
+      }
+    },
+    "fancyzhx/ag_news": {
+      "n": 10000,
+      "median_zero_mass": 0.6687,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 0
+      },
+      "SB4_hurdle_restores": false,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.007088778913021093,
+        "se": 0.004304384626581023,
+        "p_two_sided": 0.11723678502238741
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 0,
+        "gauss_real": 0,
+        "hurdle": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.08709008991718292,
+        "gauss_mvr": 0.09547089040279388,
+        "gauss_real": 0.08252464234828949,
+        "hurdle": 0.08688861131668091
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.93898606300354,
+        "gauss_mvr": 0.9469166994094849,
+        "gauss_real": 0.8898193836212158,
+        "hurdle": 0.9400694370269775
+      }
+    },
+    "Helsinki-NLP/europarl": {
+      "n": 12500,
+      "median_zero_mass": 0.73004,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 2,
+        "gauss_mvr": 0
+      },
+      "SB4_hurdle_restores": false,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.008735752105712882,
+        "se": 0.005136603128719592,
+        "p_two_sided": 0.10622090326192231
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 0,
+        "gauss_real": 2,
+        "hurdle": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.0939880758523941,
+        "gauss_mvr": 0.10439270734786987,
+        "gauss_real": 0.08641662448644638,
+        "hurdle": 0.09425269067287445
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.9651944637298584,
+        "gauss_mvr": 0.9690972566604614,
+        "gauss_real": 0.9102221727371216,
+        "hurdle": 0.9573193788528442
+      }
+    }
+  },
+  "aggregate": {
+    "n_datasets": 8,
+    "n_valid": 8,
+    "SB3_R_gaussian_breach_datasets": 0,
+    "SB3_R_equicorrelated_breach_datasets": 1,
+    "SB4_R_hurdle_restores_datasets": 1,
+    "SB3_R_replicates": false,
+    "SBZ_spearman_zero_mass_vs_excess": {
+      "rho": -0.523809523809524,
+      "p": 0.18272075053971484
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "dataset": "codeparrot/github-code",
+  "info": {
+    "n": 12500,
+    "p": 2048,
+    "s_equicorrelated": 0.0096702771048921,
+    "median_zero_mass": 0.48960000000000004,
+    "sampler_setup_seconds": 8.397901773452759
+  },
+  "mean_corr_X_Xk": {
+    "hurdle": 0.8172920052267558
+  },
+  "draw_info": {
+    "hurdle": [
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 8.63307240704501,
+        "n_constant_latents": 4,
+        "zero_mass_error_max": 0.007520000000000082
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 6.618884540117417,
+        "n_constant_latents": 4,
+        "zero_mass_error_max": 0.008879999999999999
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 6.612035225048924,
+        "n_constant_latents": 4,
+        "zero_mass_error_max": 0.008560000000000012
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 6.621819960861057,
+        "n_constant_latents": 4,
+        "zero_mass_error_max": 0.010319999999999996
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 6.591487279843444,
+        "n_constant_latents": 4,
+        "zero_mass_error_max": 0.010319999999999996
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 6.637475538160469,
+        "n_constant_latents": 4,
+        "zero_mass_error_max": 0.009039999999999937
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 6.615949119373777,
+        "n_constant_latents": 4,
+        "zero_mass_error_max": 0.010399999999999965
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 6.596868884540117,
+        "n_constant_latents": 4,
+        "zero_mass_error_max": 0.009120000000000017
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 6.62573385518591,
+        "n_constant_latents": 4,
+        "zero_mass_error_max": 0.0077600000000001
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 6.62426614481409,
+        "n_constant_latents": 4,
+        "zero_mass_error_max": 0.008560000000000012
+      }
+    ]
+  },
+  "replicates": 10,
+  "minutes": 900.5
+}
