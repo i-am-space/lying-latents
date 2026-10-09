@@ -28,5 +28,11 @@ stage4_saebench:
     - LabHC/bias_in_bios_class_set3
     - canrager/amazon_reviews_mcauley_1and5_sentiment
 
+stage4_saebench_matched:
+  datasets:                               # where the hurdle breached in saebench_amendment_3 (4, 7 and 16 of 24 cells)
+    - Helsinki-NLP/europarl
+    - LabHC/bias_in_bios_class_set1
+    - canrager/amazon_reviews_mcauley_1and5
+
 paths:
   results_dir: results/models/pythia70m   # caches stay in data/saebench/cache (file names carry the config hash)

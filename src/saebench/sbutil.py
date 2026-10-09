@@ -78,6 +78,22 @@ def load_cache(cfg: dict, dataset: str) -> dict:
             "retained_idx": d["retained_idx"], "path": str(p)}
 
 
+def positive_threshold(X: np.ndarray, frac: float) -> tuple[np.ndarray, float]:
+    """JumpReLU-like thresholding of a ReLU SAE's latents: every latent's positive values below
+    frac * (its median positive value) are set to exactly 0. A JumpReLU SAE has no activations
+    just above 0 (Gemma Scope: minimum positive / median positive 0.13-0.36); a ReLU SAE has
+    (Pythia: ~1e-4), which the hurdle's log-normal size model cannot reproduce (saebench_amendment_4).
+    Returns (thresholded copy, share of the positive entries that were zeroed)."""
+    X = np.array(X, dtype=np.float32, copy=True)
+    pos = X > 0
+    med = np.nanmedian(np.where(pos, X, np.nan), axis=0)
+    med = np.where(np.isnan(med), 0.0, med)
+    cut = (frac * med).astype(np.float32)
+    below = pos & (X < cut[None, :])
+    X[below] = 0.0
+    return X, float(below.sum() / max(int(pos.sum()), 1))
+
+
 def binary_tasks(cfg: dict, dataset: str, C: dict) -> list[dict]:
     """The dataset's one-vs-rest tasks as row indices into the cache. Each task: name, class,
     rows (train then test), y (1 = positive), saebench_split (0 train / 1 test)."""

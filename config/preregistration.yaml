@@ -1617,3 +1617,82 @@ saebench_amendment_3:
     - "Layers are matched by relative depth, not by function."
     - "Pythia-70M is far smaller than the Gemma models; its latents are a stress case for the zero-atom question, not a scale study."
     - "Common random numbers make the models' results correlated through the shared planted signals; they are not independent replications."
+
+# ===========================================================================
+# SAEBENCH AMENDMENT 4 - matched planted amplitudes, the fair-coin record, and the hurdle on thresholded ReLU latents
+#                        (written BEFORE any run)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+saebench_amendment_4:
+  meta:
+    date_written: "2026-10-09"
+    status: written_before_run
+    trigger: >
+      saebench_amendment_2/3 found no Benjamini-Yekutieli breach of the FDR target by Gaussian knockoffs on 8
+      Gemma-2 datasets (SB3-R false), although the swap test detects non-exchangeability on every dataset, and a
+      small consistent excess over the Gaussian control (+0.007 to +0.026). Two things limit what that run can
+      say. (1) The planted amplitudes (8 and 32) were calibrated to SST-2 and applied to every dataset, so the
+      datasets were not tested at the same difficulty (block-MVR power ranges 0.74-0.97). (2) A breach needs
+      significant evidence from 10 replicates per cell, so the run has little power to see a small bias. On
+      Pythia-70M the hurdle breached on 3 of 3 datasets, where about 20% of each latent's positive values are
+      below 1% of its maximum (a ReLU SAE), against 0-1.5% on the JumpReLU SAEs; its log-normal size model is
+      the suspected cause.
+  design:
+    step_1_matched_amplitudes: >
+      Per dataset (src/saebench/calibrate_amplitude.py): a ridge-logistic probe is fitted to each of the
+      dataset's real one-vs-rest tasks (5,000 rows, 60/20/20 split, ridge by validation log-loss), giving a median
+      held-out AUC. The same probe, ridge and split are fitted to planted labels drawn on 5,000 seeded rows, per
+      (form, k) with k in {100, 300}, over amplitudes 1, 2, 4, ..., 128 (3 label draws each). The matched
+      amplitude is the one at which the planted probe AUC equals the real median AUC (log-linear
+      interpolation; at the grid edge the edge value, flagged). Parameters only: no knockoffs, no FDR.
+    step_2_matched_benchmark_and_coin: >
+      Per dataset: one cell per (form, k), 4 cells, each at its matched amplitude; arms, CV penalty, targets and
+      analysis as stage4_saebench; 20 replicates (seed streams sb4m_*; the Gaussian control data and block-MVR
+      seed are sb34_data's, so they equal saebench_amendment_2's). Every cross-validated fit records, for the
+      null latents, the number with W > 0 and with W < 0, in bins of their link to the planted set (max |corr|
+      with a planted latent: < 0.05, 0.05-0.2, > 0.2). Under valid knockoffs a null with W != 0 is a fair coin.
+      The coin rate is the share with W > 0; its unit of analysis is the replicate (the mean over replicates,
+      t-test against 0.5), because nulls within a replicate are dependent through the shared knockoff draw and fit.
+      Datasets: Helsinki-NLP/europarl, LabHC/bias_in_bios_class_set1, codeparrot/github-code,
+      canrager/amazon_reviews_mcauley_1and5 (order fixed here; the zero-atom bands 0.73, 0.59, 0.49 and 0.30,
+      and the largest block-MVR excess of saebench_amendment_2). Arm group gauss (equicorrelated, block MVR,
+      control); the hurdle group is not run on Gemma-2 here (cost).
+    step_5_hurdle_on_thresholded_relu_latents: >
+      Pythia-70M (config/models/pythia70m.yaml), datasets Helsinki-NLP/europarl,
+      LabHC/bias_in_bios_class_set1, canrager/amazon_reviews_mcauley_1and5 (the three where the hurdle breached).
+      The cached latents are first thresholded JumpReLU-like (sbutil.positive_threshold): every latent's positive
+      values below 0.19 x its median positive value are set to 0. The fraction 0.19 is fixed here as the minimum
+      positive / median positive that the JumpReLU SAE of the main experiments (Gemma Scope, Gemma-2) leaves in its
+      latents: 0.129, 0.191 and 0.246 on these three datasets, mean 0.189 (results/models/positive_shape_check.json,
+      scripts/diag_positive_shape.py), so Pythia's latents get the floor of the SAE used elsewhere. Calibration (step 1) and the matched
+      benchmark (step 2, arm groups gauss and hurdle) are then run on the thresholded latents.
+  decision_rules:
+    - id: M1
+      rule: "Per dataset, report the real-label median AUC and the matched amplitudes. A (form, k) whose matched amplitude is at the grid edge is reported as bounded; no cell is dropped or re-matched."
+    - id: M2
+      rule: "Per dataset, the control is valid for the coin if its pooled coin rate is not significantly different from 0.5 (two-sided t-test over replicates, 0.05). Datasets failing it are reported, not interpreted for M3-M4."
+    - id: M3
+      rule: >
+        Gaussian knockoffs are biased on a valid dataset if the block-MVR coin rate is above 0.5 (one-sided t-test over
+        replicates, 0.05) and above the control's (two-sided Welch test, 0.05). Reported separately for the linear
+        cells, the interaction cells and all cells; the number of valid datasets on which it holds is the result.
+    - id: M4
+      rule: "Descriptive: per dataset, the block-MVR coin rate in interaction cells minus in linear cells, and by link bin; the Benjamini-Yekutieli breach counts of saebench_amendment_2's rule SB3-R, recomputed on the matched cells."
+    - id: M5
+      rule: >
+        On the thresholded Pythia latents the hurdle restores control if it has no BY breach on at least 2 of the 3
+        datasets and its pooled coin rate is not significantly above 0.5 on those; reported next to the unthresholded
+        result of saebench_amendment_3 (breaches 4, 7, 16 of 24) and with the Gaussian arms run on the same thresholded
+        latents.
+    - id: M-T
+      rule: "No change to the datasets, the 0.19 threshold fraction, the amplitude grid, the number of replicates or the bins after seeing any result."
+  smoke_test_before_commit: >
+    The calibration, the coin record, the checkpoint resume and the analysis were run on a synthetic zero-inflated
+    matrix with a stand-in knockoff sampler (CPU, knockpy not installed on the authoring machine); no real result
+    was seen. The coin counts on real data are the first output.
+  interpretation_constraints:
+    - "Planted labels on real latents; nothing is measured on SAEBench's own task labels, which only set the amplitude."
+    - "A linear probe cannot represent the interaction part of a label, so interaction amplitudes matched to a real AUC are lower bounds and may sit at the grid edge."
+    - "Thresholding changes the data (more zeros, fewer tiny positives); a result on the thresholded latents is about a JumpReLU-like version of the ReLU SAE, not about the original."
+    - "4 datasets per Gemma-2 run and 3 for Pythia; the per-dataset coin tests are not independent replications of each other (shared model and planted-signal seeds structure)."

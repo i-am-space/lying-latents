@@ -565,6 +565,11 @@ def main() -> None:
     ap.add_argument("--skip-exchangeability", action="store_true")
     ap.add_argument("--arm-group", default="gauss", help="cv / stress / saebench: which arm group to run")
     ap.add_argument("--dataset", default=None, help="saebench only: one of config saebench.datasets")
+    ap.add_argument("--matched", action="store_true",
+                    help="saebench only: per-dataset calibrated amplitudes and the null-coin record (saebench_amendment_4)")
+    ap.add_argument("--positive-threshold", type=float, nargs="?", const=-1.0, default=None, metavar="FRAC",
+                    help="saebench only: zero a latent's values below FRAC x its median positive value first "
+                         "(JumpReLU-like; bare flag = config stage4_saebench_matched.positive_threshold_frac)")
     ap.add_argument("--experiment", default="repairs", choices=["repairs", "mvr", "cv", "stress", "saebench"],
                     help="repairs: the five pre-registered arms; mvr: add block-MVR Gaussian arms (stage4_amendment_3)")
     args = ap.parse_args()
@@ -946,6 +951,24 @@ def size_labels(Xraw: np.ndarray, S_idx: np.ndarray, amp: float, rng: np.random.
     return y, prob
 
 
+def null_coin(w_np: np.ndarray, p: int, S_idx: np.ndarray, Z: np.ndarray, bins) -> np.ndarray:
+    """Signs of W_j = |w_j| - |w_j~| over the null latents, in bins of their link to the planted set
+    (max |corr| with a planted latent, on the standardised data the labels were drawn from).
+    Returns (n_bins, 2): counts of W > 0 and W < 0. Under valid knockoffs a null with W != 0 is a fair
+    coin, so pos / (pos + neg) should be 0.5 (saebench_amendment_4)."""
+    W = np.abs(w_np[:p]) - np.abs(w_np[p:2 * p])
+    null = np.ones(p, dtype=bool)
+    null[S_idx] = False
+    link = np.abs(Z.T @ Z[:, S_idx]).max(axis=1) / Z.shape[0]
+    b = np.clip(np.digitize(link, np.asarray(bins)[1:-1]), 0, len(bins) - 2)
+    out = np.zeros((len(bins) - 1, 2), dtype=np.int32)
+    for i in range(len(bins) - 1):
+        m = null & (b == i)
+        out[i, 0] = int(((W > 0) & m).sum())
+        out[i, 1] = int(((W < 0) & m).sum())
+    return out
+
+
 def run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=None,
               streams=("s4r_knockoff", "s4st_planted", "s4st_folds"), prefix=()):
     """Like run_cv, over an explicit list of (design, amplitude, form, k) cells. One knockoff draw per
@@ -957,6 +980,9 @@ def run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=None,
     M = {f"{m}_{lam}": {a: np.full(shape + (len(qs),), np.nan, dtype=np.float32) for a in names}
          for m in ("ko_fdr", "ko_pow", "ko_nd") for lam in ("fixed", "cv")}
     LAM = {a: np.zeros(shape + (3,), dtype=np.float32) for a in names}
+    cbins = sec.get("coin_link_bins")      # saebench_amendment_4: signs of W for the null latents, by link bin
+    if cbins:
+        M["coin_cv"] = {a: np.zeros(shape + (len(cbins) - 1, 2), dtype=np.int32) for a in names}
     corr, dinfo = {a: [] for a in names}, {a: [] for a in names}
     key = {"shape": list(shape), "arms": names, "cells": [list(c) for c in cells]}
     start = 0
@@ -1002,6 +1028,8 @@ def run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=None,
                     sc = score_fit(np.abs(w_np[:p]) - np.abs(w_np[p:]), np.zeros(p), no_thr, qs, truth)
                     for m in ("ko_fdr", "ko_pow", "ko_nd"):
                         M[f"{m}_{lam}"][name][ci, rep] = sc[m]
+                    if lam == "cv" and cbins:
+                        M["coin_cv"][name][ci, rep] = null_coin(w_np, p, S_idx, label_Z, cbins)
                 LAM[name][ci, rep] = (li["lambda"], li["lambda"] / li["lambda_max"], float(li["edge"]))
             del Phi
         if checkpoint is not None:
@@ -1124,11 +1152,64 @@ def main_stress(args) -> None:
 # Stages 3-4 on SAEBench (config/preregistration.yaml saebench_amendment_2)
 # ---------------------------------------------------------------------------
 
-def main_saebench(args) -> None:
-    """Per SAEBench dataset: the Stage 4 cross-validated benchmark (realistic designs) on that
-    dataset's cached latents. Arms and procedure as stage4_cv; dataset-specific seed streams."""
+def saebench_cells(ext: dict, cal: dict | None) -> list:
+    """The planted-signal cells of one dataset: stage4_saebench's fixed list, or (matched) one cell per
+    (form, k) at the amplitude calibrated to the dataset's own real labels."""
+    if cal is None:
+        return [tuple(c) for c in ext["cells"]]
+    return [("matched", float(cal["matched"][f"{f}|{k}"]["amplitude"]), f, int(k))
+            for k in ext["signal_sizes"] for f in ext["forms"]]
+
+
+def analyse_coin(rd: Path, prefix: str, groups: list, cells: list, arms: list) -> dict:
+    """The fair-coin test of saebench_amendment_4. Under valid knockoffs a null latent with W != 0 has
+    P(W > 0) = 0.5. Per replicate, pooled over the cells of a form, the share of nulls with W > 0; the
+    mean over replicates is tested against 0.5 (the replicate is the unit: nulls within one are
+    dependent through the shared knockoff draw and fit)."""
     from scipy import stats as sstats
-    from saebench.sbutil import load_cache, slug
+    z = {}
+    for g in groups:
+        z.update(dict(np.load(rd / f"{prefix}_{g}_records.npz")))
+    forms = [c[2] for c in cells]
+    sel = {"all": list(range(len(cells))), **{f: [i for i, x in enumerate(forms) if x == f] for f in sorted(set(forms))}}
+    out = {}
+    for a in arms:
+        C = z.get(f"coin_cv__{a}")
+        if C is None:
+            continue
+        res = {}
+        for label, idx in sel.items():
+            Cs = C[idx].astype(np.float64)                       # cells, R, bins, 2
+            pos, neg = Cs[..., 0].sum(axis=0), Cs[..., 1].sum(axis=0)       # (R, bins)
+            R = pos.shape[0]
+            rate = pos.sum(1) / np.maximum(pos.sum(1) + neg.sum(1), 1)
+            m, se = float(rate.mean()), float(rate.std(ddof=1) / np.sqrt(R))
+            t = (m - 0.5) / se if se > 0 else 0.0
+            by_bin = [float(pos[:, b].sum() / max(pos[:, b].sum() + neg[:, b].sum(), 1)) for b in range(pos.shape[1])]
+            res[label] = {"rate": m, "se": se, "p_two_sided": float(2 * sstats.t.sf(abs(t), df=R - 1)),
+                          "rate_by_replicate": rate.tolist(), "rate_by_link_bin": by_bin,
+                          "nulls_with_W_nonzero_per_replicate": float((pos + neg).sum(1).mean())}
+        out[a] = res
+    if "gauss_mvr" in out and "gauss_ceiling_mvr" in out:
+        from reanalysis_multiplicity import two_sided_diff
+        out["mvr_minus_control"] = {}
+        for label in sel:
+            d = two_sided_diff(out["gauss_mvr"][label]["rate_by_replicate"],
+                               out["gauss_ceiling_mvr"][label]["rate_by_replicate"], False)
+            out["mvr_minus_control"][label] = {"mean_diff": d[0], "se": d[1], "p_two_sided": d[2]}
+    return out
+
+
+def main_saebench(args) -> None:
+    """Per SAEBench dataset: the Stage 4 cross-validated benchmark on that dataset's cached latents.
+    Arms and procedure as stage4_cv; dataset-specific seed streams.
+
+    Default: saebench_amendment_2 (planted amplitudes 8 and 32 for every dataset).
+    --matched: saebench_amendment_4 (amplitudes calibrated per dataset by src/saebench/calibrate_amplitude.py,
+    the fair-coin record of the null latents, 20 replicates).
+    --positive-threshold FRAC: the latents are first thresholded JumpReLU-like (ReLU SAEs; sbutil.positive_threshold)."""
+    from scipy import stats as sstats
+    from saebench.sbutil import load_cache, positive_threshold, slug
 
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
     if device.type == "cuda":
@@ -1136,54 +1217,110 @@ def main_saebench(args) -> None:
         # build_from_X's CPU work failed with "CUDA driver initialization failed" (no numerical effect)
         torch.zeros(1, device=device)
     cfg = load_config(args.config)
-    ext = cfg["stage4_saebench"]
+    matched = bool(getattr(args, "matched", False))
+    thr = getattr(args, "positive_threshold", None)
+    if thr is not None and thr < 0:
+        thr = float(cfg["stage4_saebench_matched"]["positive_threshold_frac"])
+    ext = cfg["stage4_saebench_matched" if matched else "stage4_saebench"]
     sec = {**cfg["stage4_repairs"], "mvr_max_block": cfg["stage4_mvr"]["mvr_max_block"], "cv": cfg["stage4_cv"]["cv"],
            **{k: v for k, v in ext.items()}}
     datasets = cfg["saebench"]["datasets"]
-    rd = results_dir(cfg) / "saebench" / "stage34"
+    sfx = f"_thr{thr:g}" if thr else ""
+    tag = ("stage34_matched" if matched else "stage34") + sfx
+    base = results_dir(cfg) / "saebench"
+    rd = base / tag
     rd.mkdir(parents=True, exist_ok=True)
+    cal_all = None
+    if matched:
+        cal_path = base / f"amplitude_calibration{sfx}.json"
+        if not cal_path.exists():
+            raise SystemExit(f"{cal_path} missing: run src/saebench/calibrate_amplitude.py first"
+                             + (f" --positive-threshold {thr:g}" if thr else ""))
+        cal_all = json.loads(cal_path.read_text())["datasets"]
+
+    def cells_of(name):
+        if not matched:
+            return saebench_cells(ext, None)
+        if name not in cal_all:
+            raise SystemExit(f"{name} is not in {cal_path}: calibrate it first")
+        return saebench_cells(ext, cal_all[name])
+
+    design = "matched" if matched else "realistic"
     if args.stage == "analyse":
         summary = {}
         for name in datasets:
-            if not all((rd / f"{slug(name)}_{g}_records.npz").exists() for g in ext["arm_groups"]):
+            groups = [g for g in ext["arm_groups"] if (rd / f"{slug(name)}_{g}_records.npz").exists()]
+            if "gauss" not in groups or (not matched and len(groups) < len(ext["arm_groups"])):
                 print(f"  {name}: records incomplete, skipped", flush=True)
                 continue
-            out = analyse_stress(cfg, sec, rd, prefix=slug(name))
+            if matched and name not in cal_all:
+                continue
+            cells = cells_of(name)
+            sec_d = {**sec, "cells": cells, "arm_groups": {g: ext["arm_groups"][g] for g in groups}}
+            out = analyse_stress(cfg, sec_d, rd, prefix=slug(name))
             info = json.loads((rd / f"{slug(name)}_gauss_info.json").read_text())["info"]
             from reanalysis_multiplicity import two_sided_diff
-            z = {**dict(np.load(rd / f"{slug(name)}_gauss_records.npz")), **dict(np.load(rd / f"{slug(name)}_hurdle_records.npz"))}
+            z = {}
+            for g in groups:
+                z.update(dict(np.load(rd / f"{slug(name)}_{g}_records.npz")))
             ex = two_sided_diff(z["ko_fdr_cv__gauss_mvr"].mean(axis=(0, 2)), z["ko_fdr_cv__gauss_ceiling_mvr"].mean(axis=(0, 2)), False)
             cv = out["by_lambda"]["cv"]
-            hm = out["S3_hurdle_minus_mvr_cv"]["realistic"]["ko_fdr"]
             out["dataset"] = name
             out["median_zero_mass"] = info["median_zero_mass"]
             out["n"] = info["n"]
             out["mvr_minus_control_fdr_cv"] = {"mean_diff": ex[0], "se": ex[1], "p_two_sided": ex[2]}
             out["SB3_control_valid"] = out["S1_control_valid_cv"]
             out["SB3_gaussian_breach"] = {a: cv[a]["n_breach_BY"] for a in ("gauss_real", "gauss_mvr")}
-            out["SB4_hurdle_restores"] = bool(cv["hurdle"]["n_breach_BY"] == 0 and hm["mean_diff"] < 0 and hm["p_two_sided"] < 0.05)
+            if "hurdle" in cv:
+                hm = out["S3_hurdle_minus_mvr_cv"][design]["ko_fdr"]
+                out["SB4_hurdle_restores"] = bool(cv["hurdle"]["n_breach_BY"] == 0 and hm["mean_diff"] < 0 and hm["p_two_sided"] < 0.05)
+            else:
+                out["SB4_hurdle_restores"] = None
+            if matched:
+                out["calibration"] = {"real_auc_median": cal_all[name]["real_auc_median"], "matched": cal_all[name]["matched"]}
+                out["coin"] = analyse_coin(rd, slug(name), groups, cells, list(cv))
             (rd / f"{slug(name)}.json").write_text(json.dumps(out, indent=2, default=float))
             summary[name] = {k: out[k] for k in ("n", "median_zero_mass", "SB3_control_valid", "SB3_gaussian_breach",
                                                  "SB4_hurdle_restores", "mvr_minus_control_fdr_cv")}
             summary[name]["breaches_cv"] = {a: cv[a]["n_breach_BY"] for a in cv}
-            summary[name]["mean_fdr_q0.10_cv"] = {a: cv[a]["by_design"]["realistic"]["mean_fdr_q0.10"] for a in cv}
-            summary[name]["mean_power_cv"] = {a: cv[a]["by_design"]["realistic"]["mean_power"] for a in cv}
-            print(f"  {name:50s} zeros {out['median_zero_mass']:.2f}  breaches (BY) "
-                  + "  ".join(f"{a} {cv[a]['n_breach_BY']}" for a in ("gauss_real", "gauss_mvr", "hurdle", "gauss_ceiling_mvr"))
-                  + f"  | MVR-control FDR {ex[0]:+.3f}  hurdle restores {out['SB4_hurdle_restores']}", flush=True)
+            summary[name]["mean_fdr_q0.10_cv"] = {a: cv[a]["by_design"][design]["mean_fdr_q0.10"] for a in cv}
+            summary[name]["mean_power_cv"] = {a: cv[a]["by_design"][design]["mean_power"] for a in cv}
+            line = (f"  {name:50s} zeros {out['median_zero_mass']:.2f}  breaches (BY) "
+                    + "  ".join(f"{a} {cv[a]['n_breach_BY']}" for a in cv)
+                    + f"  | MVR-control FDR {ex[0]:+.3f}  hurdle restores {out['SB4_hurdle_restores']}")
+            if matched:
+                summary[name]["matched_amplitudes"] = cal_all[name]["matched"]
+                summary[name]["coin"] = {a: {lab: {k: v[lab][k] for k in ("rate", "se", "p_two_sided")} for lab in v}
+                                         for a, v in out["coin"].items() if a != "mvr_minus_control"}
+                summary[name]["coin_mvr_minus_control"] = out["coin"].get("mvr_minus_control")
+                c = out["coin"]
+                line += "\n      coin (share of nulls with W>0; valid = 0.50):  " + "   ".join(
+                    f"{a} " + "/".join(f"{c[a][lab]['rate']:.3f}" for lab in ("all", "linear", "interaction"))
+                    for a in ("gauss_real", "gauss_mvr", "hurdle", "gauss_ceiling_mvr") if a in c) + "   (all/linear/interaction)"
+            print(line, flush=True)
         valid = [n for n, v in summary.items() if v["SB3_control_valid"]]
         agg = {"n_datasets": len(summary), "n_valid": len(valid),
                "SB3_R_gaussian_breach_datasets": sum(summary[n]["SB3_gaussian_breach"]["gauss_mvr"] > 0 for n in valid),
                "SB3_R_equicorrelated_breach_datasets": sum(summary[n]["SB3_gaussian_breach"]["gauss_real"] > 0 for n in valid),
-               "SB4_R_hurdle_restores_datasets": sum(summary[n]["SB4_hurdle_restores"] for n in valid)}
+               "SB4_R_hurdle_restores_datasets": sum(bool(summary[n]["SB4_hurdle_restores"]) for n in valid)}
         agg["SB3_R_replicates"] = bool(valid and agg["SB3_R_gaussian_breach_datasets"] >= len(valid) / 2)
         if len(valid) >= 3:
             zm = [summary[n]["median_zero_mass"] for n in valid]
             exc = [summary[n]["mvr_minus_control_fdr_cv"]["mean_diff"] for n in valid]
             r = sstats.spearmanr(zm, exc)
             agg["SBZ_spearman_zero_mass_vs_excess"] = {"rho": float(r.statistic), "p": float(r.pvalue)}
-        (rd.parent / "stage34_summary.json").write_text(json.dumps({"datasets": summary, "aggregate": agg}, indent=2, default=float))
-        print(f"\n  aggregate: {json.dumps(agg, default=float)}\nwrote {rd.parent}/stage34_summary.json")
+        if matched:
+            # M2: control coin not significantly off 0.5 (pooled over cells); M3 only on those datasets
+            m2 = [n for n in summary if summary[n]["coin"]["gauss_ceiling_mvr"]["all"]["p_two_sided"] >= 0.05]
+            agg["M2_control_coin_valid_datasets"] = m2
+            for lab in ("all", "linear", "interaction"):
+                def biased(n):
+                    c = summary[n]["coin"]["gauss_mvr"][lab]
+                    d = summary[n]["coin_mvr_minus_control"][lab]
+                    return bool(c["rate"] > 0.5 and c["p_two_sided"] / 2 < 0.05 and d["mean_diff"] > 0 and d["p_two_sided"] < 0.05)
+                agg[f"M3_coin_biased_datasets_{lab}"] = [n for n in m2 if biased(n)]
+        (base / f"{tag}_summary.json").write_text(json.dumps({"datasets": summary, "aggregate": agg}, indent=2, default=float))
+        print(f"\n  aggregate: {json.dumps(agg, default=float)}\nwrote {base}/{tag}_summary.json")
         return
     if not args.dataset:
         raise SystemExit("--dataset is required (one of config saebench.datasets)")
@@ -1193,29 +1330,44 @@ def main_saebench(args) -> None:
     all_arms = [tuple(a) for a in cfg["stage4_repairs"]["arms"]] + [tuple(a) for a in cfg["stage4_mvr"]["arms"]]
     arm_ids = {n: i for i, (n, _) in enumerate(all_arms)}
     arms = [(n, m) for n, m in all_arms if n in ext["arm_groups"][group]]
-    cells = [tuple(c) for c in ext["cells"]]
+    cells = cells_of(name)
     C = load_cache(cfg, name)
-    print(f"device: {device} | SAEBench {name} (cache {C['config_hash']}) | group: {group} | stage: {args.stage}")
+    X = C["X"]
+    thr_info = None
+    if thr:
+        X, zeroed = positive_threshold(X, thr)
+        thr_info = {"frac": thr, "positives_zeroed": zeroed}
+        print(f"  positive threshold {thr:g} x median positive: {zeroed:.3f} of the positive entries set to 0")
+    print(f"device: {device} | SAEBench {name} (cache {C['config_hash']}) | group: {group} | stage: {args.stage}"
+          + (" | matched" if matched else "") + (f" | threshold {thr:g}" if thr else ""))
+    print(f"cells: {cells}")
     t0 = time.time()
     print("\n=== data and samplers ===")
-    D = build_from_X(cfg, sec, C["X"].astype(np.float64), device, [m for _, m in arms], cell_rng(cfg, "sb34_data", di),
+    D = build_from_X(cfg, sec, X.astype(np.float64), device, [m for _, m in arms], cell_rng(cfg, "sb34_data", di),
                      mvr_seed=int(cell_rng(cfg, "sb34_data", di, 900).integers(2**31)))
-    del C
+    del C, X
     R = args.limit_reps or (ext["diagnose"]["pilot_replicates"] if args.stage == "diagnose" else ext["replicates"])
     print(f"\n=== {args.stage}: arms {[a for a, _ in arms]}, {len(cells)} cells, {R} replicate(s) ===")
     ckpt = None if args.stage == "diagnose" else rd / f"{slug(name)}_{group}_checkpoint.json"
+    streams = ("sb4m_knockoff", "sb4m_planted", "sb4m_folds") if matched else ("sb34_knockoff", "sb34_planted", "sb34_folds")
     t = time.time()
     M, LAM, corr, dinfo = run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=ckpt,
-                                    streams=("sb34_knockoff", "sb34_planted", "sb34_folds"), prefix=(di,))
+                                    streams=streams, prefix=(di,))
     if args.stage == "diagnose":
         per_rep = (time.time() - t) / R
         print(f"  {per_rep:.0f}s per replicate -> projected full run ~{ext['replicates'] * per_rep / 60:.0f} min on this machine")
+        if "coin_cv" in M:
+            for a in M["coin_cv"]:
+                c = M["coin_cv"][a][:, 0].astype(float)
+                print(f"  coin (first replicate) {a}: share of nulls with W>0 = {c[..., 0].sum() / max(c.sum(), 1):.3f} "
+                      f"over {int(c.sum())} nulls with W != 0")
         return
     np.savez(rd / f"{slug(name)}_{group}_records.npz", **{f"{m}__{a}": M[m][a] for m in M for a, _ in arms},
              **{f"lam__{a}": LAM[a] for a, _ in arms})
     (rd / f"{slug(name)}_{group}_info.json").write_text(json.dumps(
         {"dataset": name, "info": D["info"], "mean_corr_X_Xk": {a: float(np.mean(v)) for a, v in corr.items() if v},
-         "draw_info": dinfo, "replicates": R, "minutes": round((time.time() - t0) / 60, 1)}, indent=2, default=float))
+         "draw_info": dinfo, "replicates": R, "cells": [list(c) for c in cells], "matched": matched,
+         "positive_threshold": thr_info, "minutes": round((time.time() - t0) / 60, 1)}, indent=2, default=float))
     for f in (ckpt, ckpt.with_suffix(".npz"), ckpt.with_suffix(".pt")):
         f.unlink(missing_ok=True)
     print(f"\nwrote {rd}/{slug(name)}_{group}_records.npz ({(time.time() - t0) / 60:.1f} min)")

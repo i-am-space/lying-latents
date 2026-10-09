@@ -64,6 +64,10 @@ STREAMS = [
     "sb34_folds",            # SAEBench Stages 3-4: cross-validation folds (per dataset, cell)
     "s4ev_split",            # Stage 4 cv, e-values: half-A / half-B split (per replicate)
     "s4ev_folds",            # Stage 4 cv, e-values: CV folds within half A (per cell)
+    "sb4_calib",             # SAEBench amplitude calibration: probe splits and planted draws (per dataset, task / design)
+    "sb4m_knockoff",         # SAEBench matched benchmark: knockoff draw seeds (per dataset, arm, replicate)
+    "sb4m_planted",          # SAEBench matched benchmark: planted signals and labels (per dataset, cell, replicate)
+    "sb4m_folds",            # SAEBench matched benchmark: cross-validation folds (per dataset, cell, replicate)
 ]
 
 

@@ -480,6 +480,37 @@ stage4_saebench:
   diagnose:
     pilot_replicates: 1
 
+# SAEBench matched benchmark (config/preregistration.yaml saebench_amendment_4): planted amplitudes calibrated
+# per dataset to the predictability of its own real labels (src/saebench/calibrate_amplitude.py), and the
+# fair-coin rate of null latents recorded in every fit. Same arms, CV procedure and targets as stage4_saebench.
+stage4_saebench_matched:
+  replicates: 20
+  datasets:                        # run order of scripts/saebench_matched.sh: one per zero-atom band, plus the largest excess
+    - Helsinki-NLP/europarl                 # median Pr(X=0) 0.73
+    - LabHC/bias_in_bios_class_set1         # 0.59
+    - codeparrot/github-code                # 0.49: the largest block-MVR excess in saebench_amendment_2
+    - canrager/amazon_reviews_mcauley_1and5 # 0.30
+  forms: [linear, interaction]
+  signal_sizes: [100, 300]         # one cell per (form, k): 4 cells, each at its matched amplitude
+  coin_link_bins: [0.0, 0.05, 0.2, 1.0]   # max |corr| of a null latent with the planted set
+  arm_groups:
+    hurdle: [hurdle]
+    gauss: [gauss_real, gauss_mvr, gauss_ceiling_mvr]
+  diagnose:
+    pilot_replicates: 1
+  calibration:
+    task_rows: 5000                # planted labels are drawn on this many rows, as many as a real task has
+    split: [0.6, 0.2, 0.2]         # train / validation (ridge choice) / test
+    ridge_grid: [1.0e-5, 1.0e-4, 1.0e-3, 3.0e-3, 1.0e-2, 3.0e-2, 1.0e-1, 3.0e-1, 1.0]
+    signal_amplitudes: [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0]
+    planted_replicates: 3          # label draws per amplitude; probe AUCs are averaged
+    newton_max_iter: 50
+    newton_tol: 1.0e-8
+  positive_threshold_frac: 0.19    # --positive-threshold default for ReLU SAEs: zero a latent's values below
+                                   # this fraction of its median positive value. 0.19 = the Gemma-2 (Gemma Scope,
+                                   # JumpReLU) minimum positive / median positive, mean over EuroParl, Bias in Bios 1
+                                   # and Amazon category (0.129, 0.191, 0.246; results/models/positive_shape_check.json)
+
 paths:
   cache_dir: data/cache
   results_dir: results
