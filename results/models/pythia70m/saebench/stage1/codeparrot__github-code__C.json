@@ -1,0 +1,247 @@
+{
+  "task": "codeparrot__github-code__C",
+  "dataset": "codeparrot/github-code",
+  "class": "C",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.706,
+          "n_certified": 353,
+          "ci95": [
+            0.6646164747606613,
+            0.7442421824046064
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.994,
+          "n_certified": 497,
+          "ci95": [
+            0.9825094361891064,
+            0.9979574407023611
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.346,
+          "n_certified": 173,
+          "ci95": [
+            0.3056205162688996,
+            0.3887278662386186
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.942,
+          "n_certified": 471,
+          "ci95": [
+            0.9179433020026042,
+            0.9593165352160771
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.824,
+          "n_certified": 412,
+          "ci95": [
+            0.788185127237469,
+            0.8548741199545055
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.856,
+          "n_certified": 428,
+          "ci95": [
+            0.822508879125479,
+            0.8840623924805179
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.36,
+          "n_certified": 180,
+          "ci95": [
+            0.31914070629947555,
+            0.4029941868891773
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.894,
+          "n_certified": 447,
+          "ci95": [
+            0.8639484611321094,
+            0.9180433394655388
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.62,
+          "n_certified": 310,
+          "ci95": [
+            0.5766916822967054,
+            0.6614784092558779
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.814,
+          "n_certified": 407,
+          "ci95": [
+            0.7775451944568551,
+            0.8456665451057376
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.116,
+          "n_certified": 58,
+          "ci95": [
+            0.09081324505614743,
+            0.14704246197558635
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.874,
+          "n_certified": 437,
+          "ci95": [
+            0.842031642241812,
+            0.9002651430970722
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.602,
+          "n_certified": 301,
+          "ci95": [
+            0.5584738043043082,
+            0.6439707735153876
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 3.44063458279642e-11,
+        "joint_mean_d": 0.0011988943442702293,
+        "single_p_min": 9.428146197781873e-14,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 5.954243533778936e-05,
+        "joint_mean_d": 0.002178376307711005,
+        "single_p_min": 1.9082771984813007e-07,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 4.716345586644466e-13,
+        "joint_mean_d": 0.001496378448791802,
+        "single_p_min": 4.764200411955244e-08,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.038658507168293,
+        "joint_mean_d": 0.0012633209116756916,
+        "single_p_min": 0.004693941213190556,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 1.6629556316704813e-18,
+        "joint_mean_d": 0.014295189641416073,
+        "single_p_min": 3.949216387938437e-12,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 4.174170953774592e-06,
+        "joint_mean_d": 0.022785890847444534,
+        "single_p_min": 0.00014087292947806418,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.156260395050048,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 101.118,
+    "null_mean_n_bonferroni": 0.04,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.04,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1633,
+    "real_n_bonferroni": 1257,
+    "real_n_wy": 1263
+  },
+  "cache_config_hash": "8e7ed265a8b7",
+  "minutes": 3.5053502281506854
+}

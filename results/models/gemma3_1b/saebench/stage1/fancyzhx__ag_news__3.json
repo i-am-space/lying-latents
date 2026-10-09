@@ -1,0 +1,247 @@
+{
+  "task": "fancyzhx__ag_news__3",
+  "dataset": "fancyzhx/ag_news",
+  "class": "3",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.958,
+          "n_certified": 479,
+          "ci95": [
+            0.9366479487604386,
+            0.9723679006652538
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.584,
+          "n_certified": 292,
+          "ci95": [
+            0.5403157691552084,
+            0.6264032949315997
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.074,
+          "n_certified": 37,
+          "ci95": [
+            0.05416087387750307,
+            0.10033530111082659
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.034,
+          "n_certified": 17,
+          "ci95": [
+            0.02133433944461342,
+            0.053771805026188516
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.48,
+          "n_certified": 240,
+          "ci95": [
+            0.43652763662029404,
+            0.523777348120942
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.11,
+          "n_certified": 55,
+          "ci95": [
+            0.08549101658817662,
+            0.140456185865928
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.972,
+          "n_certified": 486,
+          "ci95": [
+            0.9535531794154484,
+            0.9832491806913788
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.456,
+          "n_certified": 228,
+          "ci95": [
+            0.41284403669724773,
+            0.4998269297334718
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.054,
+          "n_certified": 27,
+          "ci95": [
+            0.03737409848513375,
+            0.07742706124443205
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.362,
+          "n_certified": 181,
+          "ci95": [
+            0.32107531661676714,
+            0.4050290780977621
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.048,
+          "n_certified": 24,
+          "ci95": [
+            0.03246497509125218,
+            0.07042768006068446
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.054,
+          "n_certified": 27,
+          "ci95": [
+            0.03737409848513375,
+            0.07742706124443205
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.48,
+          "n_certified": 240,
+          "ci95": [
+            0.43652763662029404,
+            0.523777348120942
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.078,
+          "n_certified": 39,
+          "ci95": [
+            0.057581071819524224,
+            0.10485410622055823
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 1.1813935998361558e-06,
+        "joint_mean_d": 0.0022753628436475992,
+        "single_p_min": 1.1447073844372824e-10,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.01703127659857273,
+        "joint_mean_d": 0.003256067167967558,
+        "single_p_min": 1.680536115600262e-05,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 1.981369096570873e-10,
+        "joint_mean_d": 0.00641763536259532,
+        "single_p_min": 2.116995347023476e-05,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.5692072510719299,
+        "joint_mean_d": -0.0006914839614182711,
+        "single_p_min": 0.010728941299021244,
+        "joint": false,
+        "any_uncorrected": true,
+        "any_bonferroni": false
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 1.0307423699911902e-21,
+        "joint_mean_d": 0.012917722575366497,
+        "single_p_min": 6.50015241632218e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.21360884606838226,
+        "joint_mean_d": 0.0038343947380781174,
+        "single_p_min": 0.0030157743021845818,
+        "joint": false,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.2028770446777335,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 102.57,
+    "null_mean_n_bonferroni": 0.048,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.046,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1620,
+    "real_n_bonferroni": 1185,
+    "real_n_wy": 1190
+  },
+  "cache_config_hash": "7b56f6f92896",
+  "minutes": 3.37108135620753
+}

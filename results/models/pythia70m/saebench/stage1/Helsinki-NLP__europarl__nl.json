@@ -1,0 +1,247 @@
+{
+  "task": "Helsinki-NLP__europarl__nl",
+  "dataset": "Helsinki-NLP/europarl",
+  "class": "nl",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.586,
+          "n_certified": 293,
+          "ci95": [
+            0.5423304138904992,
+            0.6283581517221855
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.14,
+          "n_certified": 70,
+          "ci95": [
+            0.11232220101564047,
+            0.17316752432660995
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.014,
+          "n_certified": 7,
+          "ci95": [
+            0.006797703071787358,
+            0.02861342614025071
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.07,
+          "n_certified": 35,
+          "ci95": [
+            0.05075944317125315,
+            0.09579772876532376
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.44,
+          "n_certified": 220,
+          "ci95": [
+            0.3971110206093619,
+            0.4838039336143465
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.076,
+          "n_certified": 38,
+          "ci95": [
+            0.05586871073410857,
+            0.10259696578009747
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.944,
+          "n_certified": 472,
+          "ci95": [
+            0.9202547013596158,
+            0.9609746373849419
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.368,
+          "n_certified": 184,
+          "ci95": [
+            0.32688381653354137,
+            0.41112908275861715
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.09,
+          "n_certified": 45,
+          "ci95": [
+            0.0679421955899675,
+            0.11830999160537325
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.324,
+          "n_certified": 162,
+          "ci95": [
+            0.2844545847826361,
+            0.3662292809402419
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.074,
+          "n_certified": 37,
+          "ci95": [
+            0.05416087387750307,
+            0.10033530111082659
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.032,
+          "n_certified": 16,
+          "ci95": [
+            0.01979134135128301,
+            0.05134530159364255
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.422,
+          "n_certified": 211,
+          "ci95": [
+            0.3794656100557239,
+            0.465723830435097
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.054,
+          "n_certified": 27,
+          "ci95": [
+            0.03737409848513375,
+            0.07742706124443205
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 4.069535208732763e-25,
+        "joint_mean_d": 0.00027826495352201164,
+        "single_p_min": 1.0078698177978797e-35,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.0031689954921603203,
+        "joint_mean_d": 0.0004886641399934888,
+        "single_p_min": 6.578753186659014e-07,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 3.824282791304181e-33,
+        "joint_mean_d": 0.0006208049017004669,
+        "single_p_min": 1.0078698177978797e-35,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 9.927008250087965e-06,
+        "joint_mean_d": 0.0010880774352699518,
+        "single_p_min": 1.9369136339264514e-07,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 1.2378690865226442e-17,
+        "joint_mean_d": 0.001848112791776657,
+        "single_p_min": 1.0078698177978797e-35,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 8.356436592293903e-05,
+        "joint_mean_d": 0.003121201880276203,
+        "single_p_min": 1.9369136339264514e-07,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.095552420616149,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 103.114,
+    "null_mean_n_bonferroni": 0.026,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.026,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1865,
+    "real_n_bonferroni": 1674,
+    "real_n_wy": 1687
+  },
+  "cache_config_hash": "8cb9336a7ef5",
+  "minutes": 3.5864803711573283
+}

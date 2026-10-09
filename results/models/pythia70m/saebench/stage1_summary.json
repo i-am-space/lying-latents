@@ -1,0 +1,630 @@
+{
+  "n_tasks": 35,
+  "n_permutations": [
+    500
+  ],
+  "datasets": [
+    "Helsinki-NLP/europarl",
+    "LabHC/bias_in_bios_class_set1",
+    "LabHC/bias_in_bios_class_set2",
+    "LabHC/bias_in_bios_class_set3",
+    "canrager/amazon_reviews_mcauley_1and5",
+    "canrager/amazon_reviews_mcauley_1and5_sentiment",
+    "codeparrot/github-code",
+    "fancyzhx/ag_news"
+  ],
+  "power_gate": {
+    "Helsinki-NLP/europarl": {
+      "same_data": true,
+      "held_out": true
+    },
+    "LabHC/bias_in_bios_class_set1": {
+      "same_data": true,
+      "held_out": true
+    },
+    "LabHC/bias_in_bios_class_set2": {
+      "same_data": true,
+      "held_out": true
+    },
+    "LabHC/bias_in_bios_class_set3": {
+      "same_data": true,
+      "held_out": true
+    },
+    "canrager/amazon_reviews_mcauley_1and5": {
+      "same_data": true,
+      "held_out": true
+    },
+    "canrager/amazon_reviews_mcauley_1and5_sentiment": {
+      "same_data": true,
+      "held_out": true
+    },
+    "codeparrot/github-code": {
+      "same_data": true,
+      "held_out": true
+    },
+    "fancyzhx/ag_news": {
+      "same_data": true,
+      "held_out": true
+    }
+  },
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "n_tasks_gate_passed": 35,
+        "median_fwer": 0.942,
+        "min_fwer": 0.454,
+        "max_fwer": 0.994,
+        "n_tasks_fwer_ge_0.5": 34,
+        "n_tasks_ci_lower_above_alpha": 35,
+        "real_labels_certified": 35
+      },
+      "held_out": {
+        "n_tasks_gate_passed": 35,
+        "median_fwer": 0.078,
+        "min_fwer": 0.026,
+        "max_fwer": 0.398,
+        "n_tasks_fwer_ge_0.5": 0,
+        "n_tasks_ci_lower_above_alpha": 22,
+        "real_labels_certified": 27
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "n_tasks_gate_passed": 35,
+        "median_fwer": 1.0,
+        "min_fwer": 0.84,
+        "max_fwer": 1.0,
+        "n_tasks_fwer_ge_0.5": 35,
+        "n_tasks_ci_lower_above_alpha": 35,
+        "real_labels_certified": 35
+      },
+      "held_out": {
+        "n_tasks_gate_passed": 35,
+        "median_fwer": 0.056,
+        "min_fwer": 0.022,
+        "max_fwer": 0.384,
+        "n_tasks_fwer_ge_0.5": 0,
+        "n_tasks_ci_lower_above_alpha": 14,
+        "real_labels_certified": 28
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "n_tasks_gate_passed": 35,
+        "median_fwer": 1.0,
+        "min_fwer": 0.758,
+        "max_fwer": 1.0,
+        "n_tasks_fwer_ge_0.5": 35,
+        "n_tasks_ci_lower_above_alpha": 35,
+        "real_labels_certified": 35
+      },
+      "held_out": {
+        "n_tasks_gate_passed": 35,
+        "median_fwer": 0.088,
+        "min_fwer": 0.018,
+        "max_fwer": 0.296,
+        "n_tasks_fwer_ge_0.5": 0,
+        "n_tasks_ci_lower_above_alpha": 23,
+        "real_labels_certified": 34
+      }
+    }
+  },
+  "search": {
+    "median_null_mean_n_naive": 101.388,
+    "median_expected_naive": 102.4,
+    "n_tasks_fwer_naive_ge_0.95": 35,
+    "max_fwer_bonferroni": 0.058,
+    "median_real_n_wy": 1263.0
+  },
+  "SB1_R_same_data_replicates": {
+    "mean_diff": true,
+    "auroc": true,
+    "probe_weight": true
+  },
+  "SB1_H_held_out_above_nominal": {
+    "mean_diff": {
+      "n_tasks": 22,
+      "of": 35
+    },
+    "auroc": {
+      "n_tasks": 14,
+      "of": 35
+    },
+    "probe_weight": {
+      "n_tasks": 23,
+      "of": 35
+    }
+  },
+  "per_task": {
+    "Helsinki-NLP__europarl__de": {
+      "mean_diff": {
+        "same_data": 0.454,
+        "held_out": 0.078
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.066
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.03
+      }
+    },
+    "Helsinki-NLP__europarl__en": {
+      "mean_diff": {
+        "same_data": 0.522,
+        "held_out": 0.288
+      },
+      "auroc": {
+        "same_data": 0.886,
+        "held_out": 0.292
+      },
+      "probe_weight": {
+        "same_data": 0.888,
+        "held_out": 0.076
+      }
+    },
+    "Helsinki-NLP__europarl__es": {
+      "mean_diff": {
+        "same_data": 0.532,
+        "held_out": 0.104
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.05
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.018
+      }
+    },
+    "Helsinki-NLP__europarl__fr": {
+      "mean_diff": {
+        "same_data": 0.606,
+        "held_out": 0.116
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.038
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.03
+      }
+    },
+    "Helsinki-NLP__europarl__nl": {
+      "mean_diff": {
+        "same_data": 0.586,
+        "held_out": 0.07
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.09
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.032
+      }
+    },
+    "LabHC__bias_in_bios_class_set1__0": {
+      "mean_diff": {
+        "same_data": 0.946,
+        "held_out": 0.084
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.04
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.086
+      }
+    },
+    "LabHC__bias_in_bios_class_set1__1": {
+      "mean_diff": {
+        "same_data": 0.942,
+        "held_out": 0.078
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.064
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.066
+      }
+    },
+    "LabHC__bias_in_bios_class_set1__2": {
+      "mean_diff": {
+        "same_data": 0.942,
+        "held_out": 0.066
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.036
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.09
+      }
+    },
+    "LabHC__bias_in_bios_class_set1__6": {
+      "mean_diff": {
+        "same_data": 0.68,
+        "held_out": 0.308
+      },
+      "auroc": {
+        "same_data": 0.918,
+        "held_out": 0.384
+      },
+      "probe_weight": {
+        "same_data": 0.872,
+        "held_out": 0.132
+      }
+    },
+    "LabHC__bias_in_bios_class_set1__9": {
+      "mean_diff": {
+        "same_data": 0.94,
+        "held_out": 0.084
+      },
+      "auroc": {
+        "same_data": 0.998,
+        "held_out": 0.038
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.08
+      }
+    },
+    "LabHC__bias_in_bios_class_set2__11": {
+      "mean_diff": {
+        "same_data": 0.95,
+        "held_out": 0.062
+      },
+      "auroc": {
+        "same_data": 0.998,
+        "held_out": 0.036
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.088
+      }
+    },
+    "LabHC__bias_in_bios_class_set2__13": {
+      "mean_diff": {
+        "same_data": 0.674,
+        "held_out": 0.246
+      },
+      "auroc": {
+        "same_data": 0.89,
+        "held_out": 0.36
+      },
+      "probe_weight": {
+        "same_data": 0.812,
+        "held_out": 0.146
+      }
+    },
+    "LabHC__bias_in_bios_class_set2__14": {
+      "mean_diff": {
+        "same_data": 0.958,
+        "held_out": 0.108
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.052
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.064
+      }
+    },
+    "LabHC__bias_in_bios_class_set2__18": {
+      "mean_diff": {
+        "same_data": 0.962,
+        "held_out": 0.076
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.032
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.076
+      }
+    },
+    "LabHC__bias_in_bios_class_set2__19": {
+      "mean_diff": {
+        "same_data": 0.73,
+        "held_out": 0.322
+      },
+      "auroc": {
+        "same_data": 0.936,
+        "held_out": 0.26
+      },
+      "probe_weight": {
+        "same_data": 0.954,
+        "held_out": 0.126
+      }
+    },
+    "LabHC__bias_in_bios_class_set3__20": {
+      "mean_diff": {
+        "same_data": 0.954,
+        "held_out": 0.11
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.056
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.096
+      }
+    },
+    "LabHC__bias_in_bios_class_set3__21": {
+      "mean_diff": {
+        "same_data": 0.954,
+        "held_out": 0.072
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.042
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.074
+      }
+    },
+    "LabHC__bias_in_bios_class_set3__22": {
+      "mean_diff": {
+        "same_data": 0.94,
+        "held_out": 0.086
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.05
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.09
+      }
+    },
+    "LabHC__bias_in_bios_class_set3__25": {
+      "mean_diff": {
+        "same_data": 0.938,
+        "held_out": 0.074
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.026
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.09
+      }
+    },
+    "LabHC__bias_in_bios_class_set3__26": {
+      "mean_diff": {
+        "same_data": 0.968,
+        "held_out": 0.084
+      },
+      "auroc": {
+        "same_data": 0.998,
+        "held_out": 0.046
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.06
+      }
+    },
+    "canrager__amazon_reviews_mcauley_1and5__1": {
+      "mean_diff": {
+        "same_data": 0.99,
+        "held_out": 0.042
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.1
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.28
+      }
+    },
+    "canrager__amazon_reviews_mcauley_1and5__2": {
+      "mean_diff": {
+        "same_data": 0.988,
+        "held_out": 0.062
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.12
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.294
+      }
+    },
+    "canrager__amazon_reviews_mcauley_1and5__3": {
+      "mean_diff": {
+        "same_data": 0.994,
+        "held_out": 0.042
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.068
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.29
+      }
+    },
+    "canrager__amazon_reviews_mcauley_1and5__5": {
+      "mean_diff": {
+        "same_data": 0.992,
+        "held_out": 0.052
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.094
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.296
+      }
+    },
+    "canrager__amazon_reviews_mcauley_1and5__6": {
+      "mean_diff": {
+        "same_data": 0.992,
+        "held_out": 0.038
+      },
+      "auroc": {
+        "same_data": 0.998,
+        "held_out": 0.108
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.288
+      }
+    },
+    "canrager__amazon_reviews_mcauley_1and5_sentiment__1.0": {
+      "mean_diff": {
+        "same_data": 0.988,
+        "held_out": 0.038
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.084
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.286
+      }
+    },
+    "codeparrot__github-code__C": {
+      "mean_diff": {
+        "same_data": 0.706,
+        "held_out": 0.346
+      },
+      "auroc": {
+        "same_data": 0.856,
+        "held_out": 0.36
+      },
+      "probe_weight": {
+        "same_data": 0.814,
+        "held_out": 0.116
+      }
+    },
+    "codeparrot__github-code__HTML": {
+      "mean_diff": {
+        "same_data": 0.87,
+        "held_out": 0.026
+      },
+      "auroc": {
+        "same_data": 0.996,
+        "held_out": 0.032
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.068
+      }
+    },
+    "codeparrot__github-code__Java": {
+      "mean_diff": {
+        "same_data": 0.682,
+        "held_out": 0.398
+      },
+      "auroc": {
+        "same_data": 0.84,
+        "held_out": 0.384
+      },
+      "probe_weight": {
+        "same_data": 0.758,
+        "held_out": 0.098
+      }
+    },
+    "codeparrot__github-code__PHP": {
+      "mean_diff": {
+        "same_data": 0.77,
+        "held_out": 0.218
+      },
+      "auroc": {
+        "same_data": 0.922,
+        "held_out": 0.156
+      },
+      "probe_weight": {
+        "same_data": 0.99,
+        "held_out": 0.104
+      }
+    },
+    "codeparrot__github-code__Python": {
+      "mean_diff": {
+        "same_data": 0.708,
+        "held_out": 0.334
+      },
+      "auroc": {
+        "same_data": 0.874,
+        "held_out": 0.28
+      },
+      "probe_weight": {
+        "same_data": 0.892,
+        "held_out": 0.114
+      }
+    },
+    "fancyzhx__ag_news__0": {
+      "mean_diff": {
+        "same_data": 0.984,
+        "held_out": 0.06
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.022
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.048
+      }
+    },
+    "fancyzhx__ag_news__1": {
+      "mean_diff": {
+        "same_data": 0.99,
+        "held_out": 0.058
+      },
+      "auroc": {
+        "same_data": 0.998,
+        "held_out": 0.024
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.042
+      }
+    },
+    "fancyzhx__ag_news__2": {
+      "mean_diff": {
+        "same_data": 0.99,
+        "held_out": 0.038
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.038
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.05
+      }
+    },
+    "fancyzhx__ag_news__3": {
+      "mean_diff": {
+        "same_data": 0.988,
+        "held_out": 0.054
+      },
+      "auroc": {
+        "same_data": 1.0,
+        "held_out": 0.03
+      },
+      "probe_weight": {
+        "same_data": 1.0,
+        "held_out": 0.05
+      }
+    }
+  }
+}

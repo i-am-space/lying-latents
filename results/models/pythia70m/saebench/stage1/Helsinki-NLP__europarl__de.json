@@ -1,0 +1,247 @@
+{
+  "task": "Helsinki-NLP__europarl__de",
+  "dataset": "Helsinki-NLP/europarl",
+  "class": "de",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.454,
+          "n_certified": 227,
+          "ci95": [
+            0.4108749466266584,
+            0.49782651827818475
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.084,
+          "n_certified": 42,
+          "ci95": [
+            0.06274379952220428,
+            0.11159988309550732
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.008,
+          "n_certified": 4,
+          "ci95": [
+            0.0031152647975077885,
+            0.020387359836901122
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.078,
+          "n_certified": 39,
+          "ci95": [
+            0.057581071819524224,
+            0.10485410622055823
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.42,
+          "n_certified": 210,
+          "ci95": [
+            0.3775085874060515,
+            0.46371135155889304
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.112,
+          "n_certified": 56,
+          "ci95": [
+            0.0872623972834597,
+            0.14265430669652132
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.94,
+          "n_certified": 470,
+          "ci95": [
+            0.9156384216937552,
+            0.9576519139990498
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.318,
+          "n_certified": 159,
+          "ci95": [
+            0.2786995689688668,
+            0.360075792176382
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.066,
+          "n_certified": 33,
+          "ci95": [
+            0.04737823802541255,
+            0.09123993085941157
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.302,
+          "n_certified": 151,
+          "ci95": [
+            0.26339087332996447,
+            0.34362847560827325
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.044,
+          "n_certified": 22,
+          "ci95": [
+            0.029233737680341678,
+            0.06571991441984218
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.03,
+          "n_certified": 15,
+          "ci95": [
+            0.018263049234083534,
+            0.04890409218496562
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.414,
+          "n_certified": 207,
+          "ci95": [
+            0.37164184827781455,
+            0.4576695861095008
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.078,
+          "n_certified": 39,
+          "ci95": [
+            0.057581071819524224,
+            0.10485410622055823
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 0.0,
+        "joint_mean_d": 0.0005307093961164355,
+        "single_p_min": 3.466363343693492e-29,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.06783831119537354,
+        "joint_mean_d": 0.00041694517130963504,
+        "single_p_min": 1.0002366934713791e-06,
+        "joint": false,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 0.0,
+        "joint_mean_d": 0.0009503469336777925,
+        "single_p_min": 1.8072906135124162e-28,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.14795532822608948,
+        "joint_mean_d": 0.0005784037639386952,
+        "single_p_min": 0.021418392658233643,
+        "joint": false,
+        "any_uncorrected": true,
+        "any_bonferroni": false
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 4.203895392974451e-45,
+        "joint_mean_d": 0.0009631687426008284,
+        "single_p_min": 1.8072906135124162e-28,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.04688699543476105,
+        "joint_mean_d": 0.0010115372715517879,
+        "single_p_min": 0.009043826721608639,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": false
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.140721797943115,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 101.304,
+    "null_mean_n_bonferroni": 0.036,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.034,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1855,
+    "real_n_bonferroni": 1632,
+    "real_n_wy": 1643
+  },
+  "cache_config_hash": "8cb9336a7ef5",
+  "minutes": 3.524154571692149
+}

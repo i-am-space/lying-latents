@@ -1,0 +1,247 @@
+{
+  "task": "canrager__amazon_reviews_mcauley_1and5__2",
+  "dataset": "canrager/amazon_reviews_mcauley_1and5",
+  "class": "2",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.944,
+          "n_certified": 472,
+          "ci95": [
+            0.9202547013596158,
+            0.9609746373849419
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.538,
+          "n_certified": 269,
+          "ci95": [
+            0.4941760408295009,
+            0.5812444881621506
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.07,
+          "n_certified": 35,
+          "ci95": [
+            0.05075944317125315,
+            0.09579772876532376
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.064,
+          "n_certified": 32,
+          "ci95": [
+            0.045695733565557124,
+            0.08895293379339062
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.47,
+          "n_certified": 235,
+          "ci95": [
+            0.4266472654581187,
+            0.5138102116537354
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.118,
+          "n_certified": 59,
+          "ci95": [
+            0.09259259259259259,
+            0.14923261596501758
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.984,
+          "n_certified": 492,
+          "ci95": [
+            0.9687485245822888,
+            0.9918708446797967
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.706,
+          "n_certified": 353,
+          "ci95": [
+            0.6646164747606613,
+            0.7442421824046064
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.156,
+          "n_certified": 78,
+          "ci95": [
+            0.12683030337229503,
+            0.19041543417696646
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.434,
+          "n_certified": 217,
+          "ci95": [
+            0.39122280165473233,
+            0.47778364799134687
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.11,
+          "n_certified": 55,
+          "ci95": [
+            0.08549101658817662,
+            0.140456185865928
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.402,
+          "n_certified": 201,
+          "ci95": [
+            0.35992798652483676,
+            0.4455664387072203
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.788,
+          "n_certified": 394,
+          "ci95": [
+            0.7500471496065019,
+            0.8215610701196979
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.39,
+          "n_certified": 195,
+          "ci95": [
+            0.34824058390510465,
+            0.4334368321716941
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 7.365875469077296e-35,
+        "joint_mean_d": 0.02666758932173252,
+        "single_p_min": 5.103280464879845e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 7.06669709416019e-08,
+        "joint_mean_d": 0.03174804151058197,
+        "single_p_min": 0.002909416565671563,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 2.802596928649634e-45,
+        "joint_mean_d": 0.041388023644685745,
+        "single_p_min": 5.103280464879845e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 2.416893352119587e-10,
+        "joint_mean_d": 0.048070672899484634,
+        "single_p_min": 0.002675842260941863,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 2.0739217272007293e-43,
+        "joint_mean_d": 0.04158741235733032,
+        "single_p_min": 5.103280464879845e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 1.5686828502836647e-09,
+        "joint_mean_d": 0.0463620088994503,
+        "single_p_min": 0.0003079759480897337,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.172095966339111,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 102.466,
+    "null_mean_n_bonferroni": 0.048,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.044,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1478,
+    "real_n_bonferroni": 922,
+    "real_n_wy": 932
+  },
+  "cache_config_hash": "3b71cac8d3b0",
+  "minutes": 3.3120358109474184
+}

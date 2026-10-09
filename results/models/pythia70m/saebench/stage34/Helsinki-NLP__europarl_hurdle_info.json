@@ -1,0 +1,79 @@
+{
+  "dataset": "Helsinki-NLP/europarl",
+  "info": {
+    "n": 12500,
+    "p": 2048,
+    "s_equicorrelated": 0.03758958936209736,
+    "median_zero_mass": 0.71604,
+    "sampler_setup_seconds": 11.077322483062744
+  },
+  "mean_corr_X_Xk": {
+    "hurdle": 0.6046066647630716
+  },
+  "draw_info": {
+    "hurdle": [
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 8.356130923302393,
+        "n_constant_latents": 1,
+        "zero_mass_error_max": 0.008879999999999999
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 13.07865168539326,
+        "n_constant_latents": 1,
+        "zero_mass_error_max": 0.008639999999999981
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 13.00781631656082,
+        "n_constant_latents": 1,
+        "zero_mass_error_max": 0.007759999999999989
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 13.090864680019541,
+        "n_constant_latents": 1,
+        "zero_mass_error_max": 0.008320000000000105
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 13.182706399609184,
+        "n_constant_latents": 1,
+        "zero_mass_error_max": 0.008399999999999963
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 13.010747435271128,
+        "n_constant_latents": 1,
+        "zero_mass_error_max": 0.009360000000000035
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 12.918417195896433,
+        "n_constant_latents": 1,
+        "zero_mass_error_max": 0.010079999999999978
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 13.20371275036639,
+        "n_constant_latents": 1,
+        "zero_mass_error_max": 0.008879999999999999
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 13.037127503663898,
+        "n_constant_latents": 1,
+        "zero_mass_error_max": 0.012240000000000029
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 13.18514899853444,
+        "n_constant_latents": 1,
+        "zero_mass_error_max": 0.007359999999999922
+      }
+    ]
+  },
+  "replicates": 10,
+  "minutes": 1115.7
+}

@@ -1,0 +1,62 @@
+{
+  "dataset": "LabHC/bias_in_bios_class_set1",
+  "info": {
+    "n": 12500,
+    "p": 2048,
+    "s_equicorrelated": 0.03912420460920185,
+    "median_zero_mass": 0.62376,
+    "sampler_setup_seconds": 167.17137050628662,
+    "block_mvr": {
+      "mean_s": 0.1448393300771864,
+      "seconds": 140.1243190765381,
+      "control_S": "reused the real-latent S",
+      "control_seconds": 0.0,
+      "min_eig_2Sigma_minus_S": 0.008770759736166391
+    }
+  },
+  "mean_corr_X_Xk": {
+    "gauss_real": 0.9614882195880534,
+    "gauss_mvr": 0.8573768252344387,
+    "gauss_ceiling_mvr": 0.8576241204672318
+  },
+  "draw_info": {
+    "gauss_real": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ],
+    "gauss_mvr": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ],
+    "gauss_ceiling_mvr": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ]
+  },
+  "replicates": 10,
+  "minutes": 458.4
+}

@@ -1,0 +1,55 @@
+{
+  "dataset": "codeparrot/github-code",
+  "task_rows_from": "codeparrot__github-code__C",
+  "replicates": 20,
+  "k": 10,
+  "amplitude": 3.0,
+  "form": "linear",
+  "min_detect_fraction": 0.8,
+  "by_method": {
+    "mean_diff": {
+      "mean_recall_at_k": 0.045,
+      "same_data": {
+        "joint": 0.85,
+        "any_uncorrected": 0.85,
+        "any_bonferroni": 0.35
+      },
+      "held_out": {
+        "joint": 0.35,
+        "any_uncorrected": 0.65,
+        "any_bonferroni": 0.3
+      }
+    },
+    "auroc": {
+      "mean_recall_at_k": 0.27,
+      "same_data": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      },
+      "held_out": {
+        "joint": 0.9,
+        "any_uncorrected": 0.95,
+        "any_bonferroni": 0.85
+      }
+    },
+    "probe_weight": {
+      "mean_recall_at_k": 0.9249999999999998,
+      "same_data": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      },
+      "held_out": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      }
+    }
+  },
+  "criterion_has_power": {
+    "same_data": true,
+    "held_out": true
+  },
+  "criterion_has_power_both": true
+}

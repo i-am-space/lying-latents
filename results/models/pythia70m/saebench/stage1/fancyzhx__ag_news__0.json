@@ -1,0 +1,247 @@
+{
+  "task": "fancyzhx__ag_news__0",
+  "dataset": "fancyzhx/ag_news",
+  "class": "0",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.984,
+          "n_certified": 492,
+          "ci95": [
+            0.9687485245822888,
+            0.9918708446797967
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.578,
+          "n_certified": 289,
+          "ci95": [
+            0.534276169564903,
+            0.6205343899442761
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.046,
+          "n_certified": 23,
+          "ci95": [
+            0.030844883399787512,
+            0.06807827022627275
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.06,
+          "n_certified": 30,
+          "ci95": [
+            0.042348086000950205,
+            0.08436157830624476
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.404,
+          "n_certified": 202,
+          "ci95": [
+            0.3618784697205358,
+            0.44758545703739777
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.1,
+          "n_certified": 50,
+          "ci95": [
+            0.07667718662472012,
+            0.1294225082000026
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.942,
+          "n_certified": 471,
+          "ci95": [
+            0.9179433020026042,
+            0.9593165352160771
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.354,
+          "n_certified": 177,
+          "ci95": [
+            0.31334158354314207,
+            0.39688480506788165
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.022,
+          "n_certified": 11,
+          "ci95": [
+            0.01232788016714588,
+            0.03896125514839773
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.31,
+          "n_certified": 155,
+          "ci95": [
+            0.27103822626974466,
+            0.3518591287719986
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.054,
+          "n_certified": 27,
+          "ci95": [
+            0.03737409848513375,
+            0.07742706124443205
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.048,
+          "n_certified": 24,
+          "ci95": [
+            0.03246497509125218,
+            0.07042768006068446
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.384,
+          "n_certified": 192,
+          "ci95": [
+            0.34240693195467675,
+            0.42736197954449284
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.07,
+          "n_certified": 35,
+          "ci95": [
+            0.05075944317125315,
+            0.09579772876532376
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 3.6139036208027164e-09,
+        "joint_mean_d": 0.0029347052332013845,
+        "single_p_min": 3.393339056856348e-06,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.007425325457006693,
+        "joint_mean_d": 0.0036170082166790962,
+        "single_p_min": 0.00035397213650867343,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 7.508826168887756e-23,
+        "joint_mean_d": 0.010039023123681545,
+        "single_p_min": 3.1400620628119214e-06,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.00032350659603253007,
+        "joint_mean_d": 0.011420883238315582,
+        "single_p_min": 0.011992080137133598,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": false
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 6.666757206514565e-28,
+        "joint_mean_d": 0.012268003076314926,
+        "single_p_min": 3.1326691241062576e-10,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.0010275192325934768,
+        "joint_mean_d": 0.012224851176142693,
+        "single_p_min": 0.009186585433781147,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": false
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.154225921630859,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 102.362,
+    "null_mean_n_bonferroni": 0.034,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.032,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1629,
+    "real_n_bonferroni": 1213,
+    "real_n_wy": 1228
+  },
+  "cache_config_hash": "f203db33f1b6",
+  "minutes": 3.467020630836487
+}

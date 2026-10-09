@@ -1,0 +1,115 @@
+{
+  "datasets": {
+    "LabHC/bias_in_bios_class_set1": {
+      "n": 12500,
+      "median_zero_mass": 0.62376,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 0
+      },
+      "SB4_hurdle_restores": false,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.015457372367382052,
+        "se": 0.004654020205120399,
+        "p_two_sided": 0.0038202398609934094
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 0,
+        "gauss_real": 0,
+        "hurdle": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.08497218787670135,
+        "gauss_mvr": 0.09874321520328522,
+        "gauss_real": 0.07017900794744492,
+        "hurdle": 0.10459316521883011
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.933763861656189,
+        "gauss_mvr": 0.9370833039283752,
+        "gauss_real": 0.8201110363006592,
+        "hurdle": 0.945888876914978
+      }
+    },
+    "canrager/amazon_reviews_mcauley_1and5": {
+      "n": 12500,
+      "median_zero_mass": 0.3994,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 0
+      },
+      "SB4_hurdle_restores": false,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.006806713342666623,
+        "se": 0.003916459291120981,
+        "p_two_sided": 0.10004479136886704
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 0,
+        "gauss_real": 0,
+        "hurdle": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.09376824647188187,
+        "gauss_mvr": 0.09816045314073563,
+        "gauss_real": 0.06197715178132057,
+        "hurdle": 0.11134703457355499
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.9513749480247498,
+        "gauss_mvr": 0.9503194093704224,
+        "gauss_real": 0.8228332996368408,
+        "hurdle": 0.9612361192703247
+      }
+    },
+    "Helsinki-NLP/europarl": {
+      "n": 12500,
+      "median_zero_mass": 0.70864,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 2
+      },
+      "SB4_hurdle_restores": true,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.014367216825485224,
+        "se": 0.0035850568654261904,
+        "p_two_sided": 0.0009530147411632142
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 2,
+        "gauss_real": 0,
+        "hurdle": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.09556321054697037,
+        "gauss_mvr": 0.11139172315597534,
+        "gauss_real": 0.07541047036647797,
+        "hurdle": 0.09682363271713257
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.9635277986526489,
+        "gauss_mvr": 0.9633194208145142,
+        "gauss_real": 0.8902638554573059,
+        "hurdle": 0.9588611125946045
+      }
+    }
+  },
+  "aggregate": {
+    "n_datasets": 3,
+    "n_valid": 3,
+    "SB3_R_gaussian_breach_datasets": 1,
+    "SB3_R_equicorrelated_breach_datasets": 0,
+    "SB4_R_hurdle_restores_datasets": 1,
+    "SB3_R_replicates": false,
+    "SBZ_spearman_zero_mass_vs_excess": {
+      "rho": 0.5,
+      "p": 0.6666666666666666
+    }
+  }
+}

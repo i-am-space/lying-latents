@@ -1,0 +1,247 @@
+{
+  "task": "codeparrot__github-code__Python",
+  "dataset": "codeparrot/github-code",
+  "class": "Python",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.55,
+          "n_certified": 275,
+          "ci95": [
+            0.5061764115934799,
+            0.5930611265534298
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.464,
+          "n_certified": 232,
+          "ci95": [
+            0.4207274028995594,
+            0.5078215696346657
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.992,
+          "n_certified": 496,
+          "ci95": [
+            0.9796126401630988,
+            0.9968847352024922
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.792,
+          "n_certified": 396,
+          "ci95": [
+            0.7542629655971269,
+            0.8252842571808257
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.628,
+          "n_certified": 314,
+          "ci95": [
+            0.5848081115127891,
+            0.6692399861432997
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.992,
+          "n_certified": 496,
+          "ci95": [
+            0.9796126401630988,
+            0.9968847352024922
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.984,
+          "n_certified": 492,
+          "ci95": [
+            0.9687485245822888,
+            0.9918708446797967
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.416,
+          "n_certified": 208,
+          "ci95": [
+            0.37359670506840015,
+            0.4596842308447916
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.996,
+          "n_certified": 498,
+          "ci95": [
+            0.9855339859585811,
+            0.9989023924587627
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.994,
+          "n_certified": 497,
+          "ci95": [
+            0.9825094361891064,
+            0.9979574407023611
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.158,
+          "n_certified": 79,
+          "ci95": [
+            0.1286522063728175,
+            0.1925630327023204
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.986,
+          "n_certified": 493,
+          "ci95": [
+            0.9713865738597492,
+            0.9932022969282127
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.964,
+          "n_certified": 482,
+          "ci95": [
+            0.943815226738503,
+            0.9771091272648186
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 7.950252824362206e-40,
+        "joint_mean_d": 0.0011275869328528643,
+        "single_p_min": 2.4687058283427883e-33,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 6.249964434879018e-11,
+        "joint_mean_d": 0.0024102283641695976,
+        "single_p_min": 4.5076994865667075e-06,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 0.0,
+        "joint_mean_d": 0.003418874926865101,
+        "single_p_min": 2.4687058283427883e-33,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 1.7529704630144666e-13,
+        "joint_mean_d": 0.006377920508384705,
+        "single_p_min": 1.310429542655811e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 2.3012811720036696e-27,
+        "joint_mean_d": 0.028380606323480606,
+        "single_p_min": 2.4687058283427883e-33,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 2.3060200570359833e-19,
+        "joint_mean_d": 0.034754395484924316,
+        "single_p_min": 1.930408899397662e-08,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.092241406440735,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 99.988,
+    "null_mean_n_bonferroni": 0.028,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.024,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1547,
+    "real_n_bonferroni": 1095,
+    "real_n_wy": 1118
+  },
+  "cache_config_hash": "7edcadf6bd79",
+  "minutes": 3.574464237689972
+}

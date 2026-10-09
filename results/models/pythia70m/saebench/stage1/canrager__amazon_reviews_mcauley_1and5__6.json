@@ -1,0 +1,247 @@
+{
+  "task": "canrager__amazon_reviews_mcauley_1and5__6",
+  "dataset": "canrager/amazon_reviews_mcauley_1and5",
+  "class": "6",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.992,
+          "n_certified": 496,
+          "ci95": [
+            0.9796126401630988,
+            0.9968847352024922
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.694,
+          "n_certified": 347,
+          "ci95": [
+            0.6522544304326852,
+            0.7327872175773242
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.082,
+          "n_certified": 41,
+          "ci95": [
+            0.06101875732494105,
+            0.10935542376689417
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.038,
+          "n_certified": 19,
+          "ci95": [
+            0.024459922123289107,
+            0.0585852253992656
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.46,
+          "n_certified": 230,
+          "ci95": [
+            0.41678432000862,
+            0.5038256494738523
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.098,
+          "n_certified": 49,
+          "ci95": [
+            0.07492354740061163,
+            0.1272066458982347
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.976,
+          "n_certified": 488,
+          "ci95": [
+            0.9585225403081018,
+            0.9862188228504781
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.56,
+          "n_certified": 280,
+          "ci95": [
+            0.5161960663856535,
+            0.6028889793906382
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.108,
+          "n_certified": 54,
+          "ci95": [
+            0.08372241545896647,
+            0.13825528546926177
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.39,
+          "n_certified": 195,
+          "ci95": [
+            0.34824058390510465,
+            0.4334368321716941
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.118,
+          "n_certified": 59,
+          "ci95": [
+            0.09259259259259259,
+            0.14923261596501758
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.288,
+          "n_certified": 144,
+          "ci95": [
+            0.25004260722886124,
+            0.3291902310282418
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.628,
+          "n_certified": 314,
+          "ci95": [
+            0.5848081115127891,
+            0.6692399861432997
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.258,
+          "n_certified": 129,
+          "ci95": [
+            0.22159556840612682,
+            0.29809474696283045
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 1.0071584908229766e-15,
+        "joint_mean_d": 0.014647739939391613,
+        "single_p_min": 3.027588718396146e-05,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.00882443506270647,
+        "joint_mean_d": 0.01079453807324171,
+        "single_p_min": 0.0020364366937428713,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 8.057027267582839e-12,
+        "joint_mean_d": 0.012552838772535324,
+        "single_p_min": 0.0031401680316776037,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.007218260318040848,
+        "joint_mean_d": 0.01119827851653099,
+        "single_p_min": 0.08628860861063004,
+        "joint": true,
+        "any_uncorrected": false,
+        "any_bonferroni": false
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 1.3072418016398497e-28,
+        "joint_mean_d": 0.05440604314208031,
+        "single_p_min": 1.1476232408824671e-08,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 4.152940391577431e-07,
+        "joint_mean_d": 0.04825969785451889,
+        "single_p_min": 3.6040411941939965e-05,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.223686099052429,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 101.458,
+    "null_mean_n_bonferroni": 0.054,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.052,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1233,
+    "real_n_bonferroni": 594,
+    "real_n_wy": 593
+  },
+  "cache_config_hash": "2e7f62e0e5b6",
+  "minutes": 3.4692172129948933
+}

@@ -1,0 +1,55 @@
+{
+  "dataset": "Helsinki-NLP/europarl",
+  "task_rows_from": "Helsinki-NLP__europarl__en",
+  "replicates": 20,
+  "k": 10,
+  "amplitude": 3.0,
+  "form": "linear",
+  "min_detect_fraction": 0.8,
+  "by_method": {
+    "mean_diff": {
+      "mean_recall_at_k": 0.005,
+      "same_data": {
+        "joint": 0.5,
+        "any_uncorrected": 0.4,
+        "any_bonferroni": 0.2
+      },
+      "held_out": {
+        "joint": 0.05,
+        "any_uncorrected": 0.35,
+        "any_bonferroni": 0.1
+      }
+    },
+    "auroc": {
+      "mean_recall_at_k": 0.335,
+      "same_data": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      },
+      "held_out": {
+        "joint": 0.9,
+        "any_uncorrected": 0.9,
+        "any_bonferroni": 0.8
+      }
+    },
+    "probe_weight": {
+      "mean_recall_at_k": 0.97,
+      "same_data": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      },
+      "held_out": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      }
+    }
+  },
+  "criterion_has_power": {
+    "same_data": true,
+    "held_out": true
+  },
+  "criterion_has_power_both": true
+}

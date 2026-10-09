@@ -1,0 +1,55 @@
+{
+  "dataset": "LabHC/bias_in_bios_class_set2",
+  "task_rows_from": "LabHC__bias_in_bios_class_set2__11",
+  "replicates": 20,
+  "k": 10,
+  "amplitude": 3.0,
+  "form": "linear",
+  "min_detect_fraction": 0.8,
+  "by_method": {
+    "mean_diff": {
+      "mean_recall_at_k": 0.005,
+      "same_data": {
+        "joint": 0.6,
+        "any_uncorrected": 0.45,
+        "any_bonferroni": 0.3
+      },
+      "held_out": {
+        "joint": 0.2,
+        "any_uncorrected": 0.55,
+        "any_bonferroni": 0.25
+      }
+    },
+    "auroc": {
+      "mean_recall_at_k": 0.41000000000000003,
+      "same_data": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      },
+      "held_out": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      }
+    },
+    "probe_weight": {
+      "mean_recall_at_k": 0.975,
+      "same_data": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      },
+      "held_out": {
+        "joint": 1.0,
+        "any_uncorrected": 1.0,
+        "any_bonferroni": 1.0
+      }
+    }
+  },
+  "criterion_has_power": {
+    "same_data": true,
+    "held_out": true
+  },
+  "criterion_has_power_both": true
+}

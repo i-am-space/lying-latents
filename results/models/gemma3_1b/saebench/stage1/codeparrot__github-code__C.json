@@ -1,0 +1,247 @@
+{
+  "task": "codeparrot__github-code__C",
+  "dataset": "codeparrot/github-code",
+  "class": "C",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.486,
+          "n_certified": 243,
+          "ci95": [
+            0.4424642011735621,
+            0.5297492881453032
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.382,
+          "n_certified": 191,
+          "ci95": [
+            0.3404638838756496,
+            0.42533552609764363
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.858,
+          "n_certified": 429,
+          "ci95": [
+            0.8246696706783865,
+            0.8858711024534867
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.698,
+          "n_certified": 349,
+          "ci95": [
+            0.6563715243917267,
+            0.7366091266700354
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.988,
+          "n_certified": 494,
+          "ci95": [
+            0.9740692922810136,
+            0.9944890800328247
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.382,
+          "n_certified": 191,
+          "ci95": [
+            0.3404638838756496,
+            0.42533552609764363
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.996,
+          "n_certified": 498,
+          "ci95": [
+            0.9855339859585811,
+            0.9989023924587627
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.984,
+          "n_certified": 492,
+          "ci95": [
+            0.9687485245822888,
+            0.9918708446797967
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.136,
+          "n_certified": 68,
+          "ci95": [
+            0.10871499179718816,
+            0.1688357304933095
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.98,
+          "n_certified": 490,
+          "ci95": [
+            0.9635794314459021,
+            0.9891009347644306
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.948,
+          "n_certified": 474,
+          "ci95": [
+            0.9248983617059371,
+            0.9642699800903735
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 9.998202184196589e-24,
+        "joint_mean_d": 0.005469310097396374,
+        "single_p_min": 3.6205062101289535e-20,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 1.534127713753719e-09,
+        "joint_mean_d": 0.0066291759721934795,
+        "single_p_min": 9.285473723252835e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 2.264484256038555e-34,
+        "joint_mean_d": 0.010769402608275414,
+        "single_p_min": 2.0190270091294862e-22,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 1.2996852942828707e-12,
+        "joint_mean_d": 0.014484887011349201,
+        "single_p_min": 5.5195692461040835e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 7.052408276041047e-37,
+        "joint_mean_d": 0.0173784326761961,
+        "single_p_min": 2.0190270091294862e-22,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 4.692259358840545e-10,
+        "joint_mean_d": 0.031488168984651566,
+        "single_p_min": 5.5195692461040835e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.140928483009338,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 103.07,
+    "null_mean_n_bonferroni": 0.052,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.042,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1737,
+    "real_n_bonferroni": 1407,
+    "real_n_wy": 1417
+  },
+  "cache_config_hash": "7edcadf6bd79",
+  "minutes": 3.569017541408539
+}

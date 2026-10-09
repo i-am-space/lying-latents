@@ -1,0 +1,247 @@
+{
+  "task": "LabHC__bias_in_bios_class_set3__25",
+  "dataset": "LabHC/bias_in_bios_class_set3",
+  "class": "25",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.626,
+          "n_certified": 313,
+          "ci95": [
+            0.582777860120605,
+            0.6673007360096074
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.336,
+          "n_certified": 168,
+          "ci95": [
+            0.29598730030060416,
+            0.3785135745775322
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.964,
+          "n_certified": 482,
+          "ci95": [
+            0.943815226738503,
+            0.9771091272648186
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.906,
+          "n_certified": 453,
+          "ci95": [
+            0.8772348563464386,
+            0.928573953406468
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.902,
+          "n_certified": 451,
+          "ci95": [
+            0.8727933541017654,
+            0.9250764525993884
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.996,
+          "n_certified": 498,
+          "ci95": [
+            0.9855339859585811,
+            0.9989023924587627
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.504,
+          "n_certified": 252,
+          "ci95": [
+            0.4603113571655595,
+            0.5476276458861933
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.942,
+          "n_certified": 471,
+          "ci95": [
+            0.9179433020026042,
+            0.9593165352160771
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.78,
+          "n_certified": 390,
+          "ci95": [
+            0.7416305610182787,
+            0.8140996526044155
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.788,
+          "n_certified": 394,
+          "ci95": [
+            0.7500471496065019,
+            0.8215610701196979
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.996,
+          "n_certified": 498,
+          "ci95": [
+            0.9855339859585811,
+            0.9989023924587627
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.16,
+          "n_certified": 80,
+          "ci95": [
+            0.13047587742957925,
+            0.19470886317143507
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.942,
+          "n_certified": 471,
+          "ci95": [
+            0.9179433020026042,
+            0.9593165352160771
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.734,
+          "n_certified": 367,
+          "ci95": [
+            0.6935914395923122,
+            0.7708402389352251
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 4.309628695575718e-11,
+        "joint_mean_d": 0.006481635849922895,
+        "single_p_min": 0.0008672517724335194,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.0020689896773546934,
+        "joint_mean_d": 0.007301849313080311,
+        "single_p_min": 0.005810599308460951,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": false
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 2.9625430625194833e-17,
+        "joint_mean_d": 0.011147256009280682,
+        "single_p_min": 0.0008672517724335194,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.00018030784849543124,
+        "joint_mean_d": 0.012153935618698597,
+        "single_p_min": 0.005810599308460951,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": false
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 1.9294303605797585e-26,
+        "joint_mean_d": 0.011318875476717949,
+        "single_p_min": 2.086450345828439e-09,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 1.3447298670143937e-06,
+        "joint_mean_d": 0.014602424576878548,
+        "single_p_min": 0.0014464351115748286,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.180791997909544,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 102.946,
+    "null_mean_n_bonferroni": 0.052,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.05,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1791,
+    "real_n_bonferroni": 1482,
+    "real_n_wy": 1492
+  },
+  "cache_config_hash": "5f43d23386f8",
+  "minutes": 3.506756091117859
+}

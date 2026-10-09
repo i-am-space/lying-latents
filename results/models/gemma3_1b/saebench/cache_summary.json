@@ -1,0 +1,174 @@
+{
+  "LabHC/bias_in_bios_class_set1": {
+    "cache": "d491295bce71__LabHC__bias_in_bios_class_set1.npz",
+    "config_hash": "d491295bce71",
+    "n": 12500,
+    "classes": [
+      "0",
+      "1",
+      "2",
+      "6",
+      "9"
+    ],
+    "sae_explained_variance": 0.8044327675102534,
+    "sae_mean_l0": 63.62808387625663,
+    "n_latents_firing_1pct": 11745,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.62376,
+    "mean_tokens": 74.1664,
+    "model": "google/gemma-3-1b-pt",
+    "layer": 22,
+    "sae": "gemma-scope-2-1b-pt-res/layer_22_width_16k_l0_medium",
+    "minutes": 1.6242254495620727
+  },
+  "LabHC/bias_in_bios_class_set2": {
+    "cache": "a480bea258e6__LabHC__bias_in_bios_class_set2.npz",
+    "config_hash": "a480bea258e6",
+    "n": 12500,
+    "classes": [
+      "11",
+      "13",
+      "14",
+      "18",
+      "19"
+    ],
+    "sae_explained_variance": 0.8078337899664045,
+    "sae_mean_l0": 64.3326849990027,
+    "n_latents_firing_1pct": 12023,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.61648,
+    "mean_tokens": 74.2004,
+    "model": "google/gemma-3-1b-pt",
+    "layer": 22,
+    "sae": "gemma-scope-2-1b-pt-res/layer_22_width_16k_l0_medium",
+    "minutes": 1.4171483596165975
+  },
+  "LabHC/bias_in_bios_class_set3": {
+    "cache": "5f43d23386f8__LabHC__bias_in_bios_class_set3.npz",
+    "config_hash": "5f43d23386f8",
+    "n": 12500,
+    "classes": [
+      "20",
+      "21",
+      "22",
+      "25",
+      "26"
+    ],
+    "sae_explained_variance": 0.8026037844631322,
+    "sae_mean_l0": 64.02098588869316,
+    "n_latents_firing_1pct": 12055,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.61192,
+    "mean_tokens": 78.20112,
+    "model": "google/gemma-3-1b-pt",
+    "layer": 22,
+    "sae": "gemma-scope-2-1b-pt-res/layer_22_width_16k_l0_medium",
+    "minutes": 1.4666898449261982
+  },
+  "canrager/amazon_reviews_mcauley_1and5": {
+    "cache": "3b71cac8d3b0__canrager__amazon_reviews_mcauley_1and5.npz",
+    "config_hash": "3b71cac8d3b0",
+    "n": 12500,
+    "classes": [
+      "1",
+      "2",
+      "3",
+      "5",
+      "6"
+    ],
+    "sae_explained_variance": 0.8008216614191515,
+    "sae_mean_l0": 63.688467203236335,
+    "n_latents_firing_1pct": 10771,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.3994,
+    "mean_tokens": 126.72104,
+    "model": "google/gemma-3-1b-pt",
+    "layer": 22,
+    "sae": "gemma-scope-2-1b-pt-res/layer_22_width_16k_l0_medium",
+    "minutes": 2.2786404132843017
+  },
+  "canrager/amazon_reviews_mcauley_1and5_sentiment": {
+    "cache": "a0d618ea9dbb__canrager__amazon_reviews_mcauley_1and5_sentiment.npz",
+    "config_hash": "a0d618ea9dbb",
+    "n": 5000,
+    "classes": [
+      "1.0",
+      "5.0"
+    ],
+    "sae_explained_variance": 0.8042149290546259,
+    "sae_mean_l0": 63.62213771174739,
+    "n_latents_firing_1pct": 11271,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.4127,
+    "mean_tokens": 126.743,
+    "model": "google/gemma-3-1b-pt",
+    "layer": 22,
+    "sae": "gemma-scope-2-1b-pt-res/layer_22_width_16k_l0_medium",
+    "minutes": 0.9275559981664022
+  },
+  "codeparrot/github-code": {
+    "cache": "7edcadf6bd79__codeparrot__github-code.npz",
+    "config_hash": "7edcadf6bd79",
+    "n": 12500,
+    "classes": [
+      "C",
+      "Python",
+      "HTML",
+      "Java",
+      "PHP"
+    ],
+    "sae_explained_variance": 0.7606454847714403,
+    "sae_mean_l0": 70.57058594668763,
+    "n_latents_firing_1pct": 13358,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.45976,
+    "mean_tokens": 126.86888,
+    "model": "google/gemma-3-1b-pt",
+    "layer": 22,
+    "sae": "gemma-scope-2-1b-pt-res/layer_22_width_16k_l0_medium",
+    "minutes": 3.7391318241755167
+  },
+  "fancyzhx/ag_news": {
+    "cache": "7b56f6f92896__fancyzhx__ag_news.npz",
+    "config_hash": "7b56f6f92896",
+    "n": 10000,
+    "classes": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "sae_explained_variance": 0.7906672271625416,
+    "sae_mean_l0": 68.26802901985721,
+    "n_latents_firing_1pct": 11802,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.6722,
+    "mean_tokens": 51.8955,
+    "model": "google/gemma-3-1b-pt",
+    "layer": 22,
+    "sae": "gemma-scope-2-1b-pt-res/layer_22_width_16k_l0_medium",
+    "minutes": 2.4978151957194012
+  },
+  "Helsinki-NLP/europarl": {
+    "cache": "e5a322b68a87__Helsinki-NLP__europarl.npz",
+    "config_hash": "e5a322b68a87",
+    "n": 12500,
+    "classes": [
+      "en",
+      "fr",
+      "de",
+      "es",
+      "nl"
+    ],
+    "sae_explained_variance": 0.77815329051427,
+    "sae_mean_l0": 69.28914055999222,
+    "n_latents_firing_1pct": 10520,
+    "p_retained": 2048,
+    "median_zero_mass_retained": 0.70864,
+    "mean_tokens": 37.0148,
+    "model": "google/gemma-3-1b-pt",
+    "layer": 22,
+    "sae": "gemma-scope-2-1b-pt-res/layer_22_width_16k_l0_medium",
+    "minutes": 2.5793655196825664
+  }
+}

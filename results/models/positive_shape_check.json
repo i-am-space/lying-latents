@@ -1,0 +1,74 @@
+{
+  "gemma2 Helsinki-NLP/europarl": {
+    "key": "X",
+    "p": 2048,
+    "median_frac_below_1pct_of_max": 0.015019309435529968,
+    "median_skew_log_x": 0.24766354404985802,
+    "median_KS_lognormal": 0.0332534911017002,
+    "median_min_over_median": 0.12895464572765114
+  },
+  "gemma2 LabHC/bias_in_bios_class_set1": {
+    "key": "X",
+    "p": 2048,
+    "median_frac_below_1pct_of_max": 0.0,
+    "median_skew_log_x": 0.2224622996874014,
+    "median_KS_lognormal": 0.04010590526602198,
+    "median_min_over_median": 0.1905940516789546
+  },
+  "gemma2 canrager/amazon_reviews_mcauley_1and5": {
+    "key": "X",
+    "p": 2048,
+    "median_frac_below_1pct_of_max": 0.0,
+    "median_skew_log_x": 0.2083250197804326,
+    "median_KS_lognormal": 0.06595875216150726,
+    "median_min_over_median": 0.24648992128780778
+  },
+  "gemma3 Helsinki-NLP/europarl": {
+    "key": "X",
+    "p": 2048,
+    "median_frac_below_1pct_of_max": 0.010122399644332475,
+    "median_skew_log_x": 0.2789608673734699,
+    "median_KS_lognormal": 0.032985941422323084,
+    "median_min_over_median": 0.14938835642432108
+  },
+  "gemma3 LabHC/bias_in_bios_class_set1": {
+    "key": "X",
+    "p": 2048,
+    "median_frac_below_1pct_of_max": 0.00014159885424637475,
+    "median_skew_log_x": 0.3719499901836991,
+    "median_KS_lognormal": 0.047028218370201796,
+    "median_min_over_median": 0.23573534943468102
+  },
+  "gemma3 canrager/amazon_reviews_mcauley_1and5": {
+    "key": "X",
+    "p": 2048,
+    "median_frac_below_1pct_of_max": 0.0,
+    "median_skew_log_x": 0.47854324892897404,
+    "median_KS_lognormal": 0.0937515826724532,
+    "median_min_over_median": 0.3567890766716827
+  },
+  "pythia Helsinki-NLP/europarl": {
+    "key": "X",
+    "p": 2048,
+    "median_frac_below_1pct_of_max": 0.22373642051887432,
+    "median_skew_log_x": -0.8589963196195971,
+    "median_KS_lognormal": 0.059326020774092825,
+    "median_min_over_median": 0.0002442646470257147
+  },
+  "pythia LabHC/bias_in_bios_class_set1": {
+    "key": "X",
+    "p": 2048,
+    "median_frac_below_1pct_of_max": 0.21998046389682976,
+    "median_skew_log_x": -0.8298320016349894,
+    "median_KS_lognormal": 0.05604703749034276,
+    "median_min_over_median": 0.0001357806655501268
+  },
+  "pythia canrager/amazon_reviews_mcauley_1and5": {
+    "key": "X",
+    "p": 2048,
+    "median_frac_below_1pct_of_max": 0.16916137403129317,
+    "median_skew_log_x": -0.8989880355000283,
+    "median_KS_lognormal": 0.06091846712439364,
+    "median_min_over_median": 0.00012233829501094232
+  }
+}

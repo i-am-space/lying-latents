@@ -1,0 +1,247 @@
+{
+  "task": "fancyzhx__ag_news__1",
+  "dataset": "fancyzhx/ag_news",
+  "class": "1",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.99,
+          "n_certified": 495,
+          "ci95": [
+            0.976806564621235,
+            0.9957213092184797
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.672,
+          "n_certified": 336,
+          "ci95": [
+            0.6296726201980068,
+            0.7117045110273624
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.046,
+          "n_certified": 23,
+          "ci95": [
+            0.030844883399787512,
+            0.06807827022627275
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.058,
+          "n_certified": 29,
+          "ci95": [
+            0.040683464783922846,
+            0.08205669799739573
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.428,
+          "n_certified": 214,
+          "ci95": [
+            0.3853409873798005,
+            0.47175695768864956
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.05,
+          "n_certified": 25,
+          "ci95": [
+            0.03409350665098192,
+            0.07276865002683111
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.948,
+          "n_certified": 474,
+          "ci95": [
+            0.9248983617059371,
+            0.9642699800903735
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.314,
+          "n_certified": 157,
+          "ci95": [
+            0.2748671671994545,
+            0.35596919089404155
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.024,
+          "n_certified": 12,
+          "ci95": [
+            0.013781177149521824,
+            0.04147745969189818
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.326,
+          "n_certified": 163,
+          "ci95": [
+            0.2863746168691645,
+            0.36827875037958996
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.064,
+          "n_certified": 32,
+          "ci95": [
+            0.045695733565557124,
+            0.08895293379339062
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 1.0,
+          "n_certified": 500,
+          "ci95": [
+            0.9923753814690964,
+            0.9999999999999999
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.042,
+          "n_certified": 21,
+          "ci95": [
+            0.027632099334746148,
+            0.06335205123956134
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.412,
+          "n_certified": 206,
+          "ci95": [
+            0.3696877164049981,
+            0.4556542164564409
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.068,
+          "n_certified": 34,
+          "ci95": [
+            0.04906621332682857,
+            0.09352145708387197
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 0.017399795353412628,
+        "joint_mean_d": 0.0009041409939527512,
+        "single_p_min": 1.9956166852352908e-06,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.15812821686267853,
+        "joint_mean_d": 0.0008683709893375635,
+        "single_p_min": 0.032086923718452454,
+        "joint": false,
+        "any_uncorrected": true,
+        "any_bonferroni": false
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 2.5954690840990224e-08,
+        "joint_mean_d": 0.005317422095686197,
+        "single_p_min": 4.783448637191157e-10,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.010887222364544868,
+        "joint_mean_d": 0.005699830129742622,
+        "single_p_min": 0.0005762210348621011,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 4.7226259935617574e-18,
+        "joint_mean_d": 0.008943096734583378,
+        "single_p_min": 4.783448637191157e-10,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.0009530474781058729,
+        "joint_mean_d": 0.008890525437891483,
+        "single_p_min": 0.0005762210348621011,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.180544471740722,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 101.3,
+    "null_mean_n_bonferroni": 0.04,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.04,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1705,
+    "real_n_bonferroni": 1303,
+    "real_n_wy": 1308
+  },
+  "cache_config_hash": "f203db33f1b6",
+  "minutes": 3.325821920235952
+}

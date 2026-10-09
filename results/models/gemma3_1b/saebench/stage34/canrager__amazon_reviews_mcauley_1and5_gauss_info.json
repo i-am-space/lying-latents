@@ -1,0 +1,62 @@
+{
+  "dataset": "canrager/amazon_reviews_mcauley_1and5",
+  "info": {
+    "n": 12500,
+    "p": 2048,
+    "s_equicorrelated": 0.03809991270839255,
+    "median_zero_mass": 0.3994,
+    "sampler_setup_seconds": 170.20407557487488,
+    "block_mvr": {
+      "mean_s": 0.17394182528550287,
+      "seconds": 148.68673133850098,
+      "control_S": "reused the real-latent S",
+      "control_seconds": 0.0,
+      "min_eig_2Sigma_minus_S": 0.01368824968507365
+    }
+  },
+  "mean_corr_X_Xk": {
+    "gauss_real": 0.9624867350953185,
+    "gauss_mvr": 0.8294648836567784,
+    "gauss_ceiling_mvr": 0.8298845105059043
+  },
+  "draw_info": {
+    "gauss_real": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ],
+    "gauss_mvr": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ],
+    "gauss_ceiling_mvr": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ]
+  },
+  "replicates": 10,
+  "minutes": 381.1
+}

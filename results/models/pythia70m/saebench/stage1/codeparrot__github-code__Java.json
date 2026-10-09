@@ -1,0 +1,247 @@
+{
+  "task": "codeparrot__github-code__Java",
+  "dataset": "codeparrot/github-code",
+  "class": "Java",
+  "n": 5000,
+  "p": 2048,
+  "n_positive": 2500,
+  "n_permutations": 500,
+  "alpha": 0.05,
+  "top_k": 10,
+  "validate": {
+    "mean_diff": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.682,
+          "n_certified": 341,
+          "ci95": [
+            0.639924207823618,
+            0.7213004310311333
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.998,
+          "n_certified": 499,
+          "ci95": [
+            0.9887590072528046,
+            0.9996468726904154
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.996,
+          "n_certified": 498,
+          "ci95": [
+            0.9855339859585811,
+            0.9989023924587627
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.398,
+          "n_certified": 199,
+          "ci95": [
+            0.35602922648461244,
+            0.44152619569569185
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.968,
+          "n_certified": 484,
+          "ci95": [
+            0.9486546984063574,
+            0.980208658648717
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.856,
+          "n_certified": 428,
+          "ci95": [
+            0.822508879125479,
+            0.8840623924805179
+          ]
+        }
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.84,
+          "n_certified": 420,
+          "ci95": [
+            0.8052911368285649,
+            0.8695241225704207
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.994,
+          "n_certified": 497,
+          "ci95": [
+            0.9825094361891064,
+            0.9979574407023611
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.99,
+          "n_certified": 495,
+          "ci95": [
+            0.976806564621235,
+            0.9957213092184797
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.384,
+          "n_certified": 192,
+          "ci95": [
+            0.34240693195467675,
+            0.42736197954449284
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.936,
+          "n_certified": 468,
+          "ci95": [
+            0.9110470662066095,
+            0.954304266434443
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.708,
+          "n_certified": 354,
+          "ci95": [
+            0.6666799846544007,
+            0.7461481740367435
+          ]
+        }
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint": {
+          "fwer": 0.758,
+          "n_certified": 379,
+          "ci95": [
+            0.7185828923419191,
+            0.7934828044961348
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.996,
+          "n_certified": 498,
+          "ci95": [
+            0.9855339859585811,
+            0.9989023924587627
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.996,
+          "n_certified": 498,
+          "ci95": [
+            0.9855339859585811,
+            0.9989023924587627
+          ]
+        }
+      },
+      "held_out": {
+        "joint": {
+          "fwer": 0.098,
+          "n_certified": 49,
+          "ci95": [
+            0.07492354740061163,
+            0.1272066458982347
+          ]
+        },
+        "any_uncorrected": {
+          "fwer": 0.914,
+          "n_certified": 457,
+          "ci95": [
+            0.8861596159077154,
+            0.9355271999486967
+          ]
+        },
+        "any_bonferroni": {
+          "fwer": 0.712,
+          "n_certified": 356,
+          "ci95": [
+            0.6708097689717583,
+            0.7499573927711387
+          ]
+        }
+      }
+    }
+  },
+  "real": {
+    "mean_diff": {
+      "same_data": {
+        "joint_p": 0.0004978405777364969,
+        "joint_mean_d": 0.0012959460727870464,
+        "single_p_min": 3.133923966656385e-16,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.07887228578329086,
+        "joint_mean_d": 0.0010509067215025425,
+        "single_p_min": 3.2685358746675774e-05,
+        "joint": false,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "auroc": {
+      "same_data": {
+        "joint_p": 1.8418118725782123e-27,
+        "joint_mean_d": 0.0019375864649191499,
+        "single_p_min": 1.7453660045019248e-13,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 0.01594507321715355,
+        "joint_mean_d": 0.001737783895805478,
+        "single_p_min": 1.893763146654237e-05,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    },
+    "probe_weight": {
+      "same_data": {
+        "joint_p": 1.1961697352498169e-33,
+        "joint_mean_d": 0.01161754410713911,
+        "single_p_min": 3.133923966656385e-16,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      },
+      "held_out": {
+        "joint_p": 1.4134589765985028e-12,
+        "joint_mean_d": 0.015725810080766678,
+        "single_p_min": 2.430105325856857e-07,
+        "joint": true,
+        "any_uncorrected": true,
+        "any_bonferroni": true
+      }
+    }
+  },
+  "search": {
+    "z_naive": 1.9599639845400536,
+    "z_bonferroni": 4.220149256827025,
+    "wy_threshold": 4.079395866394043,
+    "expected_naive_false_passes": 102.4,
+    "null_mean_n_naive": 101.69,
+    "null_mean_n_bonferroni": 0.034,
+    "fwer_naive": 1.0,
+    "fwer_bonferroni": 0.034,
+    "fwer_wy_insample": 0.05,
+    "real_n_naive": 1694,
+    "real_n_bonferroni": 1311,
+    "real_n_wy": 1334
+  },
+  "cache_config_hash": "8e7ed265a8b7",
+  "minutes": 3.5474072297414145
+}
