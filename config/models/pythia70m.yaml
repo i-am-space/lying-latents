@@ -29,6 +29,10 @@ stage4_saebench:
     - canrager/amazon_reviews_mcauley_1and5_sentiment
 
 stage4_saebench_matched:
+  replicates: 10                          # as saebench_amendment_3's Pythia run
+  designs:                                # exactly saebench_amendment_3's 8 cells (amplitudes 8, 32 x k 100, 300 x forms),
+    many_signals: {signal_sizes: [100, 300], amplitudes: [8.0, 32.0]}   # so the thresholded run is paired with
+    few_signals: null                                                    # the unthresholded one (the hurdle is the cost)
   datasets:                               # where the hurdle breached in saebench_amendment_3 (4, 7 and 16 of 24 cells)
     - Helsinki-NLP/europarl
     - LabHC/bias_in_bios_class_set1

@@ -484,14 +484,22 @@ stage4_saebench:
 # per dataset to the predictability of its own real labels (src/saebench/calibrate_amplitude.py), and the
 # fair-coin rate of null latents recorded in every fit. Same arms, CV procedure and targets as stage4_saebench.
 stage4_saebench_matched:
-  replicates: 20
+  replicates: 15
   datasets:                        # run order of scripts/saebench_matched.sh: one per zero-atom band, plus the largest excess
     - Helsinki-NLP/europarl                 # median Pr(X=0) 0.73
     - LabHC/bias_in_bios_class_set1         # 0.59
     - codeparrot/github-code                # 0.49: the largest block-MVR excess in saebench_amendment_2
     - canrager/amazon_reviews_mcauley_1and5 # 0.30
   forms: [linear, interaction]
-  signal_sizes: [100, 300]         # one cell per (form, k): 4 cells, each at its matched amplitude
+  # Amplitude SWEEP (replaces the calibration, which saturated: saebench_amendment_4 revision_1). Cells are
+  # (k, amplitude, form) for each design below. `many_signals` contains saebench_amendment_2's 8 cells (amplitudes
+  # 8 and 32, k = 100 and 300) and adds amplitude 2; `few_signals` is the regime of the SST-2 strong-signal
+  # designs (k = 10-30, amplitudes 5 and 20) where Gaussian knockoffs breached there, never run on SAEBench.
+  # 12 + 8 = 20 cells. Without `designs` or `amplitudes`, the calibrated design (one cell per (form, k) at the
+  # amplitude from calibrate_amplitude.py) is used instead.
+  designs:
+    many_signals: {signal_sizes: [100, 300], amplitudes: [2.0, 8.0, 32.0]}
+    few_signals: {signal_sizes: [10, 30], amplitudes: [5.0, 20.0]}
   coin_link_bins: [0.0, 0.05, 0.2, 1.0]   # max |corr| of a null latent with the planted set
   arm_groups:
     hurdle: [hurdle]

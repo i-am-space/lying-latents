@@ -1696,3 +1696,36 @@ saebench_amendment_4:
     - "A linear probe cannot represent the interaction part of a label, so interaction amplitudes matched to a real AUC are lower bounds and may sit at the grid edge."
     - "Thresholding changes the data (more zeros, fewer tiny positives); a result on the thresholded latents is about a JumpReLU-like version of the ReLU SAE, not about the original."
     - "4 datasets per Gemma-2 run and 3 for Pythia; the per-dataset coin tests are not independent replications of each other (shared model and planted-signal seeds structure)."
+
+  revision_1:
+    date_written: "2026-10-09"
+    status: written_before_any_fdr_or_coin_result
+    what_happened: >
+      Step 1 (calibrate_amplitude.py) was run on the four Gemma-2 datasets before any benchmark result existed.
+      It saturated on every dataset: the real tasks' held-out probe AUC is 0.955-1.000 (EuroParl 1.000, GitHub
+      0.992, Bias in Bios 0.984, Amazon category 0.955), and planted labels with k = 100 or 300 equally weighted
+      signals never reached it at any amplitude up to 128 (each probe sees 3,000 training rows for 2,048 latents),
+      so all four (form, k) matched amplitudes were the grid maximum 128, flagged 'at or above'. The calibration
+      therefore matches nothing, and the cells would have been the same near-deterministic labels everywhere.
+      A benchmark started on those cells was stopped by hand after its first replicate; its output is discarded and
+      was not analysed (no FDR, power or coin value was read).
+    change: >
+      Step 1 is replaced by an amplitude sweep (config stage4_saebench_matched.designs). Gemma-2, per dataset, 20
+      cells in two designs, each x linear and interaction: many_signals, k = 100 and 300 x amplitudes 2, 8 and 32
+      (12 cells; they contain the 8 cells of saebench_amendment_2, so the original design is repeated with the coin
+      record, plus amplitude 2 for the low-difficulty end); and few_signals, k = 10 and 30 x amplitudes 5 and 20
+      (8 cells; the regime of the SST-2 strong-signal designs, where Gaussian knockoffs breached under the
+      cross-validated penalty, never run on SAEBench). 15 replicates. Arms, CV penalty, targets, datasets and seeds
+      are unchanged; no calibration file is needed. The planted signals'
+      detectability is read off the Gaussian control's power in each cell (dose_response in the dataset JSON),
+      not assumed from the amplitude. Step 5 (Pythia, thresholded at 0.19) keeps exactly the 8 cells and 10
+      replicates of saebench_amendment_3's Pythia run (amplitudes 8 and 32 x k 100 and 300 x forms; the hurdle
+      costs about 13-16 hours per dataset at that size), so the thresholded run is paired with the unthresholded one.
+    rules_changed:
+      - id: M1
+        rule: "Replaced: per dataset, report the real-label median AUC (from the calibration run) and the Gaussian control's power in every sweep cell; no cell is dropped."
+      - id: M3
+        rule: "As written, with the cells pooled over the amplitude sweep (per form, and all)."
+      - id: M6
+        rule: "Descriptive: per dataset and form, the block-MVR coin rate and FDR as a function of the control's power across the sweep, and the amplitudes at which the control's power is about 0.5 and about 0.9."
+    unchanged: "M2, M4, M5, M-T and the interpretation constraints of this amendment."

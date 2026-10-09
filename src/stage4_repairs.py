@@ -1155,6 +1155,11 @@ def main_stress(args) -> None:
 def saebench_cells(ext: dict, cal: dict | None) -> list:
     """The planted-signal cells of one dataset: stage4_saebench's fixed list, or (matched) one cell per
     (form, k) at the amplitude calibrated to the dataset's own real labels."""
+    if ext.get("designs"):                                    # sweep, named designs of (k, amplitudes)
+        return [("sweep", float(a), f, int(k)) for d in ext["designs"].values() if d
+                for k in d["signal_sizes"] for a in d["amplitudes"] for f in ext["forms"]]
+    if "amplitudes" in ext:                                   # the amplitude sweep: no calibration
+        return [("sweep", float(a), f, int(k)) for k in ext["signal_sizes"] for a in ext["amplitudes"] for f in ext["forms"]]
     if cal is None:
         return [tuple(c) for c in ext["cells"]]
     return [("matched", float(cal["matched"][f"{f}|{k}"]["amplitude"]), f, int(k))
@@ -1172,6 +1177,9 @@ def analyse_coin(rd: Path, prefix: str, groups: list, cells: list, arms: list) -
         z.update(dict(np.load(rd / f"{prefix}_{g}_records.npz")))
     forms = [c[2] for c in cells]
     sel = {"all": list(range(len(cells))), **{f: [i for i, x in enumerate(forms) if x == f] for f in sorted(set(forms))}}
+    amps = sorted({c[1] for c in cells})
+    if len(amps) > 1:                                         # a sweep: the coin per amplitude, both forms pooled
+        sel.update({f"a{a:g}": [i for i, c in enumerate(cells) if c[1] == a] for a in amps})
     out = {}
     for a in arms:
         C = z.get(f"coin_cv__{a}")
@@ -1198,6 +1206,28 @@ def analyse_coin(rd: Path, prefix: str, groups: list, cells: list, arms: list) -
                                out["gauss_ceiling_mvr"][label]["rate_by_replicate"], False)
             out["mvr_minus_control"][label] = {"mean_diff": d[0], "se": d[1], "p_two_sided": d[2]}
     return out
+
+
+def dose_response(rd: Path, prefix: str, groups: list, cells: list, qs: list) -> list:
+    """Per cell (form, amplitude, k): power, FDR at q = 0.10 and the coin rate of each arm, so the datasets can
+    be compared at equal control power (saebench_amendment_4): the planted signals' detectability is read off
+    the Gaussian control's power, not assumed from the amplitude."""
+    z = {}
+    for g in groups:
+        z.update(dict(np.load(rd / f"{prefix}_{g}_records.npz")))
+    arms = sorted(k.split("__", 1)[1] for k in z if k.startswith("ko_pow_cv__"))
+    rows = []
+    for ci, (design, amp, form, k) in enumerate(cells):
+        row = {"form": form, "amplitude": amp, "k": k}
+        for a in arms:
+            row[f"power_{a}"] = float(z[f"ko_pow_cv__{a}"][ci].mean())
+            row[f"fdr_q0.10_{a}"] = float(z[f"ko_fdr_cv__{a}"][ci, :, qs.index(0.10)].mean())
+            C = z.get(f"coin_cv__{a}")
+            if C is not None:
+                pos, neg = C[ci][..., 0].sum(axis=-1).astype(float), C[ci][..., 1].sum(axis=-1).astype(float)
+                row[f"coin_{a}"] = float(np.mean(pos / np.maximum(pos + neg, 1)))
+        rows.append(row)
+    return rows
 
 
 def main_saebench(args) -> None:
@@ -1231,7 +1261,8 @@ def main_saebench(args) -> None:
     rd = base / tag
     rd.mkdir(parents=True, exist_ok=True)
     cal_all = None
-    if matched:
+    sweep = matched and bool(ext.get("designs") or "amplitudes" in ext)
+    if matched and not sweep:
         cal_path = base / f"amplitude_calibration{sfx}.json"
         if not cal_path.exists():
             raise SystemExit(f"{cal_path} missing: run src/saebench/calibrate_amplitude.py first"
@@ -1239,13 +1270,13 @@ def main_saebench(args) -> None:
         cal_all = json.loads(cal_path.read_text())["datasets"]
 
     def cells_of(name):
-        if not matched:
+        if not matched or sweep:
             return saebench_cells(ext, None)
         if name not in cal_all:
             raise SystemExit(f"{name} is not in {cal_path}: calibrate it first")
         return saebench_cells(ext, cal_all[name])
 
-    design = "matched" if matched else "realistic"
+    design = "sweep" if sweep else ("matched" if matched else "realistic")
     if args.stage == "analyse":
         summary = {}
         for name in datasets:
@@ -1253,7 +1284,7 @@ def main_saebench(args) -> None:
             if "gauss" not in groups or (not matched and len(groups) < len(ext["arm_groups"])):
                 print(f"  {name}: records incomplete, skipped", flush=True)
                 continue
-            if matched and name not in cal_all:
+            if cal_all is not None and name not in cal_all:
                 continue
             cells = cells_of(name)
             sec_d = {**sec, "cells": cells, "arm_groups": {g: ext["arm_groups"][g] for g in groups}}
@@ -1277,8 +1308,10 @@ def main_saebench(args) -> None:
             else:
                 out["SB4_hurdle_restores"] = None
             if matched:
-                out["calibration"] = {"real_auc_median": cal_all[name]["real_auc_median"], "matched": cal_all[name]["matched"]}
+                if cal_all is not None:
+                    out["calibration"] = {"real_auc_median": cal_all[name]["real_auc_median"], "matched": cal_all[name]["matched"]}
                 out["coin"] = analyse_coin(rd, slug(name), groups, cells, list(cv))
+                out["dose_response"] = dose_response(rd, slug(name), groups, cells, sec["nominal_fdr_targets"])
             (rd / f"{slug(name)}.json").write_text(json.dumps(out, indent=2, default=float))
             summary[name] = {k: out[k] for k in ("n", "median_zero_mass", "SB3_control_valid", "SB3_gaussian_breach",
                                                  "SB4_hurdle_restores", "mvr_minus_control_fdr_cv")}
@@ -1289,7 +1322,9 @@ def main_saebench(args) -> None:
                     + "  ".join(f"{a} {cv[a]['n_breach_BY']}" for a in cv)
                     + f"  | MVR-control FDR {ex[0]:+.3f}  hurdle restores {out['SB4_hurdle_restores']}")
             if matched:
-                summary[name]["matched_amplitudes"] = cal_all[name]["matched"]
+                if cal_all is not None:
+                    summary[name]["matched_amplitudes"] = cal_all[name]["matched"]
+                summary[name]["dose_response"] = out["dose_response"]
                 summary[name]["coin"] = {a: {lab: {k: v[lab][k] for k in ("rate", "se", "p_two_sided")} for lab in v}
                                          for a, v in out["coin"].items() if a != "mvr_minus_control"}
                 summary[name]["coin_mvr_minus_control"] = out["coin"].get("mvr_minus_control")
