@@ -1,0 +1,134 @@
+{
+  "dataset": "LabHC/bias_in_bios_class_set1",
+  "info": {
+    "n": 12500,
+    "p": 2048,
+    "s_equicorrelated": 0.035040171711449575,
+    "median_zero_mass": 0.58176,
+    "sampler_setup_seconds": 7.013403415679932
+  },
+  "mean_corr_X_Xk": {
+    "hurdle": 0.7313824663030839
+  },
+  "draw_info": {
+    "hurdle": [
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 7.35107421875,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.009519999999999973
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.5341796875,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.009679999999999911
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.53076171875,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.010720000000000007
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.521484375,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.010639999999999983
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.45361328125,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.008879999999999999
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.4130859375,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.01208000000000009
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.453125,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.011759999999999993
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.5361328125,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.011839999999999962
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.55029296875,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.010560000000000014
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.4375,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.009760000000000102
+      }
+    ]
+  },
+  "replicates": 10,
+  "cells": [
+    [
+      "sweep",
+      8.0,
+      "linear",
+      100
+    ],
+    [
+      "sweep",
+      8.0,
+      "interaction",
+      100
+    ],
+    [
+      "sweep",
+      32.0,
+      "linear",
+      100
+    ],
+    [
+      "sweep",
+      32.0,
+      "interaction",
+      100
+    ],
+    [
+      "sweep",
+      8.0,
+      "linear",
+      300
+    ],
+    [
+      "sweep",
+      8.0,
+      "interaction",
+      300
+    ],
+    [
+      "sweep",
+      32.0,
+      "linear",
+      300
+    ],
+    [
+      "sweep",
+      32.0,
+      "interaction",
+      300
+    ]
+  ],
+  "matched": true,
+  "positive_threshold": {
+    "frac": 0.19,
+    "positives_zeroed": 0.13897042447108598
+  },
+  "minutes": 847.7
+}

@@ -1,0 +1,134 @@
+{
+  "dataset": "Helsinki-NLP/europarl",
+  "info": {
+    "n": 12500,
+    "p": 2048,
+    "s_equicorrelated": 0.03783619832979532,
+    "median_zero_mass": 0.75484,
+    "sampler_setup_seconds": 7.088499069213867
+  },
+  "mean_corr_X_Xk": {
+    "hurdle": 0.7555436860143903
+  },
+  "draw_info": {
+    "hurdle": [
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 8.23974609375,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.008319999999999994
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 11.8056640625,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.008400000000000074
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 11.97900390625,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.008560000000000012
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 11.82373046875,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.008560000000000012
+      },
+      {
+        "fraction_logistic_converged": 0.99951171875,
+        "mean_newton_iterations": 11.74365234375,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.008879999999999999
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 11.853515625,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.00880000000000003
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 11.943359375,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.009759999999999991
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 11.83056640625,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.007040000000000046
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 11.75244140625,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.007759999999999989
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 11.83056640625,
+        "n_constant_latents": 0,
+        "zero_mass_error_max": 0.006879999999999997
+      }
+    ]
+  },
+  "replicates": 10,
+  "cells": [
+    [
+      "sweep",
+      8.0,
+      "linear",
+      100
+    ],
+    [
+      "sweep",
+      8.0,
+      "interaction",
+      100
+    ],
+    [
+      "sweep",
+      32.0,
+      "linear",
+      100
+    ],
+    [
+      "sweep",
+      32.0,
+      "interaction",
+      100
+    ],
+    [
+      "sweep",
+      8.0,
+      "linear",
+      300
+    ],
+    [
+      "sweep",
+      8.0,
+      "interaction",
+      300
+    ],
+    [
+      "sweep",
+      32.0,
+      "linear",
+      300
+    ],
+    [
+      "sweep",
+      32.0,
+      "interaction",
+      300
+    ]
+  ],
+  "matched": true,
+  "positive_threshold": {
+    "frac": 0.19,
+    "positives_zeroed": 0.13163152939085754
+  },
+  "minutes": 885.9
+}

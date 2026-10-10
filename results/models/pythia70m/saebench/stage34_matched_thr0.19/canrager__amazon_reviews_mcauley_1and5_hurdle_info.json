@@ -1,0 +1,134 @@
+{
+  "dataset": "canrager/amazon_reviews_mcauley_1and5",
+  "info": {
+    "n": 12500,
+    "p": 2048,
+    "s_equicorrelated": 0.05261819317965459,
+    "median_zero_mass": 0.40728,
+    "sampler_setup_seconds": 7.389032363891602
+  },
+  "mean_corr_X_Xk": {
+    "hurdle": 0.6646312456262223
+  },
+  "draw_info": {
+    "hurdle": [
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 7.04979674796748,
+        "n_constant_latents": 80,
+        "zero_mass_error_max": 0.011680000000000024
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 8.929878048780488,
+        "n_constant_latents": 80,
+        "zero_mass_error_max": 0.010319999999999996
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 8.965955284552846,
+        "n_constant_latents": 80,
+        "zero_mass_error_max": 0.011359999999999981
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.21951219512195,
+        "n_constant_latents": 80,
+        "zero_mass_error_max": 0.009680000000000022
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.205284552845528,
+        "n_constant_latents": 80,
+        "zero_mass_error_max": 0.011039999999999939
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.238821138211382,
+        "n_constant_latents": 80,
+        "zero_mass_error_max": 0.011440000000000006
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.024390243902438,
+        "n_constant_latents": 80,
+        "zero_mass_error_max": 0.009040000000000048
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 8.853150406504065,
+        "n_constant_latents": 80,
+        "zero_mass_error_max": 0.009360000000000035
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.016260162601625,
+        "n_constant_latents": 80,
+        "zero_mass_error_max": 0.010319999999999996
+      },
+      {
+        "fraction_logistic_converged": 1.0,
+        "mean_newton_iterations": 9.027439024390244,
+        "n_constant_latents": 80,
+        "zero_mass_error_max": 0.009279999999999955
+      }
+    ]
+  },
+  "replicates": 10,
+  "cells": [
+    [
+      "sweep",
+      8.0,
+      "linear",
+      100
+    ],
+    [
+      "sweep",
+      8.0,
+      "interaction",
+      100
+    ],
+    [
+      "sweep",
+      32.0,
+      "linear",
+      100
+    ],
+    [
+      "sweep",
+      32.0,
+      "interaction",
+      100
+    ],
+    [
+      "sweep",
+      8.0,
+      "linear",
+      300
+    ],
+    [
+      "sweep",
+      8.0,
+      "interaction",
+      300
+    ],
+    [
+      "sweep",
+      32.0,
+      "linear",
+      300
+    ],
+    [
+      "sweep",
+      32.0,
+      "interaction",
+      300
+    ]
+  ],
+  "matched": true,
+  "positive_threshold": {
+    "frac": 0.19,
+    "positives_zeroed": 0.1238865514378822
+  },
+  "minutes": 810.1
+}

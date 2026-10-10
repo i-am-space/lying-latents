@@ -1,0 +1,117 @@
+{
+  "dataset": "canrager/amazon_reviews_mcauley_1and5",
+  "info": {
+    "n": 12500,
+    "p": 2048,
+    "s_equicorrelated": 0.052618193179524195,
+    "median_zero_mass": 0.40728,
+    "sampler_setup_seconds": 63.78935360908508,
+    "block_mvr": {
+      "mean_s": 0.18599220002323386,
+      "seconds": 53.4404616355896,
+      "control_S": "reused the real-latent S",
+      "control_seconds": 0.0,
+      "min_eig_2Sigma_minus_S": 0.015800422734753683
+    }
+  },
+  "mean_corr_X_Xk": {
+    "gauss_real": 0.948114306896269,
+    "gauss_mvr": 0.8176978796171369,
+    "gauss_ceiling_mvr": 0.81825410806611
+  },
+  "draw_info": {
+    "gauss_real": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ],
+    "gauss_mvr": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ],
+    "gauss_ceiling_mvr": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ]
+  },
+  "replicates": 10,
+  "cells": [
+    [
+      "sweep",
+      8.0,
+      "linear",
+      100
+    ],
+    [
+      "sweep",
+      8.0,
+      "interaction",
+      100
+    ],
+    [
+      "sweep",
+      32.0,
+      "linear",
+      100
+    ],
+    [
+      "sweep",
+      32.0,
+      "interaction",
+      100
+    ],
+    [
+      "sweep",
+      8.0,
+      "linear",
+      300
+    ],
+    [
+      "sweep",
+      8.0,
+      "interaction",
+      300
+    ],
+    [
+      "sweep",
+      32.0,
+      "linear",
+      300
+    ],
+    [
+      "sweep",
+      32.0,
+      "interaction",
+      300
+    ]
+  ],
+  "matched": true,
+  "positive_threshold": {
+    "frac": 0.19,
+    "positives_zeroed": 0.1238865514378822
+  },
+  "minutes": 219.1
+}
