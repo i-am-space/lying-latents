@@ -1,0 +1,1956 @@
+{
+  "datasets": {
+    "LabHC/bias_in_bios_class_set1": {
+      "n": 12500,
+      "median_zero_mass": 0.5904,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 2
+      },
+      "SB4_hurdle_restores": null,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.018200030922889715,
+        "se": 0.004116597672463963,
+        "p_two_sided": 0.00013731487546070375
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 2,
+        "gauss_real": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.07652518898248672,
+        "gauss_mvr": 0.09510399401187897,
+        "gauss_real": 0.07091312855482101
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.811725914478302,
+        "gauss_mvr": 0.8171741366386414,
+        "gauss_real": 0.7323333621025085
+      },
+      "dose_response": [
+        {
+          "form": "linear",
+          "amplitude": 2.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9073333740234375,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.10478463023900986,
+          "coin_gauss_ceiling_mvr": 0.5078775952028891,
+          "power_gauss_mvr": 0.8993332982063293,
+          "fdr_q0.10_gauss_mvr": 0.06371381133794785,
+          "coin_gauss_mvr": 0.5029918374939508,
+          "power_gauss_real": 0.7120000123977661,
+          "fdr_q0.10_gauss_real": 0.02636530250310898,
+          "coin_gauss_real": 0.4989841776120318
+        },
+        {
+          "form": "interaction",
+          "amplitude": 2.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.7319999933242798,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.05009927973151207,
+          "coin_gauss_ceiling_mvr": 0.5003544889823609,
+          "power_gauss_mvr": 0.6806666851043701,
+          "fdr_q0.10_gauss_mvr": 0.0598580464720726,
+          "coin_gauss_mvr": 0.49392165868398735,
+          "power_gauss_real": 0.3257777690887451,
+          "fdr_q0.10_gauss_real": 0.007156176958233118,
+          "coin_gauss_real": 0.49596105685097264
+        },
+        {
+          "form": "linear",
+          "amplitude": 8.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9953333735466003,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.10719038546085358,
+          "coin_gauss_ceiling_mvr": 0.5139256275731899,
+          "power_gauss_mvr": 0.9964444637298584,
+          "fdr_q0.10_gauss_mvr": 0.0948464646935463,
+          "coin_gauss_mvr": 0.48990549622715124,
+          "power_gauss_real": 0.9897778034210205,
+          "fdr_q0.10_gauss_real": 0.09175372123718262,
+          "coin_gauss_real": 0.47640718747524485
+        },
+        {
+          "form": "interaction",
+          "amplitude": 8.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9648889899253845,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.0718204602599144,
+          "coin_gauss_ceiling_mvr": 0.49937195429071496,
+          "power_gauss_mvr": 0.9711111187934875,
+          "fdr_q0.10_gauss_mvr": 0.09613990038633347,
+          "coin_gauss_mvr": 0.5115664355629435,
+          "power_gauss_real": 0.9179999232292175,
+          "fdr_q0.10_gauss_real": 0.08030484616756439,
+          "coin_gauss_real": 0.4960902125416776
+        },
+        {
+          "form": "linear",
+          "amplitude": 32.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9997777342796326,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.09667621552944183,
+          "coin_gauss_ceiling_mvr": 0.5044101018950194,
+          "power_gauss_mvr": 0.9986666440963745,
+          "fdr_q0.10_gauss_mvr": 0.10716473311185837,
+          "coin_gauss_mvr": 0.4881248509460087,
+          "power_gauss_real": 0.9980000257492065,
+          "fdr_q0.10_gauss_real": 0.09148751199245453,
+          "coin_gauss_real": 0.4874568727923708
+        },
+        {
+          "form": "interaction",
+          "amplitude": 32.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9842222332954407,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08725818246603012,
+          "coin_gauss_ceiling_mvr": 0.5086909889015957,
+          "power_gauss_mvr": 0.9842224717140198,
+          "fdr_q0.10_gauss_mvr": 0.16896893084049225,
+          "coin_gauss_mvr": 0.5335506386521327,
+          "power_gauss_real": 0.952666699886322,
+          "fdr_q0.10_gauss_real": 0.11615550518035889,
+          "coin_gauss_real": 0.5149674715490047
+        },
+        {
+          "form": "linear",
+          "amplitude": 2.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.4220740497112274,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.039313144981861115,
+          "coin_gauss_ceiling_mvr": 0.5029885734914722,
+          "power_gauss_mvr": 0.438222199678421,
+          "fdr_q0.10_gauss_mvr": 0.0491514690220356,
+          "coin_gauss_mvr": 0.4944928927277775,
+          "power_gauss_real": 0.10903704911470413,
+          "fdr_q0.10_gauss_real": 0.0,
+          "coin_gauss_real": 0.49203526023648025
+        },
+        {
+          "form": "interaction",
+          "amplitude": 2.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.09259258955717087,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.01930757611989975,
+          "coin_gauss_ceiling_mvr": 0.4935673794458416,
+          "power_gauss_mvr": 0.15259258449077606,
+          "fdr_q0.10_gauss_mvr": 0.032109737396240234,
+          "coin_gauss_mvr": 0.5018194824751522,
+          "power_gauss_real": 0.023851851001381874,
+          "fdr_q0.10_gauss_real": 0.003030303167179227,
+          "coin_gauss_real": 0.5032306222703359
+        },
+        {
+          "form": "linear",
+          "amplitude": 8.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.944518506526947,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.09434742480516434,
+          "coin_gauss_ceiling_mvr": 0.5102157055918272,
+          "power_gauss_mvr": 0.9499260187149048,
+          "fdr_q0.10_gauss_mvr": 0.08443310111761093,
+          "coin_gauss_mvr": 0.49165769743964144,
+          "power_gauss_real": 0.8567408323287964,
+          "fdr_q0.10_gauss_real": 0.05924363434314728,
+          "coin_gauss_real": 0.4900273549592529
+        },
+        {
+          "form": "interaction",
+          "amplitude": 8.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.743629515171051,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.05126867815852165,
+          "coin_gauss_ceiling_mvr": 0.5016996353972959,
+          "power_gauss_mvr": 0.7717037796974182,
+          "fdr_q0.10_gauss_mvr": 0.07838977873325348,
+          "coin_gauss_mvr": 0.5100868782901771,
+          "power_gauss_real": 0.4990370571613312,
+          "fdr_q0.10_gauss_real": 0.0214458629488945,
+          "coin_gauss_real": 0.5031497483616217
+        },
+        {
+          "form": "linear",
+          "amplitude": 32.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.9827407598495483,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.09519437700510025,
+          "coin_gauss_ceiling_mvr": 0.5061510950775046,
+          "power_gauss_mvr": 0.9816296696662903,
+          "fdr_q0.10_gauss_mvr": 0.09148088842630386,
+          "coin_gauss_mvr": 0.49558977777759244,
+          "power_gauss_real": 0.9494073390960693,
+          "fdr_q0.10_gauss_real": 0.09417843073606491,
+          "coin_gauss_real": 0.48856371775919827
+        },
+        {
+          "form": "interaction",
+          "amplitude": 32.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.8091111779212952,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.06654829531908035,
+          "coin_gauss_ceiling_mvr": 0.4965004629966068,
+          "power_gauss_mvr": 0.8411851525306702,
+          "fdr_q0.10_gauss_mvr": 0.10698141157627106,
+          "coin_gauss_mvr": 0.5217436486651382,
+          "power_gauss_real": 0.6582963466644287,
+          "fdr_q0.10_gauss_real": 0.0402659997344017,
+          "coin_gauss_real": 0.5211136398641849
+        },
+        {
+          "form": "linear",
+          "amplitude": 5.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08280885964632034,
+          "coin_gauss_ceiling_mvr": 0.5066959117603214,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.12119270116090775,
+          "coin_gauss_mvr": 0.5024566621895772,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.09945610165596008,
+          "coin_gauss_real": 0.4846000135392164
+        },
+        {
+          "form": "interaction",
+          "amplitude": 5.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.06083916500210762,
+          "coin_gauss_ceiling_mvr": 0.5051824048487394,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.10730381309986115,
+          "coin_gauss_mvr": 0.5078429575408308,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.09696970134973526,
+          "coin_gauss_real": 0.483028158553967
+        },
+        {
+          "form": "linear",
+          "amplitude": 20.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08773448318243027,
+          "coin_gauss_ceiling_mvr": 0.4985598417123294,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.060062162578105927,
+          "coin_gauss_mvr": 0.4861016513429648,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.05440115928649902,
+          "coin_gauss_real": 0.492322735042989
+        },
+        {
+          "form": "interaction",
+          "amplitude": 20.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08127428591251373,
+          "coin_gauss_ceiling_mvr": 0.4866239844354922,
+          "power_gauss_mvr": 0.6888889074325562,
+          "fdr_q0.10_gauss_mvr": 0.1584026962518692,
+          "coin_gauss_mvr": 0.5278142121639967,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.11437452584505081,
+          "coin_gauss_real": 0.5025645030041589
+        },
+        {
+          "form": "linear",
+          "amplitude": 5.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 1.0,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.1263503134250641,
+          "coin_gauss_ceiling_mvr": 0.5106515219672836,
+          "power_gauss_mvr": 0.9933333396911621,
+          "fdr_q0.10_gauss_mvr": 0.08608051389455795,
+          "coin_gauss_mvr": 0.49180958940177516,
+          "power_gauss_real": 0.9955556392669678,
+          "fdr_q0.10_gauss_real": 0.06591226160526276,
+          "coin_gauss_real": 0.4808279497640059
+        },
+        {
+          "form": "interaction",
+          "amplitude": 5.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 0.9962963461875916,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.06277696043252945,
+          "coin_gauss_ceiling_mvr": 0.5014077869812225,
+          "power_gauss_mvr": 0.9977778196334839,
+          "fdr_q0.10_gauss_mvr": 0.10457341372966766,
+          "coin_gauss_mvr": 0.5061680307292593,
+          "power_gauss_real": 0.9918518662452698,
+          "fdr_q0.10_gauss_real": 0.12244697660207748,
+          "coin_gauss_real": 0.4958750876993776
+        },
+        {
+          "form": "linear",
+          "amplitude": 20.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 1.0,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.07380083948373795,
+          "coin_gauss_ceiling_mvr": 0.504107676915823,
+          "power_gauss_mvr": 1.0,
+          "fdr_q0.10_gauss_mvr": 0.07670774310827255,
+          "coin_gauss_mvr": 0.48528952188881685,
+          "power_gauss_real": 1.0,
+          "fdr_q0.10_gauss_real": 0.0964365154504776,
+          "coin_gauss_real": 0.48527294919796365
+        },
+        {
+          "form": "interaction",
+          "amplitude": 20.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 0.9933333396911621,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.07111023366451263,
+          "coin_gauss_ceiling_mvr": 0.5157381859457001,
+          "power_gauss_mvr": 0.9977778196334839,
+          "fdr_q0.10_gauss_mvr": 0.15451869368553162,
+          "coin_gauss_mvr": 0.519059952364976,
+          "power_gauss_real": 1.0,
+          "fdr_q0.10_gauss_real": 0.13687804341316223,
+          "coin_gauss_real": 0.5374982845641837
+        }
+      ],
+      "coin": {
+        "gauss_ceiling_mvr": {
+          "all": {
+            "rate": 0.504551315740432,
+            "se": 0.0010954761353257655,
+            "p_two_sided": 0.0009727211711741649
+          },
+          "interaction": {
+            "rate": 0.5007380775527299,
+            "se": 0.0022267009777529744,
+            "p_two_sided": 0.7452014850389999
+          },
+          "linear": {
+            "rate": 0.5070432114771918,
+            "se": 0.0019303973569898454,
+            "p_two_sided": 0.002632250911895611
+          },
+          "a2": {
+            "rate": 0.5021366503696884,
+            "se": 0.002592392985605389,
+            "p_two_sided": 0.4236457976548596
+          },
+          "a5": {
+            "rate": 0.5058303848424208,
+            "se": 0.00496602905099012,
+            "p_two_sided": 0.25995921176426745
+          },
+          "a8": {
+            "rate": 0.5068020636576887,
+            "se": 0.003165678617355347,
+            "p_two_sided": 0.04963791430337179
+          },
+          "a20": {
+            "rate": 0.5032293088533246,
+            "se": 0.0034813878169094935,
+            "p_two_sided": 0.36933549833016666
+          },
+          "a32": {
+            "rate": 0.5041774165463611,
+            "se": 0.0027486130145501055,
+            "p_two_sided": 0.150812936931014
+          }
+        },
+        "gauss_mvr": {
+          "all": {
+            "rate": 0.5016783890346139,
+            "se": 0.0012788294116384208,
+            "p_two_sided": 0.21048138584289983
+          },
+          "interaction": {
+            "rate": 0.5146864434221116,
+            "se": 0.0016103707723232254,
+            "p_two_sided": 2.8875024175655566e-07
+          },
+          "linear": {
+            "rate": 0.49146033942415024,
+            "se": 0.0016935159519973644,
+            "p_two_sided": 0.00017977322329823755
+          },
+          "a2": {
+            "rate": 0.49866424260545616,
+            "se": 0.0031369807819591434,
+            "p_two_sided": 0.6767198704665209
+          },
+          "a5": {
+            "rate": 0.49838703792222766,
+            "se": 0.004574610551168109,
+            "p_two_sided": 0.7296475833975296
+          },
+          "a8": {
+            "rate": 0.4991617370938763,
+            "se": 0.0019062507060760335,
+            "p_two_sided": 0.6668345453062563
+          },
+          "a20": {
+            "rate": 0.5009923466148464,
+            "se": 0.002645113757084191,
+            "p_two_sided": 0.7131623408050566
+          },
+          "a32": {
+            "rate": 0.5070647248394752,
+            "se": 0.0033645631293143016,
+            "p_two_sided": 0.05435877699586594
+          }
+        },
+        "gauss_real": {
+          "all": {
+            "rate": 0.49706559204402107,
+            "se": 0.0015326305121119278,
+            "p_two_sided": 0.07620141218249228
+          },
+          "interaction": {
+            "rate": 0.5086733309484989,
+            "se": 0.002785048678376313,
+            "p_two_sided": 0.007613821716646067
+          },
+          "linear": {
+            "rate": 0.48793151853669564,
+            "se": 0.001566506886656125,
+            "p_two_sided": 2.1178194962682196e-06
+          },
+          "a2": {
+            "rate": 0.4962783565375598,
+            "se": 0.0025075994260155255,
+            "p_two_sided": 0.15993355637943965
+          },
+          "a5": {
+            "rate": 0.487590821172657,
+            "se": 0.004762630548390883,
+            "p_two_sided": 0.020752712713771517
+          },
+          "a8": {
+            "rate": 0.4915987486159576,
+            "se": 0.003735549198618726,
+            "p_two_sided": 0.04113135452096713
+          },
+          "a20": {
+            "rate": 0.5028087170712381,
+            "se": 0.0033747115570782987,
+            "p_two_sided": 0.4192201021324885
+          },
+          "a32": {
+            "rate": 0.5006896583771199,
+            "se": 0.0018403695852963519,
+            "p_two_sided": 0.7134700165274379
+          }
+        }
+      },
+      "coin_mvr_minus_control": {
+        "all": {
+          "mean_diff": -0.0028729267058180685,
+          "se": 0.0016838861681063076,
+          "p_two_sided": 0.09931458491517593
+        },
+        "interaction": {
+          "mean_diff": 0.01394836586938164,
+          "se": 0.002747997683528673,
+          "p_two_sided": 2.9015040277181166e-05
+        },
+        "linear": {
+          "mean_diff": -0.015582872053041541,
+          "se": 0.0025679622729983635,
+          "p_two_sided": 1.6318463301321222e-06
+        },
+        "a2": {
+          "mean_diff": -0.0034724077642321882,
+          "se": 0.004069539263626415,
+          "p_two_sided": 0.40100622040276057
+        },
+        "a5": {
+          "mean_diff": -0.007443346920193161,
+          "se": 0.006751926112609381,
+          "p_two_sided": 0.2797343974886498
+        },
+        "a8": {
+          "mean_diff": -0.007640326563812361,
+          "se": 0.0036953095760431545,
+          "p_two_sided": 0.050124159521850745
+        },
+        "a20": {
+          "mean_diff": -0.002236962238478246,
+          "se": 0.004372263477838669,
+          "p_two_sided": 0.6132108520571052
+        },
+        "a32": {
+          "mean_diff": 0.0028873082931141214,
+          "se": 0.004344555046825333,
+          "p_two_sided": 0.5119700563175692
+        }
+      }
+    },
+    "canrager/amazon_reviews_mcauley_1and5": {
+      "n": 12500,
+      "median_zero_mass": 0.30435999999999996,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 0
+      },
+      "SB4_hurdle_restores": null,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.013855193058649698,
+        "se": 0.004513226735550659,
+        "p_two_sided": 0.004810775868429833
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 0,
+        "gauss_real": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.08401504158973694,
+        "gauss_mvr": 0.09772248566150665,
+        "gauss_real": 0.059920452535152435
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.8389259576797485,
+        "gauss_mvr": 0.8395740389823914,
+        "gauss_real": 0.7025333642959595
+      },
+      "dose_response": [
+        {
+          "form": "linear",
+          "amplitude": 2.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9431112408638,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08776256442070007,
+          "coin_gauss_ceiling_mvr": 0.5038514139475836,
+          "power_gauss_mvr": 0.9413331747055054,
+          "fdr_q0.10_gauss_mvr": 0.09282340109348297,
+          "coin_gauss_mvr": 0.48773619761623416,
+          "power_gauss_real": 0.6359999775886536,
+          "fdr_q0.10_gauss_real": 0.012100576423108578,
+          "coin_gauss_real": 0.488724278429436
+        },
+        {
+          "form": "interaction",
+          "amplitude": 2.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.8008888363838196,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.06700100749731064,
+          "coin_gauss_ceiling_mvr": 0.4972376065430788,
+          "power_gauss_mvr": 0.7995556592941284,
+          "fdr_q0.10_gauss_mvr": 0.08596707880496979,
+          "coin_gauss_mvr": 0.5088388569711477,
+          "power_gauss_real": 0.2884444296360016,
+          "fdr_q0.10_gauss_real": 0.0010582010727375746,
+          "coin_gauss_real": 0.5020282682167526
+        },
+        {
+          "form": "linear",
+          "amplitude": 8.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9948889017105103,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.09759683161973953,
+          "coin_gauss_ceiling_mvr": 0.5161757435909741,
+          "power_gauss_mvr": 0.9975555539131165,
+          "fdr_q0.10_gauss_mvr": 0.08867104351520538,
+          "coin_gauss_mvr": 0.5029200514501317,
+          "power_gauss_real": 0.9804446697235107,
+          "fdr_q0.10_gauss_real": 0.08097779750823975,
+          "coin_gauss_real": 0.49371841615385814
+        },
+        {
+          "form": "interaction",
+          "amplitude": 8.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9853333234786987,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08471456170082092,
+          "coin_gauss_ceiling_mvr": 0.49794622074578654,
+          "power_gauss_mvr": 0.981333315372467,
+          "fdr_q0.10_gauss_mvr": 0.10720784217119217,
+          "coin_gauss_mvr": 0.4932101649237373,
+          "power_gauss_real": 0.9026667475700378,
+          "fdr_q0.10_gauss_real": 0.07339206337928772,
+          "coin_gauss_real": 0.5051184962602508
+        },
+        {
+          "form": "linear",
+          "amplitude": 32.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9984444379806519,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.079253651201725,
+          "coin_gauss_ceiling_mvr": 0.5095155327461226,
+          "power_gauss_mvr": 0.9966666102409363,
+          "fdr_q0.10_gauss_mvr": 0.0894465371966362,
+          "coin_gauss_mvr": 0.49926782789848156,
+          "power_gauss_real": 0.9982221722602844,
+          "fdr_q0.10_gauss_real": 0.08051154017448425,
+          "coin_gauss_real": 0.5019248671278745
+        },
+        {
+          "form": "interaction",
+          "amplitude": 32.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.988444447517395,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.11081424355506897,
+          "coin_gauss_ceiling_mvr": 0.5076942647070177,
+          "power_gauss_mvr": 0.9855555891990662,
+          "fdr_q0.10_gauss_mvr": 0.1188933476805687,
+          "coin_gauss_mvr": 0.5100130981869863,
+          "power_gauss_real": 0.9297778010368347,
+          "fdr_q0.10_gauss_real": 0.06589552015066147,
+          "coin_gauss_real": 0.5046518039089033
+        },
+        {
+          "form": "linear",
+          "amplitude": 2.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.566074013710022,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.06285076588392258,
+          "coin_gauss_ceiling_mvr": 0.5014587770139883,
+          "power_gauss_mvr": 0.5611110925674438,
+          "fdr_q0.10_gauss_mvr": 0.06562754511833191,
+          "coin_gauss_mvr": 0.506177522417063,
+          "power_gauss_real": 0.08162963390350342,
+          "fdr_q0.10_gauss_real": 0.0,
+          "coin_gauss_real": 0.5008756326954589
+        },
+        {
+          "form": "interaction",
+          "amplitude": 2.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.1644444614648819,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.04630929231643677,
+          "coin_gauss_ceiling_mvr": 0.4911539170123298,
+          "power_gauss_mvr": 0.1831851750612259,
+          "fdr_q0.10_gauss_mvr": 0.041007138788700104,
+          "coin_gauss_mvr": 0.49839739125406535,
+          "power_gauss_real": 0.014074074104428291,
+          "fdr_q0.10_gauss_real": 0.0,
+          "coin_gauss_real": 0.5011472927075782
+        },
+        {
+          "form": "linear",
+          "amplitude": 8.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.9621480107307434,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.0982065349817276,
+          "coin_gauss_ceiling_mvr": 0.5052631843175205,
+          "power_gauss_mvr": 0.965036928653717,
+          "fdr_q0.10_gauss_mvr": 0.09876380115747452,
+          "coin_gauss_mvr": 0.5014907062117584,
+          "power_gauss_real": 0.7962963581085205,
+          "fdr_q0.10_gauss_real": 0.036364391446113586,
+          "coin_gauss_real": 0.4918577119479569
+        },
+        {
+          "form": "interaction",
+          "amplitude": 8.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.8276296257972717,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.07464484125375748,
+          "coin_gauss_ceiling_mvr": 0.5072354468406018,
+          "power_gauss_mvr": 0.8388888835906982,
+          "fdr_q0.10_gauss_mvr": 0.07762414962053299,
+          "coin_gauss_mvr": 0.5132477359026401,
+          "power_gauss_real": 0.3831111490726471,
+          "fdr_q0.10_gauss_real": 0.00591799383983016,
+          "coin_gauss_real": 0.5017351650364935
+        },
+        {
+          "form": "linear",
+          "amplitude": 32.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.9852593541145325,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08569362759590149,
+          "coin_gauss_ceiling_mvr": 0.5020895602692563,
+          "power_gauss_mvr": 0.9870371222496033,
+          "fdr_q0.10_gauss_mvr": 0.08883660286664963,
+          "coin_gauss_mvr": 0.502744664022975,
+          "power_gauss_real": 0.9334074854850769,
+          "fdr_q0.10_gauss_real": 0.07173562049865723,
+          "coin_gauss_real": 0.5052484192035946
+        },
+        {
+          "form": "interaction",
+          "amplitude": 32.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.8951851725578308,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.07551489770412445,
+          "coin_gauss_ceiling_mvr": 0.48812168574614545,
+          "power_gauss_mvr": 0.8964444398880005,
+          "fdr_q0.10_gauss_mvr": 0.10748909413814545,
+          "coin_gauss_mvr": 0.5174216927398222,
+          "power_gauss_real": 0.4562222361564636,
+          "fdr_q0.10_gauss_real": 0.0067978426814079285,
+          "coin_gauss_real": 0.5075845433174417
+        },
+        {
+          "form": "linear",
+          "amplitude": 5.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.10072150081396103,
+          "coin_gauss_ceiling_mvr": 0.4968951113138209,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.06767676770687103,
+          "coin_gauss_mvr": 0.5023907101983496,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.055555559694767,
+          "coin_gauss_real": 0.5082415110616642
+        },
+        {
+          "form": "interaction",
+          "amplitude": 5.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.07717903703451157,
+          "coin_gauss_ceiling_mvr": 0.465935739469534,
+          "power_gauss_mvr": 0.6622222065925598,
+          "fdr_q0.10_gauss_mvr": 0.11910977959632874,
+          "coin_gauss_mvr": 0.5156519762069925,
+          "power_gauss_real": 0.6577777862548828,
+          "fdr_q0.10_gauss_real": 0.14874468743801117,
+          "coin_gauss_real": 0.49297828990103393
+        },
+        {
+          "form": "linear",
+          "amplitude": 20.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.061849258840084076,
+          "coin_gauss_ceiling_mvr": 0.4994984643514756,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.10788101702928543,
+          "coin_gauss_mvr": 0.5007311005251269,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.08508159220218658,
+          "coin_gauss_real": 0.4978988636022092
+        },
+        {
+          "form": "interaction",
+          "amplitude": 20.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.11983637511730194,
+          "coin_gauss_ceiling_mvr": 0.4988821923053691,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.14658674597740173,
+          "coin_gauss_mvr": 0.5055600885351945,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.07801088690757751,
+          "coin_gauss_real": 0.5250872279001942
+        },
+        {
+          "form": "linear",
+          "amplitude": 5.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 1.0,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08804385364055634,
+          "coin_gauss_ceiling_mvr": 0.49827279751258285,
+          "power_gauss_mvr": 1.0,
+          "fdr_q0.10_gauss_mvr": 0.09727730602025986,
+          "coin_gauss_mvr": 0.49106078371752,
+          "power_gauss_real": 1.0,
+          "fdr_q0.10_gauss_real": 0.11526431143283844,
+          "coin_gauss_real": 0.5021639468092687
+        },
+        {
+          "form": "interaction",
+          "amplitude": 5.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 1.0,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.11913584917783737,
+          "coin_gauss_ceiling_mvr": 0.5074080945576677,
+          "power_gauss_mvr": 0.9955556392669678,
+          "fdr_q0.10_gauss_mvr": 0.11473395675420761,
+          "coin_gauss_mvr": 0.5119623096688567,
+          "power_gauss_real": 0.9948148727416992,
+          "fdr_q0.10_gauss_real": 0.09541236609220505,
+          "coin_gauss_real": 0.4924217211392025
+        },
+        {
+          "form": "linear",
+          "amplitude": 20.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 1.0,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.07482887804508209,
+          "coin_gauss_ceiling_mvr": 0.507980899465171,
+          "power_gauss_mvr": 1.0,
+          "fdr_q0.10_gauss_mvr": 0.11726204305887222,
+          "coin_gauss_mvr": 0.4968696168003272,
+          "power_gauss_real": 1.0,
+          "fdr_q0.10_gauss_real": 0.08251295238733292,
+          "coin_gauss_real": 0.5016667476189178
+        },
+        {
+          "form": "interaction",
+          "amplitude": 20.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 1.0,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.06834329664707184,
+          "coin_gauss_ceiling_mvr": 0.4944343503020087,
+          "power_gauss_mvr": 1.0,
+          "fdr_q0.10_gauss_mvr": 0.12156475335359573,
+          "coin_gauss_mvr": 0.5305567201755907,
+          "power_gauss_real": 0.9977778196334839,
+          "fdr_q0.10_gauss_real": 0.10307515412569046,
+          "coin_gauss_real": 0.5005762697420787
+        }
+      ],
+      "coin": {
+        "gauss_ceiling_mvr": {
+          "all": {
+            "rate": 0.5033519058867273,
+            "se": 0.0014219945474691351,
+            "p_two_sided": 0.03350124505684872
+          },
+          "interaction": {
+            "rate": 0.4990305957882261,
+            "se": 0.0024001153123838236,
+            "p_two_sided": 0.6923890484401058
+          },
+          "linear": {
+            "rate": 0.5058603167451078,
+            "se": 0.0017178676442599857,
+            "p_two_sided": 0.004216275166659651
+          },
+          "a2": {
+            "rate": 0.4989381573462526,
+            "se": 0.003139950945624723,
+            "p_two_sided": 0.7402514983661079
+          },
+          "a5": {
+            "rate": 0.502261780527552,
+            "se": 0.005842003324300579,
+            "p_two_sided": 0.7044606028827043
+          },
+          "a8": {
+            "rate": 0.5073622945424895,
+            "se": 0.0020638358243187734,
+            "p_two_sided": 0.0030929185999130763
+          },
+          "a20": {
+            "rate": 0.5046521120554283,
+            "se": 0.0034904785575232957,
+            "p_two_sided": 0.2038828376869172
+          },
+          "a32": {
+            "rate": 0.5023909889998085,
+            "se": 0.0027984577773166913,
+            "p_two_sided": 0.40726906670636115
+          }
+        },
+        "gauss_mvr": {
+          "all": {
+            "rate": 0.5047284275549183,
+            "se": 0.0013681106665407654,
+            "p_two_sided": 0.0038570092888052625
+          },
+          "interaction": {
+            "rate": 0.5106665873010401,
+            "se": 0.002020247667639165,
+            "p_two_sided": 0.00011635326980211541
+          },
+          "linear": {
+            "rate": 0.5003629195546914,
+            "se": 0.0017290215372202477,
+            "p_two_sided": 0.8367705644970813
+          },
+          "a2": {
+            "rate": 0.5002638877880197,
+            "se": 0.003383769581127801,
+            "p_two_sided": 0.9389425770416887
+          },
+          "a5": {
+            "rate": 0.5043183365829595,
+            "se": 0.004352994075420259,
+            "p_two_sided": 0.33801618382926657
+          },
+          "a8": {
+            "rate": 0.5041818515224786,
+            "se": 0.00255840939116956,
+            "p_two_sided": 0.12442050376818035
+          },
+          "a20": {
+            "rate": 0.507608255593743,
+            "se": 0.004660075343214687,
+            "p_two_sided": 0.12482393097986198
+          },
+          "a32": {
+            "rate": 0.5056695257244924,
+            "se": 0.0014444314436533805,
+            "p_two_sided": 0.0015246059421264377
+          }
+        },
+        "gauss_real": {
+          "all": {
+            "rate": 0.5008992590856655,
+            "se": 0.0015141777032399465,
+            "p_two_sided": 0.5620579285833416
+          },
+          "interaction": {
+            "rate": 0.503333927992454,
+            "se": 0.0017436828204755116,
+            "p_two_sided": 0.07656081852675557
+          },
+          "linear": {
+            "rate": 0.4990975837496043,
+            "se": 0.002073187375486286,
+            "p_two_sided": 0.669994988410489
+          },
+          "a2": {
+            "rate": 0.49844816141692616,
+            "se": 0.0036018920139682773,
+            "p_two_sided": 0.6731442666021555
+          },
+          "a5": {
+            "rate": 0.4970468187677069,
+            "se": 0.004407203317963744,
+            "p_two_sided": 0.5137080988699724
+          },
+          "a8": {
+            "rate": 0.49809501245073773,
+            "se": 0.0030916571231821306,
+            "p_two_sided": 0.5476705060179441
+          },
+          "a20": {
+            "rate": 0.5035312290281921,
+            "se": 0.0038262739498540308,
+            "p_two_sided": 0.3716971363695743
+          },
+          "a32": {
+            "rate": 0.5045743740768561,
+            "se": 0.0024329997314487244,
+            "p_two_sided": 0.08105950027340536
+          }
+        }
+      },
+      "coin_mvr_minus_control": {
+        "all": {
+          "mean_diff": 0.001376521668191022,
+          "se": 0.001973270201704411,
+          "p_two_sided": 0.49119839283989375
+        },
+        "interaction": {
+          "mean_diff": 0.01163599151281397,
+          "se": 0.0031371888931559073,
+          "p_two_sided": 0.0009421139994340223
+        },
+        "linear": {
+          "mean_diff": -0.00549739719041642,
+          "se": 0.002437331475069983,
+          "p_two_sided": 0.03210530545315341
+        },
+        "a2": {
+          "mean_diff": 0.0013257304417670923,
+          "se": 0.004616187660732111,
+          "p_two_sided": 0.7760920403281819
+        },
+        "a5": {
+          "mean_diff": 0.0020565560554075546,
+          "se": 0.00728543480252091,
+          "p_two_sided": 0.7799713565751462
+        },
+        "a8": {
+          "mean_diff": -0.003180443020010859,
+          "se": 0.0032870772614233077,
+          "p_two_sided": 0.3419154260750129
+        },
+        "a20": {
+          "mean_diff": 0.0029561435383147483,
+          "se": 0.005822348560930322,
+          "p_two_sided": 0.6159360178352565
+        },
+        "a32": {
+          "mean_diff": 0.0032785367246839225,
+          "se": 0.003149245644093021,
+          "p_two_sided": 0.30970755035135417
+        }
+      }
+    },
+    "codeparrot/github-code": {
+      "n": 12500,
+      "median_zero_mass": 0.48960000000000004,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 2
+      },
+      "SB4_hurdle_restores": null,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.011526050170262661,
+        "se": 0.0036611584307369377,
+        "p_two_sided": 0.004981697186430816
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 2,
+        "gauss_real": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.07314033061265945,
+        "gauss_mvr": 0.08154384791851044,
+        "gauss_real": 0.03355058282613754
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.7415444254875183,
+        "gauss_mvr": 0.739481508731842,
+        "gauss_real": 0.4750518798828125
+      },
+      "dose_response": [
+        {
+          "form": "linear",
+          "amplitude": 2.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.7584444880485535,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.055698033422231674,
+          "coin_gauss_ceiling_mvr": 0.5059520773596335,
+          "power_gauss_mvr": 0.7964444756507874,
+          "fdr_q0.10_gauss_mvr": 0.05517364665865898,
+          "coin_gauss_mvr": 0.485512129536182,
+          "power_gauss_real": 0.04200000315904617,
+          "fdr_q0.10_gauss_real": 0.0,
+          "coin_gauss_real": 0.5146776512028296
+        },
+        {
+          "form": "interaction",
+          "amplitude": 2.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.4399999976158142,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.029961420223116875,
+          "coin_gauss_ceiling_mvr": 0.5080574988191854,
+          "power_gauss_mvr": 0.3782222270965576,
+          "fdr_q0.10_gauss_mvr": 0.02130691520869732,
+          "coin_gauss_mvr": 0.49587344604693484,
+          "power_gauss_real": 0.029111109673976898,
+          "fdr_q0.10_gauss_real": 0.0,
+          "coin_gauss_real": 0.4939751823122382
+        },
+        {
+          "form": "linear",
+          "amplitude": 8.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9688889384269714,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.0862802043557167,
+          "coin_gauss_ceiling_mvr": 0.49809001108997103,
+          "power_gauss_mvr": 0.9680001139640808,
+          "fdr_q0.10_gauss_mvr": 0.0688394084572792,
+          "coin_gauss_mvr": 0.4871101265544334,
+          "power_gauss_real": 0.7593333721160889,
+          "fdr_q0.10_gauss_real": 0.027454528957605362,
+          "coin_gauss_real": 0.5003024257143661
+        },
+        {
+          "form": "interaction",
+          "amplitude": 8.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9268888831138611,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08593253046274185,
+          "coin_gauss_ceiling_mvr": 0.5015337629542523,
+          "power_gauss_mvr": 0.9120000004768372,
+          "fdr_q0.10_gauss_mvr": 0.11499357223510742,
+          "coin_gauss_mvr": 0.5204574990616501,
+          "power_gauss_real": 0.38555556535720825,
+          "fdr_q0.10_gauss_real": 0.005426356568932533,
+          "coin_gauss_real": 0.5186662510303155
+        },
+        {
+          "form": "linear",
+          "amplitude": 32.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9880001544952393,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.0933917760848999,
+          "coin_gauss_ceiling_mvr": 0.5086160368257008,
+          "power_gauss_mvr": 0.9851112365722656,
+          "fdr_q0.10_gauss_mvr": 0.10873408615589142,
+          "coin_gauss_mvr": 0.4879740977997745,
+          "power_gauss_real": 0.892000138759613,
+          "fdr_q0.10_gauss_real": 0.07156547904014587,
+          "coin_gauss_real": 0.4885866560764603
+        },
+        {
+          "form": "interaction",
+          "amplitude": 32.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9293333292007446,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.09713126718997955,
+          "coin_gauss_ceiling_mvr": 0.5020724547594202,
+          "power_gauss_mvr": 0.922666609287262,
+          "fdr_q0.10_gauss_mvr": 0.13827188313007355,
+          "coin_gauss_mvr": 0.5608681127343373,
+          "power_gauss_real": 0.5362221598625183,
+          "fdr_q0.10_gauss_real": 0.019983837381005287,
+          "coin_gauss_real": 0.51013280344125
+        },
+        {
+          "form": "linear",
+          "amplitude": 2.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.2258518636226654,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.014503049664199352,
+          "coin_gauss_ceiling_mvr": 0.4944171778790166,
+          "power_gauss_mvr": 0.19103702902793884,
+          "fdr_q0.10_gauss_mvr": 0.023390987887978554,
+          "coin_gauss_mvr": 0.48220929833980747,
+          "power_gauss_real": 0.0010370370000600815,
+          "fdr_q0.10_gauss_real": 0.0,
+          "coin_gauss_real": 0.49635413469965756
+        },
+        {
+          "form": "interaction",
+          "amplitude": 2.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.02244444750249386,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.0026666666381061077,
+          "coin_gauss_ceiling_mvr": 0.5146856907281756,
+          "power_gauss_mvr": 0.053185176104307175,
+          "fdr_q0.10_gauss_mvr": 0.027845118194818497,
+          "coin_gauss_mvr": 0.5055952175036579,
+          "power_gauss_real": 0.0006666667177341878,
+          "fdr_q0.10_gauss_real": 0.0,
+          "coin_gauss_real": 0.49849150345808596
+        },
+        {
+          "form": "linear",
+          "amplitude": 8.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.8356297016143799,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.0709361582994461,
+          "coin_gauss_ceiling_mvr": 0.5038237874318756,
+          "power_gauss_mvr": 0.8191851377487183,
+          "fdr_q0.10_gauss_mvr": 0.05505858361721039,
+          "coin_gauss_mvr": 0.4955513522039467,
+          "power_gauss_real": 0.16540741920471191,
+          "fdr_q0.10_gauss_real": 0.0,
+          "coin_gauss_real": 0.4996431249855415
+        },
+        {
+          "form": "interaction",
+          "amplitude": 8.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.5528889298439026,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.04046184569597244,
+          "coin_gauss_ceiling_mvr": 0.49486065104044613,
+          "power_gauss_mvr": 0.584518551826477,
+          "fdr_q0.10_gauss_mvr": 0.06545354425907135,
+          "coin_gauss_mvr": 0.5192358117359435,
+          "power_gauss_real": 0.024888889864087105,
+          "fdr_q0.10_gauss_real": 0.0,
+          "coin_gauss_real": 0.5072773264580435
+        },
+        {
+          "form": "linear",
+          "amplitude": 32.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.9060741066932678,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08648918569087982,
+          "coin_gauss_ceiling_mvr": 0.4962886144930531,
+          "power_gauss_mvr": 0.8928148150444031,
+          "fdr_q0.10_gauss_mvr": 0.08368640393018723,
+          "coin_gauss_mvr": 0.4853320015017948,
+          "power_gauss_real": 0.41066670417785645,
+          "fdr_q0.10_gauss_real": 0.0018145593348890543,
+          "coin_gauss_real": 0.49498678901660204
+        },
+        {
+          "form": "interaction",
+          "amplitude": 32.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.6505184769630432,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.042675647884607315,
+          "coin_gauss_ceiling_mvr": 0.5001197384497436,
+          "power_gauss_mvr": 0.7131111025810242,
+          "fdr_q0.10_gauss_mvr": 0.0977020412683487,
+          "coin_gauss_mvr": 0.5422066006696084,
+          "power_gauss_real": 0.12303704023361206,
+          "fdr_q0.10_gauss_real": 0.00148148147854954,
+          "coin_gauss_real": 0.5173751737216491
+        },
+        {
+          "form": "linear",
+          "amplitude": 5.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08329448103904724,
+          "coin_gauss_ceiling_mvr": 0.5024219895243248,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.08228438347578049,
+          "coin_gauss_mvr": 0.48954238098844083,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.05578865855932236,
+          "coin_gauss_real": 0.5133969814221212
+        },
+        {
+          "form": "interaction",
+          "amplitude": 5.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6888889074325562,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.1314019411802292,
+          "coin_gauss_ceiling_mvr": 0.5160186750052804,
+          "power_gauss_mvr": 0.6422222256660461,
+          "fdr_q0.10_gauss_mvr": 0.061849262565374374,
+          "coin_gauss_mvr": 0.5151921353216549,
+          "power_gauss_real": 0.5822222232818604,
+          "fdr_q0.10_gauss_real": 0.0857764482498169,
+          "coin_gauss_real": 0.5064838133328115
+        },
+        {
+          "form": "linear",
+          "amplitude": 20.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.07258297502994537,
+          "coin_gauss_ceiling_mvr": 0.5026658454552853,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.039627041667699814,
+          "coin_gauss_mvr": 0.4787452234144022,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.02500000037252903,
+          "coin_gauss_real": 0.48746461863299473
+        },
+        {
+          "form": "interaction",
+          "amplitude": 20.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08407148718833923,
+          "coin_gauss_ceiling_mvr": 0.4899881745629412,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.11909480392932892,
+          "coin_gauss_mvr": 0.5325824784594848,
+          "power_gauss_real": 0.6422222256660461,
+          "fdr_q0.10_gauss_real": 0.08935509622097015,
+          "coin_gauss_real": 0.5134185835389927
+        },
+        {
+          "form": "linear",
+          "amplitude": 5.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 0.9911110997200012,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.12205750495195389,
+          "coin_gauss_ceiling_mvr": 0.5061825324415156,
+          "power_gauss_mvr": 0.9777777791023254,
+          "fdr_q0.10_gauss_mvr": 0.07107220590114594,
+          "coin_gauss_mvr": 0.4877374405134696,
+          "power_gauss_real": 0.9311111569404602,
+          "fdr_q0.10_gauss_real": 0.04951748996973038,
+          "coin_gauss_real": 0.505831827505941
+        },
+        {
+          "form": "interaction",
+          "amplitude": 5.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 0.9600000381469727,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.07629644125699997,
+          "coin_gauss_ceiling_mvr": 0.4883351248508793,
+          "power_gauss_mvr": 0.9703704714775085,
+          "fdr_q0.10_gauss_mvr": 0.13601326942443848,
+          "coin_gauss_mvr": 0.5221185448963702,
+          "power_gauss_real": 0.7511111497879028,
+          "fdr_q0.10_gauss_real": 0.02914605475962162,
+          "coin_gauss_real": 0.5138176583716239
+        },
+        {
+          "form": "linear",
+          "amplitude": 20.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 1.0,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.09696224331855774,
+          "coin_gauss_ceiling_mvr": 0.5008891606334,
+          "power_gauss_mvr": 0.9977778196334839,
+          "fdr_q0.10_gauss_mvr": 0.08492917567491531,
+          "coin_gauss_mvr": 0.4907121707354242,
+          "power_gauss_real": 0.9955555200576782,
+          "fdr_q0.10_gauss_real": 0.10622213035821915,
+          "coin_gauss_real": 0.4766927964544841
+        },
+        {
+          "form": "interaction",
+          "amplitude": 20.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 0.9859259724617004,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.09001173079013824,
+          "coin_gauss_ceiling_mvr": 0.4993763334180957,
+          "power_gauss_mvr": 0.9851852655410767,
+          "fdr_q0.10_gauss_mvr": 0.1755504608154297,
+          "coin_gauss_mvr": 0.5376308146857982,
+          "power_gauss_real": 0.8955556154251099,
+          "fdr_q0.10_gauss_real": 0.10247956216335297,
+          "coin_gauss_real": 0.503415648008641
+        }
+      ],
+      "coin": {
+        "gauss_ceiling_mvr": {
+          "all": {
+            "rate": 0.5017054143806207,
+            "se": 0.0012414569063033537,
+            "p_two_sided": 0.19112630217368556
+          },
+          "interaction": {
+            "rate": 0.5017859394770465,
+            "se": 0.0019160914042702813,
+            "p_two_sided": 0.36709438606334094
+          },
+          "linear": {
+            "rate": 0.5015170394103788,
+            "se": 0.001839102678277281,
+            "p_two_sided": 0.4232722347154007
+          },
+          "a2": {
+            "rate": 0.5051788950046817,
+            "se": 0.0037369622265732497,
+            "p_two_sided": 0.1874703775843806
+          },
+          "a5": {
+            "rate": 0.5012321417164641,
+            "se": 0.004156357024404707,
+            "p_two_sided": 0.7712405799243767
+          },
+          "a8": {
+            "rate": 0.5008667229009791,
+            "se": 0.0031798354843560047,
+            "p_two_sided": 0.7891639704697617
+          },
+          "a20": {
+            "rate": 0.4990956155252679,
+            "se": 0.004830515117984977,
+            "p_two_sided": 0.8541718321453886
+          },
+          "a32": {
+            "rate": 0.5018689688107963,
+            "se": 0.002119028393276953,
+            "p_two_sided": 0.39267227316674813
+          }
+        },
+        "gauss_mvr": {
+          "all": {
+            "rate": 0.5072151687050112,
+            "se": 0.0013485505413802657,
+            "p_two_sided": 0.00010239608919563272
+          },
+          "interaction": {
+            "rate": 0.5288960523579439,
+            "se": 0.0020875875208118608,
+            "p_two_sided": 1.4664358206020536e-09
+          },
+          "linear": {
+            "rate": 0.4870424680769934,
+            "se": 0.0018933705325947284,
+            "p_two_sided": 8.015269177655248e-06
+          },
+          "a2": {
+            "rate": 0.4929095462650055,
+            "se": 0.004134072415996721,
+            "p_two_sided": 0.10836086617319345
+          },
+          "a5": {
+            "rate": 0.5030606826544866,
+            "se": 0.00660207815538823,
+            "p_two_sided": 0.650064208841854
+          },
+          "a8": {
+            "rate": 0.5052122910180397,
+            "se": 0.001802170022159112,
+            "p_two_sided": 0.011822150868235407
+          },
+          "a20": {
+            "rate": 0.5112128383797839,
+            "se": 0.003533706489415774,
+            "p_two_sided": 0.006773205290970845
+          },
+          "a32": {
+            "rate": 0.515305205817154,
+            "se": 0.002775552384636366,
+            "p_two_sided": 7.625700006393278e-05
+          }
+        },
+        "gauss_real": {
+          "all": {
+            "rate": 0.5020353996795834,
+            "se": 0.0007305602616172331,
+            "p_two_sided": 0.014574057560506733
+          },
+          "interaction": {
+            "rate": 0.5088994530974313,
+            "se": 0.0011660655123223243,
+            "p_two_sided": 2.3588144550349475e-06
+          },
+          "linear": {
+            "rate": 0.49558326237695344,
+            "se": 0.001205767740558505,
+            "p_two_sided": 0.0025580499916746167
+          },
+          "a2": {
+            "rate": 0.5012843847800156,
+            "se": 0.0023588730267155803,
+            "p_two_sided": 0.5946707781617053
+          },
+          "a5": {
+            "rate": 0.5069318129580815,
+            "se": 0.004328303786292546,
+            "p_two_sided": 0.13158064510395828
+          },
+          "a8": {
+            "rate": 0.5057413569452979,
+            "se": 0.0024808577148514965,
+            "p_two_sided": 0.036352953664365986
+          },
+          "a20": {
+            "rate": 0.49543599498481333,
+            "se": 0.0029336239649601996,
+            "p_two_sided": 0.14207711741936144
+          },
+          "a32": {
+            "rate": 0.5017578228624747,
+            "se": 0.001559399855716544,
+            "p_two_sided": 0.2785896894726735
+          }
+        }
+      },
+      "coin_mvr_minus_control": {
+        "all": {
+          "mean_diff": 0.005509754324390492,
+          "se": 0.0018329767627728677,
+          "p_two_sided": 0.005559203938871925
+        },
+        "interaction": {
+          "mean_diff": 0.027110112880897375,
+          "se": 0.0028336245210979997,
+          "p_two_sided": 2.7229063550982546e-10
+        },
+        "linear": {
+          "mean_diff": -0.014474571333385422,
+          "se": 0.002639536064338715,
+          "p_two_sided": 7.424511514301737e-06
+        },
+        "a2": {
+          "mean_diff": -0.012269348739676222,
+          "se": 0.0055727409255715695,
+          "p_two_sided": 0.03618243508074768
+        },
+        "a5": {
+          "mean_diff": 0.0018285409380224271,
+          "se": 0.007801457535882177,
+          "p_two_sided": 0.8167087600643833
+        },
+        "a8": {
+          "mean_diff": 0.00434556811706055,
+          "se": 0.0036550199036856916,
+          "p_two_sided": 0.24705563881535075
+        },
+        "a20": {
+          "mean_diff": 0.012117222854516052,
+          "se": 0.005985061224283389,
+          "p_two_sided": 0.05344039970383354
+        },
+        "a32": {
+          "mean_diff": 0.013436237006357654,
+          "se": 0.0034919868801836186,
+          "p_two_sided": 0.0006882290135135141
+        }
+      }
+    },
+    "Helsinki-NLP/europarl": {
+      "n": 12500,
+      "median_zero_mass": 0.73004,
+      "SB3_control_valid": true,
+      "SB3_gaussian_breach": {
+        "gauss_real": 0,
+        "gauss_mvr": 0
+      },
+      "SB4_hurdle_restores": null,
+      "mvr_minus_control_fdr_cv": {
+        "mean_diff": 0.01169882863759994,
+        "se": 0.0037111587082908526,
+        "p_two_sided": 0.003924282639099747
+      },
+      "breaches_cv": {
+        "gauss_ceiling_mvr": 0,
+        "gauss_mvr": 0,
+        "gauss_real": 0
+      },
+      "mean_fdr_q0.10_cv": {
+        "gauss_ceiling_mvr": 0.08294504880905151,
+        "gauss_mvr": 0.09697374701499939,
+        "gauss_real": 0.07476099580526352
+      },
+      "mean_power_cv": {
+        "gauss_ceiling_mvr": 0.8504074215888977,
+        "gauss_mvr": 0.8537667393684387,
+        "gauss_real": 0.7663221955299377
+      },
+      "dose_response": [
+        {
+          "form": "linear",
+          "amplitude": 2.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9528889060020447,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.10033602267503738,
+          "coin_gauss_ceiling_mvr": 0.5002641623519682,
+          "power_gauss_mvr": 0.9568889141082764,
+          "fdr_q0.10_gauss_mvr": 0.08537887781858444,
+          "coin_gauss_mvr": 0.49559017583246917,
+          "power_gauss_real": 0.84333336353302,
+          "fdr_q0.10_gauss_real": 0.05925340577960014,
+          "coin_gauss_real": 0.48291465366894876
+        },
+        {
+          "form": "interaction",
+          "amplitude": 2.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.8413334488868713,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.06936857104301453,
+          "coin_gauss_ceiling_mvr": 0.49347801052975127,
+          "power_gauss_mvr": 0.8271110653877258,
+          "fdr_q0.10_gauss_mvr": 0.06615618616342545,
+          "coin_gauss_mvr": 0.4949620715713597,
+          "power_gauss_real": 0.37911105155944824,
+          "fdr_q0.10_gauss_real": 0.010677678510546684,
+          "coin_gauss_real": 0.48448256229605335
+        },
+        {
+          "form": "linear",
+          "amplitude": 8.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.999333381652832,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08689317852258682,
+          "coin_gauss_ceiling_mvr": 0.5042999595958617,
+          "power_gauss_mvr": 0.9984444379806519,
+          "fdr_q0.10_gauss_mvr": 0.08544936031103134,
+          "coin_gauss_mvr": 0.47625460048751017,
+          "power_gauss_real": 0.997333288192749,
+          "fdr_q0.10_gauss_real": 0.09438575804233551,
+          "coin_gauss_real": 0.486074752587392
+        },
+        {
+          "form": "interaction",
+          "amplitude": 8.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9860000610351562,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.0828750804066658,
+          "coin_gauss_ceiling_mvr": 0.4980684923199333,
+          "power_gauss_mvr": 0.9833335280418396,
+          "fdr_q0.10_gauss_mvr": 0.13397441804409027,
+          "coin_gauss_mvr": 0.517645801212973,
+          "power_gauss_real": 0.951999843120575,
+          "fdr_q0.10_gauss_real": 0.10570888221263885,
+          "coin_gauss_real": 0.5033148050826196
+        },
+        {
+          "form": "linear",
+          "amplitude": 32.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 1.0,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08793091773986816,
+          "coin_gauss_ceiling_mvr": 0.4933755429295258,
+          "power_gauss_mvr": 0.999333381652832,
+          "fdr_q0.10_gauss_mvr": 0.08486977219581604,
+          "coin_gauss_mvr": 0.4755771116963862,
+          "power_gauss_real": 0.999333381652832,
+          "fdr_q0.10_gauss_real": 0.08477122336626053,
+          "coin_gauss_real": 0.47644677956368603
+        },
+        {
+          "form": "interaction",
+          "amplitude": 32.0,
+          "k": 100,
+          "power_gauss_ceiling_mvr": 0.9928889870643616,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.07524710148572922,
+          "coin_gauss_ceiling_mvr": 0.48587840569977886,
+          "power_gauss_mvr": 0.9904446005821228,
+          "fdr_q0.10_gauss_mvr": 0.14368142187595367,
+          "coin_gauss_mvr": 0.5244689583053644,
+          "power_gauss_real": 0.9859998822212219,
+          "fdr_q0.10_gauss_real": 0.12347912788391113,
+          "coin_gauss_real": 0.5188592519792131
+        },
+        {
+          "form": "linear",
+          "amplitude": 2.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.6165925860404968,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.05574532970786095,
+          "coin_gauss_ceiling_mvr": 0.4970363085797781,
+          "power_gauss_mvr": 0.6319999098777771,
+          "fdr_q0.10_gauss_mvr": 0.06985484808683395,
+          "coin_gauss_mvr": 0.49445844392018845,
+          "power_gauss_real": 0.16503703594207764,
+          "fdr_q0.10_gauss_real": 0.003819764358922839,
+          "coin_gauss_real": 0.4966750899509638
+        },
+        {
+          "form": "interaction",
+          "amplitude": 2.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.2173333466053009,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.037874627858400345,
+          "coin_gauss_ceiling_mvr": 0.4925788205547258,
+          "power_gauss_mvr": 0.24170371890068054,
+          "fdr_q0.10_gauss_mvr": 0.03601720184087753,
+          "coin_gauss_mvr": 0.48056613239487306,
+          "power_gauss_real": 0.027851851657032967,
+          "fdr_q0.10_gauss_real": 0.0031746032182127237,
+          "coin_gauss_real": 0.49416197109202675
+        },
+        {
+          "form": "linear",
+          "amplitude": 8.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.9668888449668884,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08747471123933792,
+          "coin_gauss_ceiling_mvr": 0.5061247785829421,
+          "power_gauss_mvr": 0.9670370221138,
+          "fdr_q0.10_gauss_mvr": 0.09443233162164688,
+          "coin_gauss_mvr": 0.47699972723357137,
+          "power_gauss_real": 0.884592592716217,
+          "fdr_q0.10_gauss_real": 0.06957598030567169,
+          "coin_gauss_real": 0.4898135855986521
+        },
+        {
+          "form": "interaction",
+          "amplitude": 8.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.8657776713371277,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08462481200695038,
+          "coin_gauss_ceiling_mvr": 0.5054701324452912,
+          "power_gauss_mvr": 0.8897779583930969,
+          "fdr_q0.10_gauss_mvr": 0.10983596742153168,
+          "coin_gauss_mvr": 0.5085412233893777,
+          "power_gauss_real": 0.6553333401679993,
+          "fdr_q0.10_gauss_real": 0.03812124580144882,
+          "coin_gauss_real": 0.5104674199025453
+        },
+        {
+          "form": "linear",
+          "amplitude": 32.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.9914074540138245,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.09601765125989914,
+          "coin_gauss_ceiling_mvr": 0.5136922597281447,
+          "power_gauss_mvr": 0.9886667132377625,
+          "fdr_q0.10_gauss_mvr": 0.09464816749095917,
+          "coin_gauss_mvr": 0.4795427386988837,
+          "power_gauss_real": 0.968666672706604,
+          "fdr_q0.10_gauss_real": 0.08826475590467453,
+          "coin_gauss_real": 0.4899140600794326
+        },
+        {
+          "form": "interaction",
+          "amplitude": 32.0,
+          "k": 300,
+          "power_gauss_ceiling_mvr": 0.911037027835846,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.0767735093832016,
+          "coin_gauss_ceiling_mvr": 0.5091778018857712,
+          "power_gauss_mvr": 0.9361482262611389,
+          "fdr_q0.10_gauss_mvr": 0.12439009547233582,
+          "coin_gauss_mvr": 0.5134588918129516,
+          "power_gauss_real": 0.8011851906776428,
+          "fdr_q0.10_gauss_real": 0.0612737312912941,
+          "coin_gauss_real": 0.5038810005634958
+        },
+        {
+          "form": "linear",
+          "amplitude": 5.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08185213059186935,
+          "coin_gauss_ceiling_mvr": 0.491778479286374,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.07483627647161484,
+          "coin_gauss_mvr": 0.47483584536183543,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.104739710688591,
+          "coin_gauss_real": 0.48237642628429744
+        },
+        {
+          "form": "interaction",
+          "amplitude": 5.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08327506482601166,
+          "coin_gauss_ceiling_mvr": 0.519011926634979,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.09238539636135101,
+          "coin_gauss_mvr": 0.4979729051566989,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.09512775391340256,
+          "coin_gauss_real": 0.485874402075766
+        },
+        {
+          "form": "linear",
+          "amplitude": 20.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.0798867866396904,
+          "coin_gauss_ceiling_mvr": 0.5142633741973168,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.05353535711765289,
+          "coin_gauss_mvr": 0.4736871203415092,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.055011652410030365,
+          "coin_gauss_real": 0.4837754374934643
+        },
+        {
+          "form": "interaction",
+          "amplitude": 20.0,
+          "k": 10,
+          "power_gauss_ceiling_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.08011988550424576,
+          "coin_gauss_ceiling_mvr": 0.47414786794196223,
+          "power_gauss_mvr": 0.6666666865348816,
+          "fdr_q0.10_gauss_mvr": 0.1314019411802292,
+          "coin_gauss_mvr": 0.5165908747474601,
+          "power_gauss_real": 0.6666666865348816,
+          "fdr_q0.10_gauss_real": 0.11385282129049301,
+          "coin_gauss_real": 0.51057698008195
+        },
+        {
+          "form": "linear",
+          "amplitude": 5.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 1.0,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.09545624256134033,
+          "coin_gauss_ceiling_mvr": 0.5108617545878604,
+          "power_gauss_mvr": 1.0,
+          "fdr_q0.10_gauss_mvr": 0.07035943865776062,
+          "coin_gauss_mvr": 0.4911247945705857,
+          "power_gauss_real": 1.0,
+          "fdr_q0.10_gauss_real": 0.0865868479013443,
+          "coin_gauss_real": 0.4897815014825179
+        },
+        {
+          "form": "interaction",
+          "amplitude": 5.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 1.0,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.0875919759273529,
+          "coin_gauss_ceiling_mvr": 0.49778234370513436,
+          "power_gauss_mvr": 0.9977778196334839,
+          "fdr_q0.10_gauss_mvr": 0.1413487046957016,
+          "coin_gauss_mvr": 0.47920063873571234,
+          "power_gauss_real": 1.0,
+          "fdr_q0.10_gauss_real": 0.09196782857179642,
+          "coin_gauss_real": 0.47778299198718205
+        },
+        {
+          "form": "linear",
+          "amplitude": 20.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 1.0,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.11131823807954788,
+          "coin_gauss_ceiling_mvr": 0.502590399432859,
+          "power_gauss_mvr": 1.0,
+          "fdr_q0.10_gauss_mvr": 0.1015850082039833,
+          "coin_gauss_mvr": 0.47835101710593025,
+          "power_gauss_real": 1.0,
+          "fdr_q0.10_gauss_real": 0.0689602717757225,
+          "coin_gauss_real": 0.48151928458666815
+        },
+        {
+          "form": "interaction",
+          "amplitude": 20.0,
+          "k": 30,
+          "power_gauss_ceiling_mvr": 1.0,
+          "fdr_q0.10_gauss_ceiling_mvr": 0.09823902696371078,
+          "coin_gauss_ceiling_mvr": 0.48543263313218793,
+          "power_gauss_mvr": 1.0,
+          "fdr_q0.10_gauss_mvr": 0.1453341394662857,
+          "coin_gauss_mvr": 0.5216610243784523,
+          "power_gauss_real": 1.0,
+          "fdr_q0.10_gauss_real": 0.13646692037582397,
+          "coin_gauss_real": 0.5129512710423161
+        }
+      ],
+      "coin": {
+        "gauss_ceiling_mvr": {
+          "all": {
+            "rate": 0.5023241482058304,
+            "se": 0.001276570783693374,
+            "p_two_sided": 0.09010322956246689
+          },
+          "interaction": {
+            "rate": 0.49794245032151413,
+            "se": 0.0016706223279913664,
+            "p_two_sided": 0.23838350443604392
+          },
+          "linear": {
+            "rate": 0.5051644864426464,
+            "se": 0.0018256132756633973,
+            "p_two_sided": 0.013395623183538314
+          },
+          "a2": {
+            "rate": 0.49668864973293037,
+            "se": 0.002546193707536688,
+            "p_two_sided": 0.21442762157591824
+          },
+          "a5": {
+            "rate": 0.506611655557705,
+            "se": 0.003074895277640558,
+            "p_two_sided": 0.04949809186135135
+          },
+          "a8": {
+            "rate": 0.5053291868049229,
+            "se": 0.002293590039432034,
+            "p_two_sided": 0.0357196322748004
+          },
+          "a20": {
+            "rate": 0.5017977422816621,
+            "se": 0.0027821150512786002,
+            "p_two_sided": 0.5286147774981345
+          },
+          "a32": {
+            "rate": 0.5015158449764974,
+            "se": 0.0019993736992522256,
+            "p_two_sided": 0.4609281486730907
+          }
+        },
+        "gauss_mvr": {
+          "all": {
+            "rate": 0.49329202830722685,
+            "se": 0.0013800446368598018,
+            "p_two_sided": 0.0002521621813599396
+          },
+          "interaction": {
+            "rate": 0.5091282477479994,
+            "se": 0.001850022986671569,
+            "p_two_sided": 0.00021984967617445764
+          },
+          "linear": {
+            "rate": 0.4807562090029999,
+            "se": 0.002244970676536479,
+            "p_two_sided": 6.074953702730188e-07
+          },
+          "a2": {
+            "rate": 0.4920879093879507,
+            "se": 0.002824734398766604,
+            "p_two_sided": 0.014152345106889043
+          },
+          "a5": {
+            "rate": 0.4877600361751622,
+            "se": 0.004705312276597767,
+            "p_two_sided": 0.020924020808060724
+          },
+          "a8": {
+            "rate": 0.49260490187984546,
+            "se": 0.0026873908961538265,
+            "p_two_sided": 0.015590515046865346
+          },
+          "a20": {
+            "rate": 0.49404246566490156,
+            "se": 0.003553737980359502,
+            "p_two_sided": 0.11583557078848758
+          },
+          "a32": {
+            "rate": 0.49526618348358425,
+            "se": 0.00281583515158924,
+            "p_two_sided": 0.11489922012211293
+          }
+        },
+        "gauss_real": {
+          "all": {
+            "rate": 0.49431195395085414,
+            "se": 0.0012273507811011923,
+            "p_two_sided": 0.0003863488210332364
+          },
+          "interaction": {
+            "rate": 0.5045903877609276,
+            "se": 0.002258619086450058,
+            "p_two_sided": 0.061535857982804705
+          },
+          "linear": {
+            "rate": 0.4862774081236199,
+            "se": 0.0011037674886435424,
+            "p_two_sided": 5.929423772860184e-09
+          },
+          "a2": {
+            "rate": 0.49224670384829755,
+            "se": 0.0034682477142511333,
+            "p_two_sided": 0.04219022735564685
+          },
+          "a5": {
+            "rate": 0.4863018279188846,
+            "se": 0.004824885834082118,
+            "p_two_sided": 0.013129982772434386
+          },
+          "a8": {
+            "rate": 0.4964299512245347,
+            "se": 0.0025742085491663688,
+            "p_two_sided": 0.18717290270662418
+          },
+          "a20": {
+            "rate": 0.4952254893511471,
+            "se": 0.002692955295316691,
+            "p_two_sided": 0.09798260526334909
+          },
+          "a32": {
+            "rate": 0.49482492390408395,
+            "se": 0.0024937581103486226,
+            "p_two_sided": 0.05687832099134306
+          }
+        }
+      },
+      "coin_mvr_minus_control": {
+        "all": {
+          "mean_diff": -0.00903211989860353,
+          "se": 0.001879935149281756,
+          "p_two_sided": 4.799752135680261e-05
+        },
+        "interaction": {
+          "mean_diff": 0.011185797426485233,
+          "se": 0.002492702151079524,
+          "p_two_sided": 0.00011470278920964962
+        },
+        "linear": {
+          "mean_diff": -0.02440827743964652,
+          "se": 0.002893571697882583,
+          "p_two_sided": 4.946370859458616e-09
+        },
+        "a2": {
+          "mean_diff": -0.004600740344979648,
+          "se": 0.0038029234570097197,
+          "p_two_sided": 0.23658177775449285
+        },
+        "a5": {
+          "mean_diff": -0.018851619382542817,
+          "se": 0.005620938052385728,
+          "p_two_sided": 0.0026289079317390342
+        },
+        "a8": {
+          "mean_diff": -0.012724284925077434,
+          "se": 0.0035330758692267428,
+          "p_two_sided": 0.0012411756268724196
+        },
+        "a20": {
+          "mean_diff": -0.007755276616760509,
+          "se": 0.004513226982060681,
+          "p_two_sided": 0.09740915903868698
+        },
+        "a32": {
+          "mean_diff": -0.006249661492913117,
+          "se": 0.0034534653306768737,
+          "p_two_sided": 0.08226319150706608
+        }
+      }
+    }
+  },
+  "aggregate": {
+    "n_datasets": 4,
+    "n_valid": 4,
+    "SB3_R_gaussian_breach_datasets": 2,
+    "SB3_R_equicorrelated_breach_datasets": 0,
+    "SB4_R_hurdle_restores_datasets": 0,
+    "SB3_R_replicates": true,
+    "SBZ_spearman_zero_mass_vs_excess": {
+      "rho": 0.0,
+      "p": 1.0
+    },
+    "M2_control_coin_valid_datasets": [
+      "codeparrot/github-code",
+      "Helsinki-NLP/europarl"
+    ],
+    "M3_coin_biased_datasets_all": [
+      "codeparrot/github-code"
+    ],
+    "M3_coin_biased_datasets_linear": [],
+    "M3_coin_biased_datasets_interaction": [
+      "codeparrot/github-code",
+      "Helsinki-NLP/europarl"
+    ]
+  }
+}

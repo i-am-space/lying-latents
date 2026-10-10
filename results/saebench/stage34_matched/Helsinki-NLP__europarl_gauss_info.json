@@ -1,0 +1,201 @@
+{
+  "dataset": "Helsinki-NLP/europarl",
+  "info": {
+    "n": 12500,
+    "p": 2048,
+    "s_equicorrelated": 0.05476042566409102,
+    "median_zero_mass": 0.73004,
+    "sampler_setup_seconds": 123.80641508102417,
+    "block_mvr": {
+      "mean_s": 0.20590692877160838,
+      "seconds": 56.55506253242493,
+      "control_S": "recomputed for the control covariance",
+      "control_seconds": 59.08320927619934,
+      "min_eig_2Sigma_minus_S": 0.021807564726477307
+    }
+  },
+  "mean_corr_X_Xk": {
+    "gauss_real": 0.9461785626253297,
+    "gauss_mvr": 0.7996015318164702,
+    "gauss_ceiling_mvr": 0.8345828580813506
+  },
+  "draw_info": {
+    "gauss_real": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ],
+    "gauss_mvr": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ],
+    "gauss_ceiling_mvr": [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ]
+  },
+  "replicates": 15,
+  "cells": [
+    [
+      "sweep",
+      2.0,
+      "linear",
+      100
+    ],
+    [
+      "sweep",
+      2.0,
+      "interaction",
+      100
+    ],
+    [
+      "sweep",
+      8.0,
+      "linear",
+      100
+    ],
+    [
+      "sweep",
+      8.0,
+      "interaction",
+      100
+    ],
+    [
+      "sweep",
+      32.0,
+      "linear",
+      100
+    ],
+    [
+      "sweep",
+      32.0,
+      "interaction",
+      100
+    ],
+    [
+      "sweep",
+      2.0,
+      "linear",
+      300
+    ],
+    [
+      "sweep",
+      2.0,
+      "interaction",
+      300
+    ],
+    [
+      "sweep",
+      8.0,
+      "linear",
+      300
+    ],
+    [
+      "sweep",
+      8.0,
+      "interaction",
+      300
+    ],
+    [
+      "sweep",
+      32.0,
+      "linear",
+      300
+    ],
+    [
+      "sweep",
+      32.0,
+      "interaction",
+      300
+    ],
+    [
+      "sweep",
+      5.0,
+      "linear",
+      10
+    ],
+    [
+      "sweep",
+      5.0,
+      "interaction",
+      10
+    ],
+    [
+      "sweep",
+      20.0,
+      "linear",
+      10
+    ],
+    [
+      "sweep",
+      20.0,
+      "interaction",
+      10
+    ],
+    [
+      "sweep",
+      5.0,
+      "linear",
+      30
+    ],
+    [
+      "sweep",
+      5.0,
+      "interaction",
+      30
+    ],
+    [
+      "sweep",
+      20.0,
+      "linear",
+      30
+    ],
+    [
+      "sweep",
+      20.0,
+      "interaction",
+      30
+    ]
+  ],
+  "matched": true,
+  "positive_threshold": null,
+  "minutes": 1000.3
+}
