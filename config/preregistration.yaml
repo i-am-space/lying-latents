@@ -1774,3 +1774,56 @@ saebench_amendment_5:
   smoke_test_before_commit: >
     One replicate (diagnose) on a Gemma-2 SAEBench dataset, checking that it runs, the time per replicate and
     that the planted sets equal the knockoff arms' for the same cell and replicate.
+
+# ===========================================================================
+# STAGE 4 AMENDMENT 7 - more powerful valid e-values (written BEFORE any run)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+stage4_amendment_7:
+  meta:
+    date_written: "2026-10-10"
+    status: written_before_run
+    trigger: >
+      E-value splitting is the only procedure with no FDR breach on SST-2 and on all 14 SAEBench datasets of
+      saebench_amendment_5, but on SAEBench it loses 0.27-0.46 power against the hurdle (0.60 on Amazon
+      sentiment), against -0.02 on SST-2. The submission moved to the ARR January cycle, so changes that keep
+      the guarantee are tested. Ingredients checked in the papers on 2026-10-10: averages of e-values are
+      e-values under arbitrary dependence (Vovk and Wang 2021, Ann. Statist.) and e-BH controls FDR under
+      arbitrary dependence (Wang and Ramdas 2022, JRSSB).
+  design:
+    variants: >
+      E0 = the existing e-values (one split, CV lasso on A, Wald p on B, calibrator kappa 0.5, cap 500; records
+      reused). E1 = no cap (every latent selected on A is tested on B), same split and selection as E0, so
+      E1 - E0 isolates the cap. E2 (primary) = E1's e-values from K = 5 random splits, each with its own CV
+      selection on its half A, averaged per latent, then e-BH over all p. Split 0 = E0's split (sbev_split /
+      s4ev_split) with E0's folds; splits 1-4 from sbevk_split (dataset, replicate, split), their folds from
+      sbevk_folds (dataset, cell, replicate, split). CV penalty only (the fixed penalty was reported before).
+    dropped_before_any_run: >
+      E3, the cross-fit split likelihood-ratio e-value (Wasserman, Ramdas and Balakrishnan 2020, PNAS, eq. 9-10),
+      was built and smoke-tested (one replicate, Gemma-2 EuroParl) and dropped before any run: on planted
+      labels it made 0 discoveries where E1 made 44 true ones, because with about 750 selected latents the null
+      MLE fitted in-sample on half B always out-scores the alternative fitted on half A (the profile-likelihood
+      form of their section 6 has the same numerator); it also took 24 min per replicate, above this amendment's
+      20-minute limit. Validity on null labels was confirmed (mean e about 0).
+    cells: >
+      SST-2: stage4_cv's cells (8, 10 replicates, labels s4cv_planted), paired with stage4_cv's records.
+      SAEBench: stage4_saebench's cells (8, 10 replicates, labels sb34_planted) on the 14 datasets of
+      saebench_amendment_5 (Gemma-2 8; Gemma-3-1B and Pythia-70M: EuroParl, Bias in Bios 1, Amazon category).
+  decision_rules:
+    - id: V1
+      rule: "Per variant and dataset, Benjamini-Yekutieli breaches over the 24 cell-q combinations at the CV penalty; any breach is reported as a validity failure in that setting."
+    - id: V2
+      rule: "Primary: per dataset, E2 minus E0 power (paired over replicates, mean over cells and q); Holm across the two variants within a dataset. E1 is secondary."
+    - id: V3
+      rule: "Per dataset, the share of the E0-to-hurdle power gap recovered. A variant succeeds if it has no breach anywhere and its power is within 0.10 of the hurdle's on a majority of the 15 datasets."
+    - id: V4
+      rule: "Seconds per replicate of each variant are reported."
+    - id: V5
+      rule: "No change to K, the variants, the cells or the datasets after seeing any result."
+  interpretation_constraints:
+    - "As E0, validity rests on the half-B logistic refit being correctly specified; it is not for the interaction cells."
+    - "Averaging over splits removes the dependence of E0 on one random split as well as adding power."
+  smoke_test_before_commit: >
+    E0's discoveries are reproduced exactly by the new per-split e-value code with the cap of 500 (unit check).
+    One diagnose replicate on Gemma-2 EuroParl: E1 38 s, E2 192 s per replicate on the RTX 5050.

@@ -223,6 +223,8 @@ stage4_repairs:
     max_selected: 500
     refit_ridge: 1.0e-6
     calibrator_kappa: 0.5       # e = kappa * p^(kappa - 1)
+  evalue_plus:                  # stage4_amendment_7: more powerful valid e-value variants (CV penalty only)
+    splits: 5                   # E2: e-values averaged over 5 random splits (split 0 = E0's)
   arms:                         # [name, method]
     - [gauss_real, gaussian]
     - [hurdle, hurdle_scip]
@@ -397,6 +399,7 @@ stage4_cv:
     hurdle: [hurdle]
     gauss: [gauss_real, gauss_mvr, gauss_ceiling_mvr]
     evalue: [evalue]              # stage4_amendment_6: e-value splitting, fixed and CV selection penalty
+    evalue_plus: [evalue_nocap, evalue_k5]   # stage4_amendment_7
   diagnose:
     pilot_replicates: 1
 
@@ -478,6 +481,7 @@ stage4_saebench:
     hurdle: [hurdle]
     gauss: [gauss_real, gauss_mvr, gauss_ceiling_mvr]
     evalue: [evalue]              # saebench_amendment_5: e-value splitting on the same cells and labels
+    evalue_plus: [evalue_nocap, evalue_k5]   # stage4_amendment_7
   diagnose:
     pilot_replicates: 1
 
@@ -506,6 +510,7 @@ stage4_saebench_matched:
     hurdle: [hurdle]
     gauss: [gauss_real, gauss_mvr, gauss_ceiling_mvr]
     evalue: [evalue]              # saebench_amendment_5: e-value splitting on the same cells and labels
+    evalue_plus: [evalue_nocap, evalue_k5]   # stage4_amendment_7
   diagnose:
     pilot_replicates: 1
   calibration:

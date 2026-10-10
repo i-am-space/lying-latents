@@ -254,6 +254,107 @@ def evalue_discoveries(Z: torch.Tensor, y: torch.Tensor, split: np.ndarray, ev: 
     return out
 
 
+def wald_evalues(Z: torch.Tensor, y: torch.Tensor, A: torch.Tensor, B: torch.Tensor, w: torch.Tensor,
+                 ev: dict, cap: int | None) -> torch.Tensor:
+    """evalue_discoveries' e-values for one split (selection weights w fitted on A), as a vector, with an
+    optional cap (None = every selected latent is tested). stage4_amendment_7 variants E1, E2."""
+    p = Z.shape[1]
+    e = torch.zeros(p, dtype=torch.float64, device=Z.device)
+    sel = torch.nonzero(w.abs() > 0).flatten()
+    if cap is not None and sel.numel() > cap:
+        sel = sel[torch.argsort(w[sel].abs(), descending=True)[:cap]]
+    if sel.numel() == 0:
+        return e
+    beta, _, _, _, Ha = newton_logistic(Z[B][:, sel], y[B], ev["refit_ridge"], 50, 1e-8)
+    try:
+        cov = torch.linalg.inv(Ha) / B.numel()
+    except torch.linalg.LinAlgError:
+        cov = torch.linalg.pinv(Ha) / B.numel()
+    zst = beta / torch.sqrt(torch.diag(cov)[: sel.numel()].clamp(min=1e-300))
+    pval = torch.special.erfc(zst.abs() / math.sqrt(2.0)).clamp(min=1e-300)
+    kap = ev["calibrator_kappa"]
+    e[sel] = kap * pval ** (kap - 1.0)
+    return e
+
+
+def ebh(e: torch.Tensor, qs) -> dict:
+    """e-BH (Wang & Ramdas 2022) at each q over all p hypotheses."""
+    p = e.numel()
+    order = torch.argsort(e, descending=True)
+    es = e[order].cpu().numpy()
+    ks = np.arange(1, p + 1)
+    out = {}
+    for q in qs:
+        ok = np.nonzero(es >= p / (q * ks))[0]
+        k_star = int(ok.max() + 1) if ok.size else 0
+        out[q] = set(order[:k_star].cpu().numpy().tolist())
+    return out
+
+
+EVPLUS_ARMS = ("evalue_nocap", "evalue_k5")   # E3 (split likelihood ratio) dropped before any run: stage4_amendment_7
+
+
+def run_evalue_variants(cfg, sec, D, device, R, n_cells, cell_labels, split0, folds0, prefix, checkpoint=None):
+    """stage4_amendment_7: variants E1 (no cap) and E2 (K splits averaged) on given cells.
+    cell_labels(c, rep) -> (y_np, truth); split0(rep) / folds0(c, rep) -> the E0 split permutation / fold rng, so
+    split 0 and its selection are E0's. Further splits: sbevk_split (*prefix, rep, k); their folds: sbevk_folds
+    (*prefix, c, rep, k). CV penalty only."""
+    from stage3_followups import cv_lasso
+    qs, ev, evp = sec["nominal_fdr_targets"], sec["evalue"], sec["evalue_plus"]
+    K = evp["splits"]
+    shape = (n_cells, R)
+    M = {f"{m}_cv": {a: np.full(shape + (len(qs),), np.nan, dtype=np.float32) for a in EVPLUS_ARMS}
+         for m in ("ko_fdr", "ko_pow", "ko_nd")}
+    EXTRA = np.zeros(shape + (1,), dtype=np.float32)                  # selected on A (split 0)
+    SECS = {a: 0.0 for a in EVPLUS_ARMS}
+    start = 0
+    if checkpoint is not None and checkpoint.exists():
+        meta = json.loads(checkpoint.read_text())
+        if meta.get("shape") == list(shape):
+            z = np.load(checkpoint.with_suffix(".npz"))
+            for m in M:
+                for a in EVPLUS_ARMS:
+                    M[m][a] = z[f"{m}__{a}"]
+            EXTRA, start, SECS = z["extra"], meta["reps_done"], meta["seconds"]
+            print(f"  resuming from checkpoint: {start}/{R} replicates done", flush=True)
+    Zt = torch.from_numpy(D["Z"].astype(np.float32)).to(device)
+    n = Zt.shape[0]
+    nA = int(n * ev["split_fraction"])
+    t0 = time.time()
+    for rep in range(start, R):
+        splits = [split0(rep)] + [cell_rng(cfg, "sbevk_split", *prefix, rep, k).permutation(n) for k in range(1, K)]
+        halves = [(torch.as_tensor(s[:nA], device=device), torch.as_tensor(s[nA:], device=device)) for s in splits]
+        for c in range(n_cells):
+            y_np, truth = cell_labels(c, rep)
+            y_t = torch.from_numpy(y_np.astype(np.float32)).to(device)
+            t = time.time()
+            ws = []
+            for k, (A, B) in enumerate(halves):
+                rng = folds0(c, rep) if k == 0 else cell_rng(cfg, "sbevk_folds", *prefix, c, rep, k)
+                ws.append(cv_lasso(Zt[A], y_t[A], sec["cv"], rng)[0])
+            t_sel = time.time() - t
+            t = time.time()
+            e_k = [wald_evalues(Zt, y_t, A, B, w, ev, None) for (A, B), w in zip(halves, ws)]
+            t_wald = time.time() - t
+            evs = {"evalue_nocap": e_k[0], "evalue_k5": torch.stack(e_k).mean(0)}
+            SECS["evalue_nocap"] += t_sel / K + t_wald / K
+            SECS["evalue_k5"] += t_sel + t_wald
+            for a, e in evs.items():
+                disc = ebh(e, qs)
+                for iq, q in enumerate(qs):
+                    fdr, pw = evaluate_discoveries(disc[q], truth)
+                    M["ko_fdr_cv"][a][c, rep, iq], M["ko_pow_cv"][a][c, rep, iq], M["ko_nd_cv"][a][c, rep, iq] = fdr, pw, len(disc[q])
+            EXTRA[c, rep, 0] = float((ws[0].abs() > 0).sum())
+        if checkpoint is not None:
+            np.savez(checkpoint.with_suffix(".npz"), **{f"{m}__{a}": M[m][a] for m in M for a in EVPLUS_ARMS}, extra=EXTRA)
+            checkpoint.write_text(json.dumps({"shape": list(shape), "reps_done": rep + 1, "seconds": SECS}))
+        el = time.time() - t0
+        print(f"  rep {rep + 1:>2}/{R}  elapsed {el / 60:.1f}m  ETA {el / (rep + 1 - start) * (R - rep - 1) / 60:.1f}m", flush=True)
+    info = {"selected_on_A_median": float(np.median(EXTRA[..., 0])),
+            "seconds_per_replicate": {a: v / max(R - start, 1) for a, v in SECS.items()}}
+    return M, info
+
+
 # ---------------------------------------------------------------------------
 # data
 # ---------------------------------------------------------------------------
@@ -790,6 +891,26 @@ def run_evalue_cv(cfg, sec, D, device, R, checkpoint=None):
     return M, LAM, NSEL
 
 
+def evplus_rules(z: dict, breaches: dict, axes: tuple, hurdle: str = "hurdle") -> dict:
+    """stage4_amendment_7 rules V1-V3 from the records (CV penalty): breaches per variant, the paired power gain
+    over E0 (`evalue`) with Holm across the variants, and the share of the E0-to-hurdle power gap recovered."""
+    from reanalysis_multiplicity import two_sided_diff
+    arms = [a for a in EVPLUS_ARMS if f"ko_pow_cv__{a}" in z]
+    out = {"V1_breaches_cv": {a: breaches[a] for a in arms}}
+    e0 = z["ko_pow_cv__evalue"].mean(axis=axes)
+    gains = {a: two_sided_diff(z[f"ko_pow_cv__{a}"].mean(axis=axes), e0, True) for a in arms}
+    holm_p = dict(zip(arms, holm(np.array([gains[a][2] for a in arms]))))
+    out["V2_power_gain_over_E0"] = {a: {"mean_diff": gains[a][0], "se": gains[a][1], "p_two_sided": gains[a][2], "p_holm": float(holm_p[a])}
+                                    for a in arms}
+    if f"ko_pow_cv__{hurdle}" in z:
+        ph, p0 = float(z[f"ko_pow_cv__{hurdle}"].mean()), float(z["ko_pow_cv__evalue"].mean())
+        out["V3"] = {a: {"power": float(z[f"ko_pow_cv__{a}"].mean()), "power_E0": p0, "power_hurdle": ph,
+                         "gap_recovered": (float(z[f"ko_pow_cv__{a}"].mean()) - p0) / (ph - p0) if ph > p0 else None,
+                         "within_0.10_of_hurdle": bool(float(z[f"ko_pow_cv__{a}"].mean()) >= ph - 0.10)} for a in arms}
+    return out
+
+
+
 def analyse_cv(cfg, sec, rd: Path) -> dict:
     """Combine the arm groups' records and apply rules C1-C3 (corrected statistics only)."""
     from reanalysis_multiplicity import by_adjust, cells, one_sided_exceed, two_sided_diff
@@ -799,6 +920,8 @@ def analyse_cv(cfg, sec, rd: Path) -> dict:
     for g in sec["arm_groups"]:
         f = rd / f"stage4_cv_{g}_records.npz"
         if not f.exists():
+            if g == "evalue_plus":                 # stage4_amendment_7: optional
+                continue
             raise SystemExit(f"{f} missing: run --arm-group {g} first")
         z.update(dict(np.load(f)))
     arms = sorted({k.split("__", 1)[1] for k in z if k.startswith("ko_fdr_cv__")})
@@ -806,6 +929,8 @@ def analyse_cv(cfg, sec, rd: Path) -> dict:
     for lam in ("fixed", "cv"):
         res = {}
         for a in arms:
+            if f"ko_fdr_{lam}__{a}" not in z:      # the stage4_amendment_7 variants run at the CV penalty only
+                continue
             F = z[f"ko_fdr_{lam}__{a}"]
             pv = np.array([one_sided_exceed(F[ia, jf, kk, :, iq], c["q"])[2] for (ia, jf, kk, iq), c in cells(d)])
             res[a] = {"n_breach_BY": int((by_adjust(pv) < 0.05).sum()),
@@ -834,6 +959,8 @@ def analyse_cv(cfg, sec, rd: Path) -> dict:
                                       for lam in ("fixed", "cv")} if h in arms else None
         out["E1_evalue_breaches_cv"] = out["by_lambda"]["cv"]["evalue"]["n_breach_BY"]
     out["C2_gaussian_breaches_cv"] = {a: out["by_lambda"]["cv"][a]["n_breach_BY"] for a in arms if a.startswith("gauss")}
+    if "evalue" in arms and any(a in arms for a in EVPLUS_ARMS):
+        out["evalue_plus"] = evplus_rules(z, {a: out["by_lambda"]["cv"][a]["n_breach_BY"] for a in arms}, (0, 1, 2, 4))
     lamz = {k.split("__", 1)[1]: v for k, v in z.items() if k.startswith("lam__")}
     out["cv_lambda"] = {a: {"median_ratio_to_lambda_max": float(np.median(v[..., 1])), "share_at_grid_edge": float(v[..., 2].mean())}
                         for a, v in lamz.items()}
@@ -866,7 +993,7 @@ def main_cv(args) -> None:
     all_arms = [tuple(a) for a in cfg["stage4_repairs"]["arms"]] + [tuple(a) for a in cfg["stage4_mvr"]["arms"]]
     arm_ids = {n: i for i, (n, _) in enumerate(all_arms)}
     arms = [(n, m) for n, m in all_arms if n in ext["arm_groups"][group]]
-    if group == "evalue":
+    if group in ("evalue", "evalue_plus"):
         arms = []                                  # no knockoffs: the Gaussian samplers are not needed
     cp = Path(args.cache) if args.cache else cache_path(cfg)
     if not cp.exists():
@@ -879,6 +1006,33 @@ def main_cv(args) -> None:
     D = build(cfg, sec, X_all, device, methods=[m for _, m in arms])
     del X_all
     R = args.limit_reps or (ext["diagnose"]["pilot_replicates"] if args.stage == "diagnose" else ext["replicates"])
+    if group == "evalue_plus":                     # stage4_amendment_7 on the stage4_cv cells
+        amps, forms, ks = sec["signal_amplitudes"], sec["functional_forms"], sec["signal_sizes"]
+        grid = [(ia, jf, kk) for ia in range(len(amps)) for jf in range(len(forms)) for kk in range(len(ks))]
+        p_ = D["Z"].shape[1]
+
+        def cell_labels(c, rep):
+            ia, jf, kk = grid[c]
+            rng = cell_rng(cfg, "s4cv_planted", ia, jf, kk, rep)
+            S_idx = np.sort(rng.choice(p_, size=ks[kk], replace=False))
+            return generate_planted_labels(D["Z"], S_idx, forms[jf], amps[ia], rng)[0], set(S_idx.tolist())
+        n = D["Z"].shape[0]
+        ckpt = None if args.stage == "diagnose" else rd / "stage4_cv_evalue_plus_checkpoint.json"
+        M, vinfo = run_evalue_variants(cfg, sec, D, device, R, len(grid), cell_labels,
+                                       lambda rep: cell_rng(cfg, "s4ev_split", rep).permutation(n),
+                                       lambda c, rep: cell_rng(cfg, "s4ev_folds", *grid[c], rep), (999,), checkpoint=ckpt)
+        print(f"  per replicate (s): {json.dumps({a: round(v) for a, v in vinfo['seconds_per_replicate'].items()})}; "
+              f"selected on A median {vinfo['selected_on_A_median']:.0f}", flush=True)
+        if args.stage == "diagnose":
+            return
+        shape5 = (len(amps), len(forms), len(ks), R, len(sec["nominal_fdr_targets"]))
+        np.savez(rd / "stage4_cv_evalue_plus_records.npz", **{f"{m}__{a}": M[m][a].reshape(shape5) for m in M for a in EVPLUS_ARMS})
+        (rd / "stage4_cv_evalue_plus_info.json").write_text(json.dumps({"replicates": R, **vinfo,
+                                                                         "minutes": round((time.time() - t0) / 60, 1)}, indent=2, default=float))
+        for f in (ckpt, ckpt.with_suffix(".npz")):
+            f.unlink(missing_ok=True)
+        print(f"\nwrote {rd}/stage4_cv_evalue_plus_records.npz ({(time.time() - t0) / 60:.1f} min)")
+        return
     if group == "evalue":
         print(f"\n=== {args.stage}: e-value sample splitting, fixed and CV selection penalty, {R} replicate(s) ===")
         ckpt = None if args.stage == "diagnose" else rd / "stage4_cv_evalue_checkpoint.json"
@@ -1118,6 +1272,8 @@ def analyse_stress(cfg, sec, rd: Path, prefix: str = "stage4_stress") -> dict:
     for lam in ("fixed", "cv"):
         res = {}
         for a in arms:
+            if f"ko_fdr_{lam}__{a}" not in z:      # the stage4_amendment_7 variants run at the CV penalty only
+                continue
             F = z[f"ko_fdr_{lam}__{a}"]
             rows = [(ci, iq, *one_sided_exceed(F[ci, :, iq], q)) for ci in range(len(cells)) for iq, q in enumerate(qs)]
             pb = by_adjust(np.array([r[4] for r in rows]))
@@ -1390,7 +1546,7 @@ def main_saebench(args) -> None:
         summary = {}
         for name in datasets:
             groups = [g for g in ext["arm_groups"] if (rd / f"{slug(name)}_{g}_records.npz").exists()]
-            required = [g for g in ext["arm_groups"] if g != "evalue"]     # e-values (saebench_amendment_5) are optional
+            required = [g for g in ext["arm_groups"] if g not in ("evalue", "evalue_plus")]   # e-value groups are optional
             if "gauss" not in groups or (not matched and not all(g in groups for g in required)):
                 print(f"  {name}: records incomplete, skipped", flush=True)
                 continue
@@ -1421,6 +1577,10 @@ def main_saebench(args) -> None:
                             for m in ("ko_fdr", "ko_pow")} for lam in ("fixed", "cv")}
                 ei = json.loads((rd / f"{slug(name)}_evalue_info.json").read_text())
                 out["EV3_selection"] = {k: ei[k] for k in ("median_selected_fixed", "median_selected_cv", "share_at_cap_cv")}
+                if any(a in cv for a in EVPLUS_ARMS):                  # stage4_amendment_7
+                    out["V_evalue_plus"] = evplus_rules(z, {a: cv[a]["n_breach_BY"] for a in cv}, (0, 2))
+                    out["V_evalue_plus"]["V4_seconds_per_replicate"] = json.loads(
+                        (rd / f"{slug(name)}_evalue_plus_info.json").read_text())["seconds_per_replicate"]
             if "hurdle" in cv:
                 hm = out["S3_hurdle_minus_mvr_cv"][design]["ko_fdr"]
                 out["SB4_hurdle_restores"] = bool(cv["hurdle"]["n_breach_BY"] == 0 and hm["mean_diff"] < 0 and hm["p_two_sided"] < 0.05)
@@ -1435,7 +1595,7 @@ def main_saebench(args) -> None:
             summary[name] = {k: out[k] for k in ("n", "median_zero_mass", "SB3_control_valid", "SB3_gaussian_breach",
                                                  "SB4_hurdle_restores", "mvr_minus_control_fdr_cv")}
             summary[name]["breaches_cv"] = {a: cv[a]["n_breach_BY"] for a in cv}
-            for k_ in [k_ for k_ in out if k_.startswith("EV")]:
+            for k_ in [k_ for k_ in out if k_.startswith("EV") or k_ == "V_evalue_plus"]:
                 summary[name][k_] = out[k_]
             summary[name]["mean_fdr_q0.10_cv"] = {a: cv[a]["by_design"][design]["mean_fdr_q0.10"] for a in cv}
             summary[name]["mean_power_cv"] = {a: cv[a]["by_design"][design]["mean_power"] for a in cv}
@@ -1491,7 +1651,7 @@ def main_saebench(args) -> None:
     all_arms = [tuple(a) for a in cfg["stage4_repairs"]["arms"]] + [tuple(a) for a in cfg["stage4_mvr"]["arms"]]
     arm_ids = {n: i for i, (n, _) in enumerate(all_arms)}
     arms = [(n, m) for n, m in all_arms if n in ext["arm_groups"][group]]
-    if group == "evalue":
+    if group in ("evalue", "evalue_plus"):
         arms = []                                  # no knockoffs: no samplers are built
     cells = cells_of(name)
     C = load_cache(cfg, name)
@@ -1520,6 +1680,29 @@ def main_saebench(args) -> None:
     print(f"\n=== {args.stage}: arms {[a for a, _ in arms]}, {len(cells)} cells, {R} replicate(s) ===")
     ckpt = None if args.stage == "diagnose" else rd / f"{slug(name)}_{group}_checkpoint.json"
     streams = ("sb4m_knockoff", "sb4m_planted", "sb4m_folds") if matched else ("sb34_knockoff", "sb34_planted", "sb34_folds")
+    if group == "evalue_plus":                     # stage4_amendment_7
+        def cell_labels(ci, rep):
+            design, amp, form, k = cells[ci]
+            rng = cell_rng(cfg, streams[1], di, ci, rep)
+            S_idx = np.sort(rng.choice(D["Z"].shape[1], size=k, replace=False))
+            y_np = (size_labels(D["X"], S_idx, amp, rng) if form == "size" else generate_planted_labels(D["Z"], S_idx, form, amp, rng))[0]
+            return y_np, set(S_idx.tolist())
+        n = D["Z"].shape[0]
+        M, vinfo = run_evalue_variants(cfg, sec, D, device, R, len(cells), cell_labels,
+                                       lambda rep: cell_rng(cfg, "sbev_split", di, rep).permutation(n),
+                                       lambda ci, rep: cell_rng(cfg, "sbev_folds", di, ci, rep), (di,), checkpoint=ckpt)
+        print(f"  per replicate (s): {json.dumps({a: round(v) for a, v in vinfo['seconds_per_replicate'].items()})}; "
+              f"selected on A median {vinfo['selected_on_A_median']:.0f}", flush=True)
+        if args.stage == "diagnose":
+            return
+        np.savez(rd / f"{slug(name)}_evalue_plus_records.npz", **{f"{m}__{a}": M[m][a] for m in M for a in EVPLUS_ARMS})
+        (rd / f"{slug(name)}_evalue_plus_info.json").write_text(json.dumps(
+            {"dataset": name, "info": D["info"], "replicates": R, "cells": [list(c) for c in cells], **vinfo,
+             "positive_threshold": thr_info, "minutes": round((time.time() - t0) / 60, 1)}, indent=2, default=float))
+        for f in (ckpt, ckpt.with_suffix(".npz")):
+            f.unlink(missing_ok=True)
+        print(f"\nwrote {rd}/{slug(name)}_evalue_plus_records.npz ({(time.time() - t0) / 60:.1f} min)")
+        return
     if group == "evalue":
         t = time.time()
         M, LAM, NSEL = run_evalue_cells(cfg, sec, D, device, R, cells, streams, prefix=(di,), checkpoint=ckpt)

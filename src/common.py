@@ -71,6 +71,8 @@ STREAMS = [
     "sb4x_diagnostics",      # SAEBench swap tests of every knockoff arm: draw seeds, row partitions, classifiers (per dataset, arm)
     "sbev_split",            # SAEBench e-values: half-A / half-B split (per dataset, replicate)
     "sbev_folds",            # SAEBench e-values: CV folds within half A (per dataset, cell, replicate)
+    "sbevk_split",           # stage4_amendment_7: further random splits (per dataset, replicate, split)
+    "sbevk_folds",           # stage4_amendment_7: CV folds of those splits and of the swapped E3 selection (per dataset, cell, replicate, split)
 ]
 
 
