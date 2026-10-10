@@ -1,0 +1,67 @@
+{
+  "dataset": "LabHC/bias_in_bios_class_set3",
+  "info": {
+    "n": 12500,
+    "p": 2048,
+    "s_equicorrelated": 0.04870068740608462,
+    "median_zero_mass": 0.58124,
+    "sampler_setup_seconds": 9.308855772018433
+  },
+  "replicates": 10,
+  "cells": [
+    [
+      "realistic",
+      8.0,
+      "linear",
+      100
+    ],
+    [
+      "realistic",
+      8.0,
+      "linear",
+      300
+    ],
+    [
+      "realistic",
+      8.0,
+      "interaction",
+      100
+    ],
+    [
+      "realistic",
+      8.0,
+      "interaction",
+      300
+    ],
+    [
+      "realistic",
+      32.0,
+      "linear",
+      100
+    ],
+    [
+      "realistic",
+      32.0,
+      "linear",
+      300
+    ],
+    [
+      "realistic",
+      32.0,
+      "interaction",
+      100
+    ],
+    [
+      "realistic",
+      32.0,
+      "interaction",
+      300
+    ]
+  ],
+  "matched": false,
+  "positive_threshold": null,
+  "median_selected_fixed": 124.0,
+  "median_selected_cv": 701.0,
+  "share_at_cap_cv": 0.9125,
+  "minutes": 8.1
+}

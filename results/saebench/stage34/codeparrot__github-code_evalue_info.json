@@ -1,0 +1,67 @@
+{
+  "dataset": "codeparrot/github-code",
+  "info": {
+    "n": 12500,
+    "p": 2048,
+    "s_equicorrelated": 0.009670277104891645,
+    "median_zero_mass": 0.48960000000000004,
+    "sampler_setup_seconds": 27.490821599960327
+  },
+  "replicates": 10,
+  "cells": [
+    [
+      "realistic",
+      8.0,
+      "linear",
+      100
+    ],
+    [
+      "realistic",
+      8.0,
+      "linear",
+      300
+    ],
+    [
+      "realistic",
+      8.0,
+      "interaction",
+      100
+    ],
+    [
+      "realistic",
+      8.0,
+      "interaction",
+      300
+    ],
+    [
+      "realistic",
+      32.0,
+      "linear",
+      100
+    ],
+    [
+      "realistic",
+      32.0,
+      "linear",
+      300
+    ],
+    [
+      "realistic",
+      32.0,
+      "interaction",
+      100
+    ],
+    [
+      "realistic",
+      32.0,
+      "interaction",
+      300
+    ]
+  ],
+  "matched": false,
+  "positive_threshold": null,
+  "median_selected_fixed": 113.0,
+  "median_selected_cv": 674.5,
+  "share_at_cap_cv": 0.8875,
+  "minutes": 10.5
+}

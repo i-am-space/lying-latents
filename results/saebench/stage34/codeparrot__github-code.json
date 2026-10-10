@@ -1,5 +1,6 @@
 {
   "arms": [
+    "evalue",
     "gauss_ceiling_mvr",
     "gauss_mvr",
     "gauss_real",
@@ -57,6 +58,27 @@
   ],
   "by_lambda": {
     "fixed": {
+      "evalue": {
+        "n_breach_BY": 0,
+        "breaches": [],
+        "by_design": {
+          "realistic": {
+            "n_breach_BY": 0,
+            "mean_fdr_q0.10": 0.047654394060373306,
+            "mean_power": 0.2472500056028366
+          }
+        },
+        "cells_fdr_q0.10": {
+          "realistic|8.0|linear|100": 0.02710871398448944,
+          "realistic|8.0|linear|300": 0.06666667014360428,
+          "realistic|8.0|interaction|100": 0.016240600496530533,
+          "realistic|8.0|interaction|300": 0.04159091040492058,
+          "realistic|32.0|linear|100": 0.023866524919867516,
+          "realistic|32.0|linear|300": 0.11895100027322769,
+          "realistic|32.0|interaction|100": 0.02429700456559658,
+          "realistic|32.0|interaction|300": 0.06251373887062073
+        }
+      },
       "gauss_ceiling_mvr": {
         "n_breach_BY": 0,
         "breaches": [],
@@ -143,6 +165,27 @@
       }
     },
     "cv": {
+      "evalue": {
+        "n_breach_BY": 0,
+        "breaches": [],
+        "by_design": {
+          "realistic": {
+            "n_breach_BY": 0,
+            "mean_fdr_q0.10": 0.0032948374282568693,
+            "mean_power": 0.4599027633666992
+          }
+        },
+        "cells_fdr_q0.10": {
+          "realistic|8.0|linear|100": 0.0035294119734317064,
+          "realistic|8.0|linear|300": 0.003937368281185627,
+          "realistic|8.0|interaction|100": 0.0,
+          "realistic|8.0|interaction|300": 0.0029411765281111,
+          "realistic|32.0|linear|100": 0.0,
+          "realistic|32.0|linear|300": 0.011338295415043831,
+          "realistic|32.0|interaction|100": 0.0038548719603568316,
+          "realistic|32.0|interaction|300": 0.0007575757917948067
+        }
+      },
       "gauss_ceiling_mvr": {
         "n_breach_BY": 0,
         "breaches": [],
@@ -263,6 +306,10 @@
     "gauss_ceiling_mvr": {
       "median_ratio_to_lambda_max": 0.009999999776482582,
       "share_at_grid_edge": 0.11249999701976776
+    },
+    "evalue": {
+      "median_ratio_to_lambda_max": 0.009999999776482582,
+      "share_at_grid_edge": 0.03750000149011612
     }
   },
   "dataset": "codeparrot/github-code",
@@ -277,6 +324,67 @@
   "SB3_gaussian_breach": {
     "gauss_real": 0,
     "gauss_mvr": 0
+  },
+  "EV1_evalue_breaches": {
+    "fixed": 0,
+    "cv": 0
+  },
+  "EV2_evalue_minus_hurdle": {
+    "fixed": {
+      "ko_fdr": {
+        "mean_diff": 0.000994000770151615,
+        "se": 0.009137787992514256,
+        "p_two_sided": 0.9157643396705023
+      },
+      "ko_pow": {
+        "mean_diff": 0.11450000070035457,
+        "se": 0.01006810405788706,
+        "p_two_sided": 1.214993136034305e-06
+      }
+    },
+    "cv": {
+      "ko_fdr": {
+        "mean_diff": -0.1141667810617946,
+        "se": 0.00395731679409956,
+        "p_two_sided": 3.5197372751089e-10
+      },
+      "ko_pow": {
+        "mean_diff": -0.43326389193534853,
+        "se": 0.02081814807999834,
+        "p_two_sided": 6.390477285410264e-09
+      }
+    }
+  },
+  "EV2_evalue_minus_gauss_mvr": {
+    "fixed": {
+      "ko_fdr": {
+        "mean_diff": -0.03876415118575096,
+        "se": 0.00742353246671092,
+        "p_two_sided": 0.0005478865888594098
+      },
+      "ko_pow": {
+        "mean_diff": 0.07254166454076767,
+        "se": 0.011576795203609254,
+        "p_two_sided": 0.00014678281087654221
+      }
+    },
+    "cv": {
+      "ko_fdr": {
+        "mean_diff": -0.113489220791962,
+        "se": 0.0039804565802619065,
+        "p_two_sided": 3.9094166184343584e-10
+      },
+      "ko_pow": {
+        "mean_diff": -0.3981527626514435,
+        "se": 0.01889159027686804,
+        "p_two_sided": 5.71736924521276e-09
+      }
+    }
+  },
+  "EV3_selection": {
+    "median_selected_fixed": 113.0,
+    "median_selected_cv": 674.5,
+    "share_at_cap_cv": 0.8875
   },
   "SB4_hurdle_restores": false
 }
