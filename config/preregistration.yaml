@@ -1729,3 +1729,48 @@ saebench_amendment_4:
       - id: M6
         rule: "Descriptive: per dataset and form, the block-MVR coin rate and FDR as a function of the control's power across the sweep, and the amplitudes at which the control's power is about 0.5 and about 0.9."
     unchanged: "M2, M4, M5, M-T and the interpretation constraints of this amendment."
+
+# ===========================================================================
+# SAEBench AMENDMENT 5 - e-value splitting on the SAEBench cells (written BEFORE any run)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+saebench_amendment_5:
+  meta:
+    date_written: "2026-10-10"
+    status: written_before_run
+    trigger: >
+      E-value sample splitting is the only Stage 4 arm whose validity does not rest on a model of the
+      activations. It was run on SST-2 only (stage4_amendment_6: no breach at either penalty, FDR 0.001 at
+      q = 0.10 under CV). On SAEBench the hurdle breaches on Pythia-70M (saebench_amendment_3: 4, 7 and 16 of
+      24) and once on Gemma-2 (saebench_amendment_2), so whether the guaranteed fallback holds on every model
+      and dataset reported is open.
+  design:
+    cells: >
+      Exactly the cells, labels and replicates of the knockoff arms already run: stage4_saebench (8 realistic
+      cells, amplitudes 8 and 32 x linear/interaction x k = 100, 300; q .05/.10/.20; 10 replicates) on the 8
+      Gemma-2 datasets (saebench_amendment_2) and on EuroParl, Bias in Bios 1 and Amazon category for
+      Gemma-3-1B and Pythia-70M (saebench_amendment_3). Labels are regenerated from the same planted stream,
+      cell and replicate as run_cells' real-latent arms (sb34_planted), so every e-value record is paired with
+      the hurdle and Gaussian records. If time allows, the same on the matched sweep (stage4_saebench_matched,
+      sb4m_planted; Gemma-2 4 datasets, Pythia thresholded at 0.19, 3 datasets), reported separately.
+    method: >
+      stage4_repairs evalue settings unchanged (split 0.5, at most 500 selected, refit ridge 1e-6, calibrator
+      kappa 0.5, e-BH over all p). The selection lasso on half A uses the fixed selection_lambda (0.02) and a
+      penalty chosen by 5-fold CV within half A only (stage4_cv's grid relative to lambda_max of half A), as
+      stage4_amendment_6. Split: sbev_split (dataset, replicate); folds: sbev_folds (dataset, cell, replicate).
+  decision_rules:
+    - id: EV1
+      rule: "Per dataset, e-value Benjamini-Yekutieli breaches over its 24 cell-q combinations, at both penalties; the number of datasets with any breach under CV is the result."
+    - id: EV2
+      rule: "Per dataset, paired pooled differences e-values minus hurdle and e-values minus block MVR (FDR and power) at both penalties."
+    - id: EV3
+      rule: "Per dataset, the median number selected on half A (fixed and CV) and the share of CV fits above the 500 cap."
+    - id: EV4
+      rule: "No tuning and no change to the dataset list after seeing any e-value result."
+  interpretation_constraints:
+    - "E-value validity rests on the half-B logistic refit being correctly specified; it is not for the interaction cells."
+    - "3 datasets per new model; Gemma-2 has 8."
+  smoke_test_before_commit: >
+    One replicate (diagnose) on a Gemma-2 SAEBench dataset, checking that it runs, the time per replicate and
+    that the planted sets equal the knockoff arms' for the same cell and replicate.

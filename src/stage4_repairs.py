@@ -1043,6 +1043,64 @@ def run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=None,
     return M, LAM, corr, dinfo
 
 
+def run_evalue_cells(cfg, sec, D, device, R, cells, streams, prefix=(), checkpoint=None):
+    """E-value sample splitting over run_cells' cells (saebench_amendment_5), with the labels regenerated
+    exactly as run_cells makes them for the real-latent arms (same planted stream, cell and replicate),
+    so the records pair with the knockoff arms'. Selection on half A at the fixed selection_lambda and at
+    a penalty chosen by 5-fold CV within half A only; split sbev_split, folds sbev_folds."""
+    from stage3_followups import cv_lasso
+    qs, ev = sec["nominal_fdr_targets"], sec["evalue"]
+    shape = (len(cells), R)
+    M = {f"{m}_{lam}": {"evalue": np.full(shape + (len(qs),), np.nan, dtype=np.float32)}
+         for m in ("ko_fdr", "ko_pow", "ko_nd") for lam in ("fixed", "cv")}
+    LAM = np.zeros(shape + (3,), dtype=np.float32)
+    NSEL = np.zeros(shape + (2,), dtype=np.float32)              # selected on A: fixed, cv
+    key = {"shape": list(shape), "cells": [list(c) for c in cells]}
+    start = 0
+    if checkpoint is not None and checkpoint.exists():
+        meta = json.loads(checkpoint.read_text())
+        if all(meta.get(k) == v for k, v in key.items()):
+            z = np.load(checkpoint.with_suffix(".npz"))
+            for m in M:
+                M[m]["evalue"] = z[f"{m}__evalue"]
+            LAM, NSEL, start = z["lam__evalue"], z["nsel"], meta["reps_done"]
+            print(f"  resuming from checkpoint: {start}/{R} replicates done", flush=True)
+    Zt = torch.from_numpy(D["Z"].astype(np.float32)).to(device)
+    n, p = D["Z"].shape
+    A = None
+    t0 = time.time()
+    for rep in range(start, R):
+        split = cell_rng(cfg, "sbev_split", *prefix, rep).permutation(n)
+        A = torch.as_tensor(split[: int(n * ev["split_fraction"])], device=device)
+        for ci, (design, amp, form, k) in enumerate(cells):
+            rng = cell_rng(cfg, streams[1], *prefix, ci, rep)
+            S_idx = np.sort(rng.choice(p, size=k, replace=False))
+            truth = set(S_idx.tolist())
+            if form == "size":
+                y_np, _ = size_labels(D["X"], S_idx, amp, rng)
+            else:
+                y_np, _ = generate_planted_labels(D["Z"], S_idx, form, amp, rng)
+            y_t = torch.from_numpy(y_np.astype(np.float32)).to(device)
+            w_fix, _, _, _ = fit_lasso_checked(Zt[A], y_t[A], ev["selection_lambda"], sec["lasso"]["max_iter"], sec["lasso"]["tol"])
+            w_cv, _, li = cv_lasso(Zt[A], y_t[A], sec["cv"], cell_rng(cfg, "sbev_folds", *prefix, ci, rep))
+            for li_, (lam, w) in enumerate((("fixed", w_fix), ("cv", w_cv))):
+                disc = evalue_discoveries(Zt, y_t, split, ev, sec["lasso"], qs, w_sel=w)
+                NSEL[ci, rep, li_] = float((w.abs() > 0).sum())
+                for iq, q in enumerate(qs):
+                    fdr, pw = evaluate_discoveries(disc[q], truth)
+                    M[f"ko_fdr_{lam}"]["evalue"][ci, rep, iq] = fdr
+                    M[f"ko_pow_{lam}"]["evalue"][ci, rep, iq] = pw
+                    M[f"ko_nd_{lam}"]["evalue"][ci, rep, iq] = len(disc[q])
+            LAM[ci, rep] = (li["lambda"], li["lambda"] / li["lambda_max"], float(li["edge"]))
+        if checkpoint is not None:
+            np.savez(checkpoint.with_suffix(".npz"), **{f"{m}__evalue": M[m]["evalue"] for m in M},
+                     lam__evalue=LAM, nsel=NSEL)
+            checkpoint.write_text(json.dumps({**key, "reps_done": rep + 1}))
+        el = time.time() - t0
+        print(f"  rep {rep + 1:>2}/{R}  elapsed {el / 60:.1f}m  ETA {el / (rep + 1 - start) * (R - rep - 1) / 60:.1f}m", flush=True)
+    return M, LAM, NSEL
+
+
 def analyse_stress(cfg, sec, rd: Path, prefix: str = "stage4_stress") -> dict:
     """Rules S1-S3 over the stress cells (corrected statistics only). Also used per SAEBench dataset."""
     from reanalysis_multiplicity import by_adjust, one_sided_exceed, two_sided_diff
@@ -1332,7 +1390,8 @@ def main_saebench(args) -> None:
         summary = {}
         for name in datasets:
             groups = [g for g in ext["arm_groups"] if (rd / f"{slug(name)}_{g}_records.npz").exists()]
-            if "gauss" not in groups or (not matched and len(groups) < len(ext["arm_groups"])):
+            required = [g for g in ext["arm_groups"] if g != "evalue"]     # e-values (saebench_amendment_5) are optional
+            if "gauss" not in groups or (not matched and not all(g in groups for g in required)):
                 print(f"  {name}: records incomplete, skipped", flush=True)
                 continue
             if cal_all is not None and name not in cal_all:
@@ -1353,6 +1412,15 @@ def main_saebench(args) -> None:
             out["mvr_minus_control_fdr_cv"] = {"mean_diff": ex[0], "se": ex[1], "p_two_sided": ex[2]}
             out["SB3_control_valid"] = out["S1_control_valid_cv"]
             out["SB3_gaussian_breach"] = {a: cv[a]["n_breach_BY"] for a in ("gauss_real", "gauss_mvr")}
+            if "evalue" in cv:                                             # saebench_amendment_5, rules EV1-EV3
+                out["EV1_evalue_breaches"] = {lam: out["by_lambda"][lam]["evalue"]["n_breach_BY"] for lam in ("fixed", "cv")}
+                for other in ("hurdle", "gauss_mvr"):
+                    if other in cv:
+                        out[f"EV2_evalue_minus_{other}"] = {lam: {m: dict(zip(("mean_diff", "se", "p_two_sided"), two_sided_diff(
+                            z[f"{m}_{lam}__evalue"].mean(axis=(0, 2)), z[f"{m}_{lam}__{other}"].mean(axis=(0, 2)), True)))
+                            for m in ("ko_fdr", "ko_pow")} for lam in ("fixed", "cv")}
+                ei = json.loads((rd / f"{slug(name)}_evalue_info.json").read_text())
+                out["EV3_selection"] = {k: ei[k] for k in ("median_selected_fixed", "median_selected_cv", "share_at_cap_cv")}
             if "hurdle" in cv:
                 hm = out["S3_hurdle_minus_mvr_cv"][design]["ko_fdr"]
                 out["SB4_hurdle_restores"] = bool(cv["hurdle"]["n_breach_BY"] == 0 and hm["mean_diff"] < 0 and hm["p_two_sided"] < 0.05)
@@ -1367,6 +1435,8 @@ def main_saebench(args) -> None:
             summary[name] = {k: out[k] for k in ("n", "median_zero_mass", "SB3_control_valid", "SB3_gaussian_breach",
                                                  "SB4_hurdle_restores", "mvr_minus_control_fdr_cv")}
             summary[name]["breaches_cv"] = {a: cv[a]["n_breach_BY"] for a in cv}
+            for k_ in [k_ for k_ in out if k_.startswith("EV")]:
+                summary[name][k_] = out[k_]
             summary[name]["mean_fdr_q0.10_cv"] = {a: cv[a]["by_design"][design]["mean_fdr_q0.10"] for a in cv}
             summary[name]["mean_power_cv"] = {a: cv[a]["by_design"][design]["mean_power"] for a in cv}
             line = (f"  {name:50s} zeros {out['median_zero_mass']:.2f}  breaches (BY) "
@@ -1390,6 +1460,11 @@ def main_saebench(args) -> None:
                "SB3_R_equicorrelated_breach_datasets": sum(summary[n]["SB3_gaussian_breach"]["gauss_real"] > 0 for n in valid),
                "SB4_R_hurdle_restores_datasets": sum(bool(summary[n]["SB4_hurdle_restores"]) for n in valid)}
         agg["SB3_R_replicates"] = bool(valid and agg["SB3_R_gaussian_breach_datasets"] >= len(valid) / 2)
+        ev_ds = [n for n in summary if "EV1_evalue_breaches" in summary[n]]
+        if ev_ds:
+            agg["EV1_evalue_breach_datasets_cv"] = [n for n in ev_ds if summary[n]["EV1_evalue_breaches"]["cv"] > 0]
+            agg["EV_n_datasets"] = len(ev_ds)
+            agg["EV3_share_at_cap_cv"] = {n: summary[n]["EV3_selection"]["share_at_cap_cv"] for n in ev_ds}
         if len(valid) >= 3:
             zm = [summary[n]["median_zero_mass"] for n in valid]
             exc = [summary[n]["mvr_minus_control_fdr_cv"]["mean_diff"] for n in valid]
@@ -1416,6 +1491,8 @@ def main_saebench(args) -> None:
     all_arms = [tuple(a) for a in cfg["stage4_repairs"]["arms"]] + [tuple(a) for a in cfg["stage4_mvr"]["arms"]]
     arm_ids = {n: i for i, (n, _) in enumerate(all_arms)}
     arms = [(n, m) for n, m in all_arms if n in ext["arm_groups"][group]]
+    if group == "evalue":
+        arms = []                                  # no knockoffs: no samplers are built
     cells = cells_of(name)
     C = load_cache(cfg, name)
     X = C["X"]
@@ -1443,6 +1520,23 @@ def main_saebench(args) -> None:
     print(f"\n=== {args.stage}: arms {[a for a, _ in arms]}, {len(cells)} cells, {R} replicate(s) ===")
     ckpt = None if args.stage == "diagnose" else rd / f"{slug(name)}_{group}_checkpoint.json"
     streams = ("sb4m_knockoff", "sb4m_planted", "sb4m_folds") if matched else ("sb34_knockoff", "sb34_planted", "sb34_folds")
+    if group == "evalue":
+        t = time.time()
+        M, LAM, NSEL = run_evalue_cells(cfg, sec, D, device, R, cells, streams, prefix=(di,), checkpoint=ckpt)
+        sel_info = {"median_selected_fixed": float(np.median(NSEL[..., 0])), "median_selected_cv": float(np.median(NSEL[..., 1])),
+                    "share_at_cap_cv": float((NSEL[..., 1] > sec["evalue"]["max_selected"]).mean())}
+        print(f"  {(time.time() - t) / R:.0f}s per replicate; selected on half A: fixed median {sel_info['median_selected_fixed']:.0f}, "
+              f"CV median {sel_info['median_selected_cv']:.0f} (cap {sec['evalue']['max_selected']}, share above {sel_info['share_at_cap_cv']:.2f})", flush=True)
+        if args.stage == "diagnose":
+            return
+        np.savez(rd / f"{slug(name)}_evalue_records.npz", **{f"{m}__evalue": M[m]["evalue"] for m in M}, lam__evalue=LAM)
+        (rd / f"{slug(name)}_evalue_info.json").write_text(json.dumps(
+            {"dataset": name, "info": D["info"], "replicates": R, "cells": [list(c) for c in cells], "matched": matched,
+             "positive_threshold": thr_info, **sel_info, "minutes": round((time.time() - t0) / 60, 1)}, indent=2, default=float))
+        for f in (ckpt, ckpt.with_suffix(".npz")):
+            f.unlink(missing_ok=True)
+        print(f"\nwrote {rd}/{slug(name)}_evalue_records.npz ({(time.time() - t0) / 60:.1f} min)")
+        return
     t = time.time()
     M, LAM, corr, dinfo = run_cells(cfg, sec, D, device, R, arms, arm_ids, cells, checkpoint=ckpt,
                                     streams=streams, prefix=(di,))

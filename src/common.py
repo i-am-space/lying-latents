@@ -69,6 +69,8 @@ STREAMS = [
     "sb4m_planted",          # SAEBench matched benchmark: planted signals and labels (per dataset, cell, replicate)
     "sb4m_folds",            # SAEBench matched benchmark: cross-validation folds (per dataset, cell, replicate)
     "sb4x_diagnostics",      # SAEBench swap tests of every knockoff arm: draw seeds, row partitions, classifiers (per dataset, arm)
+    "sbev_split",            # SAEBench e-values: half-A / half-B split (per dataset, replicate)
+    "sbev_folds",            # SAEBench e-values: CV folds within half A (per dataset, cell, replicate)
 ]
 
 

@@ -477,6 +477,7 @@ stage4_saebench:
   arm_groups:
     hurdle: [hurdle]
     gauss: [gauss_real, gauss_mvr, gauss_ceiling_mvr]
+    evalue: [evalue]              # saebench_amendment_5: e-value splitting on the same cells and labels
   diagnose:
     pilot_replicates: 1
 
@@ -504,6 +505,7 @@ stage4_saebench_matched:
   arm_groups:
     hurdle: [hurdle]
     gauss: [gauss_real, gauss_mvr, gauss_ceiling_mvr]
+    evalue: [evalue]              # saebench_amendment_5: e-value splitting on the same cells and labels
   diagnose:
     pilot_replicates: 1
   calibration:
