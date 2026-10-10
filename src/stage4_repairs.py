@@ -560,7 +560,8 @@ def main() -> None:
     ap.add_argument("--config", default="config/default.yaml")
     ap.add_argument("--cache", default=None)
     ap.add_argument("--device", default=None)
-    ap.add_argument("--stage", default="diagnose", choices=["diagnose", "full", "analyse"])
+    ap.add_argument("--stage", default="diagnose", choices=["diagnose", "full", "analyse", "exchange"],
+                    help="exchange (saebench only): the Stage 2 swap tests on one knockoff draw of every arm of the group")
     ap.add_argument("--limit-reps", type=int, default=None)
     ap.add_argument("--skip-exchangeability", action="store_true")
     ap.add_argument("--arm-group", default="gauss", help="cv / stress / saebench: which arm group to run")
@@ -1230,6 +1231,56 @@ def dose_response(rd: Path, prefix: str, groups: list, cells: list, qs: list) ->
     return rows
 
 
+def exchange_tests(cfg: dict, D: dict, arms, arm_ids: dict, di: int) -> dict:
+    """Stage 2's exchangeability tests, unchanged (src/saebench/stage2.py: knockoff_audit.run_suite and
+    label_permutation_null, settings saebench.stage2), on one knockoff draw of each arm, so every construction
+    (hurdle included) gets the test the Gaussian knockoffs got: the 1{x = 0} rule, the swap two-sample classifier
+    at |S| = 0, 1, 10, 50, all (3 draws of S), moments, MMD, and a label-permutation null band for the AUC.
+    A construction is detected as non-exchangeable at |S| when its swap AUC is above the band's 97.5th
+    percentile. Seeds from stream sb4x_diagnostics (dataset, arm)."""
+    from knockoff_audit import label_permutation_null, run_suite
+    s2 = cfg["saebench"]["stage2"]
+    out = {"settings": {k: s2[k] for k in ("swap_sizes", "swap_replicates", "n_label_permutations")}, "arms": {}}
+    p = D["Z"].shape[1]
+    for name, method in arms:
+        aid = arm_ids[name]
+        seed = int(cell_rng(cfg, "sb4x_diagnostics", di, aid, 0).integers(2**31))
+        t = time.time()
+        Dm, Dk, info = data_and_knockoffs(method, D, seed)
+        raw = None
+        if Dm is D["Z"]:                      # real latents: the raw scale, for the 1{x = 0} rule
+            Xk_raw = Dk * D["sd"] + D["mu"]
+            Xk_raw[np.abs(Xk_raw) < 1e-7] = 0.0     # exact zeros of a hurdle draw, through the standardisation round trip
+            raw = (D["X"], Xk_raw)
+        rr = cell_rng(cfg, "sb4x_diagnostics", di, aid, 1)
+        res = run_suite(name, Dm, Dk, cfg, rr, s2["swap_sizes"], s2["swap_replicates"], raw=raw)
+        res.pop("_zero_mass_arrays", None)
+        null = label_permutation_null(Dm, Dk, cfg, rr, s2["n_label_permutations"])
+        q975 = float(np.quantile(null, 0.975))
+
+        def auc_at(size):
+            v = [r["auc"] for r in res["swap"] if r["swap_size"] == size]
+            return float(np.mean(v)) if v else None
+
+        sizes = [p if s == "all" else int(s) for s in s2["swap_sizes"]]
+        res["label_permutation_auc"] = {"values": null, "mean": float(np.mean(null)), "q975": q975}
+        res["summary"] = {
+            "swap_auc": {("all" if s == p else str(s)): auc_at(s) for s in sizes},
+            "detected_at": {("all" if s == p else str(s)): bool(auc_at(s) > q975) for s in sizes if s > 0},
+            "null_q975": q975,
+            "zero_mass_median_accuracy": res.get("zero_mass", {}).get("median_accuracy"),
+            "knockoff_self_correlation": res["knockoff_self_correlation"],
+            "draw_seconds": round(time.time() - t, 1),
+            **{k: v for k, v in info.items() if not isinstance(v, (list, dict))}}
+        out["arms"][name] = res
+        sm = res["summary"]
+        print(f"  [{name}] swap AUC " + "  ".join(f"|S|={k}: {v:.3f}" for k, v in sm["swap_auc"].items())
+              + f"  (null q97.5 {q975:.3f}; detected at " + ", ".join(k for k, v in sm["detected_at"].items() if v) + ")"
+              + (f"  zero-mass rule {sm['zero_mass_median_accuracy']:.3f}" if sm["zero_mass_median_accuracy"] is not None else "")
+              + f"  ({time.time() - t:.0f}s)", flush=True)
+    return out
+
+
 def main_saebench(args) -> None:
     """Per SAEBench dataset: the Stage 4 cross-validated benchmark on that dataset's cached latents.
     Arms and procedure as stage4_cv; dataset-specific seed streams.
@@ -1381,6 +1432,13 @@ def main_saebench(args) -> None:
     D = build_from_X(cfg, sec, X.astype(np.float64), device, [m for _, m in arms], cell_rng(cfg, "sb34_data", di),
                      mvr_seed=int(cell_rng(cfg, "sb34_data", di, 900).integers(2**31)))
     del C, X
+    if args.stage == "exchange":
+        out = exchange_tests(cfg, D, arms, arm_ids, di)
+        out.update({"dataset": name, "group": group, "positive_threshold": thr_info, "info": D["info"],
+                    "minutes": round((time.time() - t0) / 60, 1)})
+        (rd / f"{slug(name)}_{group}_exchange.json").write_text(json.dumps(out, indent=2, default=float))
+        print(f"\nwrote {rd}/{slug(name)}_{group}_exchange.json ({out['minutes']} min)")
+        return
     R = args.limit_reps or (ext["diagnose"]["pilot_replicates"] if args.stage == "diagnose" else ext["replicates"])
     print(f"\n=== {args.stage}: arms {[a for a, _ in arms]}, {len(cells)} cells, {R} replicate(s) ===")
     ckpt = None if args.stage == "diagnose" else rd / f"{slug(name)}_{group}_checkpoint.json"

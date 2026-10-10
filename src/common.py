@@ -68,6 +68,7 @@ STREAMS = [
     "sb4m_knockoff",         # SAEBench matched benchmark: knockoff draw seeds (per dataset, arm, replicate)
     "sb4m_planted",          # SAEBench matched benchmark: planted signals and labels (per dataset, cell, replicate)
     "sb4m_folds",            # SAEBench matched benchmark: cross-validation folds (per dataset, cell, replicate)
+    "sb4x_diagnostics",      # SAEBench swap tests of every knockoff arm: draw seeds, row partitions, classifiers (per dataset, arm)
 ]
 
 

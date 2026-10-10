@@ -8,6 +8,8 @@
 #   calibrate   parameters only (per-dataset amplitude matched to the real labels; minutes, no knockoffs)
 #   run         the benchmark: one process per (dataset, arm group), PAR at a time on GPU; resumes from checkpoints
 #   analyse     per-dataset JSON and the summary: breaches, FDR, power and the coin
+#   exchange    the Stage 2 swap tests (and the zero-mass rule) on one knockoff draw of every arm of each group;
+#               writes <dataset>_<group>_exchange.json next to the records
 #   all         calibrate, run, analyse
 #
 # Env:  GPU   (default 2)            CUDA device
@@ -24,7 +26,7 @@
 #   GPU=2 CFG=config/models/pythia70m.yaml THR=0.19 ARMS="hurdle gauss" scripts/saebench_matched.sh all
 set -uo pipefail
 cd "$(dirname "$0")/.."
-MODE=${1:?usage: $0 calibrate|run|analyse|all [DATASET ...]}
+MODE=${1:?usage: $0 calibrate|run|analyse|exchange|all [DATASET ...]}
 shift
 GPU=${GPU:-2}
 CFG=${CFG:-config/default.yaml}
@@ -73,6 +75,22 @@ do_run() {
     stamp "run finished"
 }
 
+do_exchange() {
+    local g d
+    for g in "${ARM_GROUPS[@]}"; do
+        for d in "${DATASETS[@]}"; do
+            if [[ -f "$RD/$SUB/${d//\//__}_${g}_exchange.json" ]]; then stamp "exchange done already: $d $g"; continue; fi
+            while (( $(jobs -rp | wc -l) >= PAR )); do wait -n || true; done
+            stamp "exchange: $d ($g, GPU $GPU)"
+            CUDA_VISIBLE_DEVICES=$GPU python src/stage4_repairs.py --config "$CFG" --device cuda --experiment saebench --matched \
+                --dataset "$d" --arm-group "$g" --stage exchange ${THRARG[@]+"${THRARG[@]}"} \
+                > "$LOG/exchange_${g}_${d//\//__}.log" 2>&1 || stamp "EXCHANGE FAILED: $d $g (see $LOG)" &
+        done
+    done
+    wait
+    stamp "exchange finished"
+}
+
 do_analyse() {
     python src/stage4_repairs.py --config "$CFG" --experiment saebench --matched --stage analyse ${THRARG[@]+"${THRARG[@]}"} \
         2>&1 | tee "$LOG/analyse.log"
@@ -82,6 +100,7 @@ case $MODE in
     calibrate) do_calibrate ;;
     run) do_run ;;
     analyse) do_analyse ;;
+    exchange) do_exchange ;;
     all) do_calibrate && do_run && do_analyse ;;
     *) echo "unknown mode $MODE"; exit 2 ;;
 esac
