@@ -1913,3 +1913,18 @@ saebench_amendment_6:
       hurdle records; same deep_knockoffs settings, seeds (dk_train per dataset) and stages. It shows whether deep
       knockoffs keep FDR control where the Gaussian arms already do, not only where they fail
       (scripts/deep_knockoffs.sh, SET=gemma8). DK2 is reported per setting; DK-T applies to it unchanged.
+  revision_2:
+    date_written: "2026-10-21"
+    status: written_before_any_result
+    what_happened: >
+      Both runs (the 5 datasets and gemma2_all) were started; only generator training had finished, and no swap test,
+      record or FDR value had been written. On Pythia Amazon category the training loss stayed at about 18 (others
+      0.02-0.07), with the second-moment term already 200 at step 0, before training. Cause, an implementation error:
+      the floor set values below a latent's smallest observed activation to 0 also for latents that are never 0 in
+      the data (always-on latents of the ReLU SAE), producing knockoff values far outside their support (reproduced
+      on synthetic data: -46.6 standardised units against a data minimum of -3.6).
+    change: >
+      For a latent with no exact zeros in the data, values below its smallest observed activation are set to that
+      value instead of 0; latents with zeros are unchanged. Both runs are stopped, their generators and partial
+      outputs deleted, and every dataset of both settings rerun from the start with the fix, so all deep results use
+      one method. Nothing else changes.

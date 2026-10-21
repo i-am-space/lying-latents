@@ -7,7 +7,9 @@ second-moment matching and a decorrelation term that stops X~ from copying X. Tw
 - Residual on block-MVR Gaussian knockoffs: X~ = jump(Gaussian MVR knockoff + f(X, E)), with f's last layer
   zero-initialised, so training starts from the second-order knockoff the Gaussian arm uses and learns the
   correction beyond second moments. `jump` sets a value below the latent's smallest observed positive
-  activation to 0, so the generator can produce the zero atom and the JumpReLU floor.
+  activation to 0, so the generator can produce the zero atom and the JumpReLU floor. A latent that is never 0
+  in the data (always-on latents of ReLU SAEs) is clamped at its smallest value instead, so no knockoff value
+  falls outside the latent's observed support (saebench_amendment_6 revision_2).
 - The MMD swap loss is taken on the full (X, X~) vector and on neighbourhoods (an anchor latent and its
   most correlated latents), where the swap property is local and the full-dimension kernel is insensitive.
 
@@ -69,6 +71,7 @@ class DeepKnockoffSampler:
         self.mu_t, self.sd_t = f32(mu), f32(sd)
         floor = np.where(X > 0, X, np.inf).min(0)
         self.floor_t = f32(np.where(np.isfinite(floor), floor, np.inf))
+        self.below_t = f32(np.where((X == 0).any(0), 0.0, floor))      # value given below the floor: 0, or the floor
         self.zero_mass = (X == 0).mean(0)
         self.target = f32(np.clip(1.0 - s, 0.0, 1.0))
         perm = np.random.default_rng([seed, 0]).permutation(n)
@@ -100,7 +103,7 @@ class DeepKnockoffSampler:
         b = self.base
         v = b.mu + (Zb - b.mu) @ b.A + E @ b.Lt + net(torch.cat([Zb, E], dim=1))
         t = self.mu_t + self.sd_t * v
-        x = torch.where(t >= self.floor_t, t, torch.zeros_like(t))
+        x = torch.where(t >= self.floor_t, t, self.below_t.expand_as(t))
         return (x - self.mu_t) / self.sd_t
 
     def _train(self, f: int, seed: int) -> dict:
