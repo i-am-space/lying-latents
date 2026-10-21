@@ -482,6 +482,7 @@ stage4_saebench:
     gauss: [gauss_real, gauss_mvr, gauss_ceiling_mvr]
     evalue: [evalue]              # saebench_amendment_5: e-value splitting on the same cells and labels
     evalue_plus: [evalue_nocap, evalue_k5]   # stage4_amendment_7
+    deep: [deep]                  # saebench_amendment_6: deep knockoffs (deep_knockoffs below)
   diagnose:
     pilot_replicates: 1
 
@@ -511,6 +512,7 @@ stage4_saebench_matched:
     gauss: [gauss_real, gauss_mvr, gauss_ceiling_mvr]
     evalue: [evalue]              # saebench_amendment_5: e-value splitting on the same cells and labels
     evalue_plus: [evalue_nocap, evalue_k5]   # stage4_amendment_7
+    deep: [deep]                  # saebench_amendment_6
   diagnose:
     pilot_replicates: 1
   calibration:
@@ -525,6 +527,26 @@ stage4_saebench_matched:
                                    # this fraction of its median positive value. 0.19 = the Gemma-2 (Gemma Scope,
                                    # JumpReLU) minimum positive / median positive, mean over EuroParl, Bias in Bios 1
                                    # and Amazon category (0.129, 0.191, 0.246; results/models/positive_shape_check.json)
+
+# Deep knockoffs (config/preregistration.yaml saebench_amendment_6; src/deep_knockoffs.py): a generator trained
+# with the swap-MMD loss of Romano, Sesia and Candes (2019), as a residual on the block-MVR Gaussian knockoff,
+# with a floor at each latent's smallest positive activation (exact zeros), cross-fitted over 2 row folds.
+# Fixed before any real-data run; not tuned on any result.
+deep_knockoffs:
+  arms:                           # appended after stage4_repairs' and stage4_mvr's arms: arm id 7
+    - [deep, deep_residual]
+  hidden: 1024                    # width of the 2 hidden layers (Linear, LayerNorm, GELU); input [Z, E], output p
+  layers: 2
+  steps: 4000                     # Adam steps per fold
+  batch: 2048                     # rows per step; the MMD compares its two halves
+  lr: 3.0e-4
+  mmd_scales: [0.25, 0.5, 1.0, 2.0, 4.0]   # Gaussian kernel bandwidths, x the median squared cross distance
+  local_blocks: 8                 # neighbourhood MMDs per step
+  local_size: 64                  # an anchor latent and its 63 most correlated latents
+  gamma_mmd: 1.0                  # loss weights as Romano et al.'s defaults: MMD, second moments, decorrelation
+  lambda_moments: 1.0
+  delta_decorrelation: 1.0        # target corr(X_j, X~_j) = 1 - s_j of the block-MVR S
+  log_every: 250
 
 paths:
   cache_dir: data/cache

@@ -1827,3 +1827,78 @@ stage4_amendment_7:
   smoke_test_before_commit: >
     E0's discoveries are reproduced exactly by the new per-split e-value code with the cap of 500 (unit check).
     One diagnose replicate on Gemma-2 EuroParl: E1 38 s, E2 192 s per replicate on the RTX 5050.
+
+# ===========================================================================
+# SAEBench AMENDMENT 6 - deep knockoffs (written BEFORE any real-data run)
+# ===========================================================================
+# Appended; no earlier line is altered.
+saebench_amendment_6:
+  meta:
+    date_written: "2026-10-21"
+    status: written_before_run
+    trigger: >
+      Both parametric samplers fail somewhere: Gaussian (block MVR) knockoffs breach in strong interaction cells
+      on SST-2 and on 2 of 4 Gemma-2 datasets of the matched sweep (saebench_amendment_4), with a null coin above
+      0.5 in interaction cells on all 4; hurdle knockoffs breach on all 3 Pythia-70M datasets (saebench_amendment_3:
+      4, 7 and 16 of 24). The obvious alternative is to learn the knockoff sampler from the data instead of
+      assuming a law: deep knockoffs (Romano, Sesia and Candes 2019, JASA). Whether a learned sampler passes the
+      same audit is tested here.
+  design:
+    method: >
+      src/deep_knockoffs.py, settings config deep_knockoffs (fixed here, not tuned on any result). A network maps
+      (Z, E) to a correction f added to the block-MVR Gaussian knockoff of the same dataset (same S and solve
+      seed as gauss_mvr), Xk = jump(mu + sd * (Gaussian knockoff + f)), where jump sets values below the
+      latent's smallest observed positive activation to 0 (exact zeros and the JumpReLU floor) and f's last layer
+      is zero-initialised (training starts at the floored Gaussian knockoff). Two hidden layers of 1,024
+      (LayerNorm, GELU). Loss, weights 1 / 1 / 1 as Romano et al.: MMD between (X, Xk) and its swaps (a random
+      half of the columns, and all columns) on the full vector and on 8 neighbourhoods per step (an anchor latent
+      and its 63 most correlated latents); mean, covariance and cross-covariance matching; and decorrelation
+      towards corr(X_j, Xk_j) = 1 - s_j of the block-MVR S. Adam, lr 3e-4, batch 2,048, 4,000 steps.
+      Cross-fitting: rows split in two folds; the generator applied to a fold is trained on the other fold only.
+      Seeds: dk_train (dataset) for the fold split and training; knockoff draws from the experiment's knockoff
+      stream with arm id 7 (deep_knockoffs.arms is appended after the existing arms, so no earlier seed changes).
+      The trained generators are saved per dataset (<dataset>_deep_generators.pt) and reused by every stage.
+    deviations_from_romano_et_al: >
+      The residual parameterisation, the floor and the neighbourhood MMD are not in the original method, which was
+      shown at p of about 100; they are made for p = 2,048 and zero-inflated activations before any result.
+    settings:
+      gemma2_matched: >
+        config/default.yaml, --matched (stage4_saebench_matched: 20 sweep cells, 15 replicates, sb4m_* streams):
+        LabHC/bias_in_bios_class_set1 and codeparrot/github-code, the two datasets where block MVR breached.
+        Paired with saebench_amendment_4's gauss records (same planted labels, folds and Gaussian control).
+      pythia: >
+        config/models/pythia70m.yaml, unthresholded latents, stage4_saebench (8 cells, 10 replicates, sb34_*
+        streams): Helsinki-NLP/europarl, LabHC/bias_in_bios_class_set1, canrager/amazon_reviews_mcauley_1and5,
+        where the hurdle breached. Paired with saebench_amendment_3's hurdle and gauss records.
+    stages: >
+      Per dataset: the Stage 2 exchangeability suite on one deep draw (--stage exchange, as exchange_tests: swap
+      classifier at |S| = 0, 1, 10, 50, all, label-permutation band, 1{x = 0} rule), then the benchmark (--stage
+      full, arm group deep), then the same suite on the Gaussian arms where it was not yet run. The swap tests do
+      not stop the benchmark. Analysis: --stage analyse, unchanged rules of the earlier amendments plus DK1-DK4.
+      Script: scripts/deep_knockoffs.sh (one GPU, the 5 datasets side by side).
+  decision_rules:
+    - id: DK1
+      rule: "Per dataset, the deep arm's swap AUC at each |S| against the label-permutation 97.5% point, next to block MVR's (and the hurdle's where run); reported, not a gate."
+    - id: DK2
+      rule: >
+        Deep knockoffs repair a dataset if they have no Benjamini-Yekutieli breach under CV over its cell-q
+        combinations, their pooled FDR is not significantly above the Gaussian control's (paired over replicates,
+        two-sided 0.05), and, on the matched sweep, their interaction-cell null coin is not significantly above 0.5
+        (one-sided 0.05). The result is the number of the 5 datasets repaired, reported per setting.
+    - id: DK3
+      rule: "Per dataset, paired deep minus block-MVR, minus control and (Pythia) minus hurdle FDR and power under CV."
+    - id: DK4
+      rule: "Descriptive: the deep arm's coin (matched sweep: all, linear, interaction, per amplitude), its mean self-correlation, its zero-mass error and the training losses."
+    - id: DK-T
+      rule: "No change to the network, the loss, its weights, the steps, the datasets or the cells after any real-data result; a failed run is fixed only for crashes and reported."
+  smoke_test_before_commit: >
+    CPU only, no real data seen. (1) src/deep_knockoffs.py on a synthetic zero-inflated nonlinear matrix (n 3,000,
+    p 64, 400 steps): trains, draws are reproducible from the seed and identical after reloading the saved
+    generators; zero mass moved from 0.36 (floored Gaussian start) to 0.62 (data 0.70), swap AUC on quadratic
+    features from 1.00 to 0.93. (2) The full stage4_repairs path (exchange, full, analyse; matched and original
+    cells; with gauss and hurdle groups) on a synthetic cache with knockpy stubbed, producing the DK keys.
+  interpretation_constraints:
+    - "A learned sampler has no exchangeability guarantee; like the hurdle, its validity is what the swap tests and the benchmark measure."
+    - "One network size and training budget; a failure is of this generator, not of every learned sampler."
+    - "The residual design inherits block MVR's second-order structure; a repair shows that a correction beyond second moments is learnable from 6,250 rows, not that it is unique."
+    - "2 Gemma-2 and 3 Pythia datasets; SST-2 is not run here (different pipeline)."

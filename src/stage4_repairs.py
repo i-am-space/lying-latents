@@ -49,7 +49,7 @@ ARM_COLOR = {"gauss_real": "#c0392b", "hurdle": "#2e8b57", "binarised": "#8e44ad
              "evalue": "#e07b39", "gauss_ceiling": "#3b6ea5", "gauss_mvr": "#f1948a",
              "gauss_ceiling_mvr": "#85c1e9"}
 KNOCKOFF_METHODS = ("gaussian", "hurdle_scip", "binary_scip", "gaussian_control",
-                    "gaussian_mvr", "gaussian_control_mvr")
+                    "gaussian_mvr", "gaussian_control_mvr", "deep_residual")
 CONTROL_METHODS = ("gaussian_control", "gaussian_control_mvr")
 
 
@@ -384,7 +384,7 @@ def build_block_mvr(Z, Sigma, Zg, Sigma_g, sec: dict, device, seed: int) -> dict
             "min_eig_2Sigma_minus_S": float(np.linalg.eigvalsh(2 * Sigma - S).min())}
     print(f"  block MVR: mean s={info['mean_s']:.4f} ({t_real:.0f}s), control: {note}", flush=True)
     return {"gauss_mvr": GaussKnockoffGPU(Zt, Sigma, S), "gauss_ctrl_mvr": GaussKnockoffGPU(Zgt, Sigma_g, S_g),
-            "mvr_info": info}
+            "mvr_info": info, "mvr_s": np.diag(S).copy()}
 
 
 def build(cfg: dict, sec: dict, X_all: np.ndarray, device, methods=None) -> dict:
@@ -405,10 +405,11 @@ def build(cfg: dict, sec: dict, X_all: np.ndarray, device, methods=None) -> dict
 
 
 def build_from_X(cfg: dict, sec: dict, X: np.ndarray, device, methods, rng: np.random.Generator,
-                 mvr_seed: int) -> dict:
+                 mvr_seed: int, deep_seed: int | None = None, deep_cache: Path | None = None) -> dict:
     """Standardised data, Gaussian control (drawn from rng), S matrices and samplers for a raw
     latent matrix X (rows x latents). build() calls it on the Stage 4 rows; the SAEBench run on each
-    dataset's cache."""
+    dataset's cache. Deep knockoffs (saebench_amendment_6) are built only when listed in methods; their
+    generators are trained from deep_seed, or loaded from deep_cache if it exists."""
     from knockpy import smatrix
     from knockpy.knockoffs import GaussianSampler
 
@@ -433,16 +434,24 @@ def build_from_X(cfg: dict, sec: dict, X: np.ndarray, device, methods, rng: np.r
     if "binary_scip" in need:
         samplers["binary_scip"] = SCIPSampler(X, "binary", sec["scip"], device)
     mvr = {}
-    if need & {"gaussian_mvr", "gaussian_control_mvr"}:
+    if need & {"gaussian_mvr", "gaussian_control_mvr", "deep_residual"}:
         mvr = build_block_mvr(Z, Sigma, Zg, Sigma_g, sec, device, seed=mvr_seed)
+    deep = None
+    if methods is not None and "deep_residual" in methods:
+        from deep_knockoffs import DeepKnockoffSampler
+        if deep_seed is None:
+            raise ValueError("deep_residual needs deep_seed")
+        deep = DeepKnockoffSampler(X, Z, mu, sd, mvr["gauss_mvr"], mvr["mvr_s"], cfg["deep_knockoffs"], device,
+                                   deep_seed, cache=deep_cache)
     return {"X": X, "Z": Z, "mu": mu, "sd": sd, "Zg": Zg, "Zb": (Zb - mb) / sb, "mb": mb, "sb": sb,
             "gauss": GaussianSampler(Z, mu=Z.mean(0), Sigma=Sigma, S=S),
             "gauss_ctrl": GaussianSampler(Zg, mu=Zg.mean(0), Sigma=Sigma_g, S=S_g),
-            "scip": samplers, **mvr,
+            "scip": samplers, **mvr, "deep": deep,
             "info": {"n": n, "p": p, "s_equicorrelated": float(np.diag(S).mean()),
                      "median_zero_mass": float(np.median((X == 0).mean(0))),
                      "sampler_setup_seconds": time.time() - t,
-                     **({"block_mvr": mvr["mvr_info"]} if mvr else {})}}
+                     **({"block_mvr": mvr["mvr_info"]} if mvr else {}),
+                     **({"deep": deep.info} if deep else {})}}
 
 
 def data_and_knockoffs(method: str, D: dict, seed: int):
@@ -461,6 +470,9 @@ def data_and_knockoffs(method: str, D: dict, seed: int):
         Xk, info = D["scip"]["hurdle_scip"].sample(seed)
         info["zero_mass_error_max"] = float(np.abs((D["X"] == 0).mean(0) - (Xk == 0).mean(0)).max())
         return D["Z"], (Xk - D["mu"]) / D["sd"], info
+    if method == "deep_residual":
+        Zk, info = D["deep"].sample(seed)
+        return D["Z"], Zk, info
     if method == "binary_scip":
         Zbk, info = D["scip"]["binary_scip"].sample(seed)
         info["zero_mass_error_max"] = float(np.abs((D["X"] > 0).mean(0) - Zbk.mean(0)).max())
@@ -1495,6 +1507,38 @@ def exchange_tests(cfg: dict, D: dict, arms, arm_ids: dict, di: int) -> dict:
     return out
 
 
+def deep_rules(z: dict, cv: dict, out: dict, rd: Path, prefix: str, matched: bool) -> dict:
+    """saebench_amendment_6. DK1: swap tests of the deep arm (and the Gaussian ones, if run) from the exchange
+    stage. DK2: the deep arm repairs the dataset if it has no BY breach under CV, its pooled FDR is not
+    significantly above the control's and (matched sweep) its interaction-cell coin is not significantly above
+    0.5. DK3: paired deep minus control, block MVR and hurdle FDR and power. DK4: the coin, from out["coin"]."""
+    from reanalysis_multiplicity import two_sided_diff
+    r = {"breaches_cv": cv["deep"]["n_breach_BY"]}
+    for other in ("gauss_ceiling_mvr", "gauss_mvr", "hurdle"):
+        if other in cv:
+            r[f"DK3_deep_minus_{other}"] = {m: dict(zip(("mean_diff", "se", "p_two_sided"), two_sided_diff(
+                z[f"{m}_cv__deep"].mean(axis=(0, 2)), z[f"{m}_cv__{other}"].mean(axis=(0, 2)), other != "gauss_ceiling_mvr")))
+                for m in ("ko_fdr", "ko_pow")}
+    ctrl = r["DK3_deep_minus_gauss_ceiling_mvr"]["ko_fdr"]
+    above_ctrl = bool(ctrl["mean_diff"] > 0 and ctrl["p_two_sided"] < 0.05)
+    coin_bad = False
+    if matched and "deep" in out.get("coin", {}):
+        c = out["coin"]["deep"]
+        r["DK4_coin"] = {lab: {k: c[lab][k] for k in ("rate", "se", "p_two_sided")} for lab in c}
+        ci = c.get("interaction")
+        coin_bad = bool(ci and ci["rate"] > 0.5 and ci["p_two_sided"] / 2 < 0.05)
+    r["DK2_repairs"] = bool(r["breaches_cv"] == 0 and not above_ctrl and not coin_bad)
+    ex = {}
+    for g in ("deep", "gauss", "hurdle"):
+        f = rd / f"{prefix}_{g}_exchange.json"
+        if f.exists():
+            ex.update({a: v["summary"] for a, v in json.loads(f.read_text())["arms"].items()})
+    if ex:
+        r["DK1_exchange"] = {a: {k: v[k] for k in ("swap_auc", "detected_at", "null_q975", "zero_mass_median_accuracy",
+                                                   "knockoff_self_correlation") if k in v} for a, v in ex.items()}
+    return r
+
+
 def main_saebench(args) -> None:
     """Per SAEBench dataset: the Stage 4 cross-validated benchmark on that dataset's cached latents.
     Arms and procedure as stage4_cv; dataset-specific seed streams.
@@ -1546,7 +1590,7 @@ def main_saebench(args) -> None:
         summary = {}
         for name in datasets:
             groups = [g for g in ext["arm_groups"] if (rd / f"{slug(name)}_{g}_records.npz").exists()]
-            required = [g for g in ext["arm_groups"] if g not in ("evalue", "evalue_plus")]   # e-value groups are optional
+            required = [g for g in ext["arm_groups"] if g not in ("evalue", "evalue_plus", "deep")]   # e-value and deep groups are optional
             if "gauss" not in groups or (not matched and not all(g in groups for g in required)):
                 print(f"  {name}: records incomplete, skipped", flush=True)
                 continue
@@ -1591,11 +1635,13 @@ def main_saebench(args) -> None:
                     out["calibration"] = {"real_auc_median": cal_all[name]["real_auc_median"], "matched": cal_all[name]["matched"]}
                 out["coin"] = analyse_coin(rd, slug(name), groups, cells, list(cv))
                 out["dose_response"] = dose_response(rd, slug(name), groups, cells, sec["nominal_fdr_targets"])
+            if "deep" in cv:                                               # saebench_amendment_6, rules DK1-DK4
+                out["DK"] = deep_rules(z, cv, out, rd, slug(name), matched)
             (rd / f"{slug(name)}.json").write_text(json.dumps(out, indent=2, default=float))
             summary[name] = {k: out[k] for k in ("n", "median_zero_mass", "SB3_control_valid", "SB3_gaussian_breach",
                                                  "SB4_hurdle_restores", "mvr_minus_control_fdr_cv")}
             summary[name]["breaches_cv"] = {a: cv[a]["n_breach_BY"] for a in cv}
-            for k_ in [k_ for k_ in out if k_.startswith("EV") or k_ == "V_evalue_plus"]:
+            for k_ in [k_ for k_ in out if k_.startswith("EV") or k_ in ("V_evalue_plus", "DK")]:
                 summary[name][k_] = out[k_]
             summary[name]["mean_fdr_q0.10_cv"] = {a: cv[a]["by_design"][design]["mean_fdr_q0.10"] for a in cv}
             summary[name]["mean_power_cv"] = {a: cv[a]["by_design"][design]["mean_power"] for a in cv}
@@ -1612,7 +1658,7 @@ def main_saebench(args) -> None:
                 c = out["coin"]
                 line += "\n      coin (share of nulls with W>0; valid = 0.50):  " + "   ".join(
                     f"{a} " + "/".join(f"{c[a][lab]['rate']:.3f}" for lab in ("all", "linear", "interaction"))
-                    for a in ("gauss_real", "gauss_mvr", "hurdle", "gauss_ceiling_mvr") if a in c) + "   (all/linear/interaction)"
+                    for a in ("gauss_real", "gauss_mvr", "hurdle", "deep", "gauss_ceiling_mvr") if a in c) + "   (all/linear/interaction)"
             print(line, flush=True)
         valid = [n for n, v in summary.items() if v["SB3_control_valid"]]
         agg = {"n_datasets": len(summary), "n_valid": len(valid),
@@ -1620,6 +1666,11 @@ def main_saebench(args) -> None:
                "SB3_R_equicorrelated_breach_datasets": sum(summary[n]["SB3_gaussian_breach"]["gauss_real"] > 0 for n in valid),
                "SB4_R_hurdle_restores_datasets": sum(bool(summary[n]["SB4_hurdle_restores"]) for n in valid)}
         agg["SB3_R_replicates"] = bool(valid and agg["SB3_R_gaussian_breach_datasets"] >= len(valid) / 2)
+        dk_ds = [n for n in valid if "DK" in summary[n]]
+        if dk_ds:
+            agg["DK_n_datasets"] = len(dk_ds)
+            agg["DK2_deep_repairs_datasets"] = [n for n in dk_ds if summary[n]["DK"]["DK2_repairs"]]
+            agg["DK2_deep_breach_datasets"] = [n for n in dk_ds if summary[n]["DK"]["breaches_cv"] > 0]
         ev_ds = [n for n in summary if "EV1_evalue_breaches" in summary[n]]
         if ev_ds:
             agg["EV1_evalue_breach_datasets_cv"] = [n for n in ev_ds if summary[n]["EV1_evalue_breaches"]["cv"] > 0]
@@ -1648,7 +1699,8 @@ def main_saebench(args) -> None:
     name = args.dataset
     di = datasets.index(name)
     group = args.arm_group
-    all_arms = [tuple(a) for a in cfg["stage4_repairs"]["arms"]] + [tuple(a) for a in cfg["stage4_mvr"]["arms"]]
+    all_arms = ([tuple(a) for a in cfg["stage4_repairs"]["arms"]] + [tuple(a) for a in cfg["stage4_mvr"]["arms"]]
+                + [tuple(a) for a in cfg.get("deep_knockoffs", {}).get("arms", [])])   # appended: earlier arm ids unchanged
     arm_ids = {n: i for i, (n, _) in enumerate(all_arms)}
     arms = [(n, m) for n, m in all_arms if n in ext["arm_groups"][group]]
     if group in ("evalue", "evalue_plus"):
@@ -1667,7 +1719,9 @@ def main_saebench(args) -> None:
     t0 = time.time()
     print("\n=== data and samplers ===")
     D = build_from_X(cfg, sec, X.astype(np.float64), device, [m for _, m in arms], cell_rng(cfg, "sb34_data", di),
-                     mvr_seed=int(cell_rng(cfg, "sb34_data", di, 900).integers(2**31)))
+                     mvr_seed=int(cell_rng(cfg, "sb34_data", di, 900).integers(2**31)),
+                     deep_seed=int(cell_rng(cfg, "dk_train", di).integers(2**31)),
+                     deep_cache=rd / f"{slug(name)}_deep_generators.pt")
     del C, X
     if args.stage == "exchange":
         out = exchange_tests(cfg, D, arms, arm_ids, di)
