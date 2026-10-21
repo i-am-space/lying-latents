@@ -9,7 +9,11 @@
 #   nohup scripts/deep_knockoffs.sh > logs/deep_knockoffs.log 2>&1 &
 #   scripts/deep_knockoffs.sh status
 #
-# Env: GPU (default 0), THREADS (CPU threads per process, default 6)
+# SET=gemma8 instead runs the deep arm on all 8 Gemma-2 datasets with saebench_amendment_2's 8 cells
+# (stage34, paired with its gauss and hurdle records; saebench_amendment_6 revision_1):
+#   SET=gemma8 GPU=1 nohup scripts/deep_knockoffs.sh > logs/deep_knockoffs_gemma8.log 2>&1 &
+#
+# Env: SET (main | gemma8, default main), GPU (default 0), THREADS (CPU threads per process, default 6)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 [[ -f .venv/bin/activate && -z "${VIRTUAL_ENV:-}" ]] && source .venv/bin/activate
@@ -17,7 +21,8 @@ GPU=${GPU:-0}
 THREADS=${THREADS:-6}
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export OMP_NUM_THREADS=$THREADS MKL_NUM_THREADS=$THREADS OPENBLAS_NUM_THREADS=$THREADS
-LOG=logs/deep_knockoffs
+SET=${SET:-main}
+LOG=logs/deep_knockoffs$([[ $SET == main ]] || echo "_$SET")
 mkdir -p "$LOG"
 stamp() { echo "[$(date '+%F %T')] $*"; }
 G2=config/default.yaml
@@ -27,6 +32,11 @@ JOBS=("$G2|--matched|LabHC/bias_in_bios_class_set1|results/saebench/stage34_matc
       "$PY||Helsinki-NLP/europarl|results/models/pythia70m/saebench/stage34"
       "$PY||LabHC/bias_in_bios_class_set1|results/models/pythia70m/saebench/stage34"
       "$PY||canrager/amazon_reviews_mcauley_1and5|results/models/pythia70m/saebench/stage34")
+if [[ $SET == gemma8 ]]; then
+    mapfile -t G8 < <(python -c "import sys; sys.path.insert(0, 'src'); from common import load_config; print('\n'.join(load_config('$G2')['saebench']['datasets']))")
+    JOBS=()
+    for d in "${G8[@]}"; do JOBS+=("$G2||$d|results/saebench/stage34"); done
+elif [[ $SET != main ]]; then echo "unknown SET=$SET"; exit 2; fi
 
 step() {   # cfg flag dataset rd group stage
     local cfg=$1 flag=$2 d=$3 rd=$4 g=$5 st=$6 out tag
@@ -74,6 +84,12 @@ pids=()
 for j in "${JOBS[@]}"; do pipeline "$j" & pids+=($!); sleep 20; done   # staggered: the generator training is the memory peak
 for p in "${pids[@]}"; do wait "$p"; done
 stamp "analyse"
+if [[ $SET == gemma8 ]]; then
+    python src/stage4_repairs.py --config "$G2" --experiment saebench --stage analyse > "$LOG/analyse_gemma2.log" 2>&1 \
+        || stamp "analyse FAILED (Gemma-2)"
+    stamp "all done -> results/saebench/stage34_summary.json (DK keys)"
+    exit 0
+fi
 python src/stage4_repairs.py --config "$G2" --experiment saebench --matched --stage analyse > "$LOG/analyse_gemma2_matched.log" 2>&1 \
     || stamp "analyse FAILED (Gemma-2)"
 python src/stage4_repairs.py --config "$PY" --experiment saebench --stage analyse > "$LOG/analyse_pythia.log" 2>&1 \

@@ -1902,3 +1902,14 @@ saebench_amendment_6:
     - "One network size and training budget; a failure is of this generator, not of every learned sampler."
     - "The residual design inherits block MVR's second-order structure; a repair shows that a correction beyond second moments is learnable from 6,250 rows, not that it is unique."
     - "2 Gemma-2 and 3 Pythia datasets; SST-2 is not run here (different pipeline)."
+  revision_1:
+    date_written: "2026-10-21"
+    status: written_before_any_result
+    what_happened: >
+      The run of the 5 datasets above was started (no output yet). A second GPU is free.
+    change: >
+      Added setting gemma2_all: config/default.yaml, unmatched stage4_saebench (saebench_amendment_2's 8 cells,
+      10 replicates, sb34_* streams), all 8 Gemma-2 SAEBench datasets, paired with saebench_amendment_2's gauss and
+      hurdle records; same deep_knockoffs settings, seeds (dk_train per dataset) and stages. It shows whether deep
+      knockoffs keep FDR control where the Gaussian arms already do, not only where they fail
+      (scripts/deep_knockoffs.sh, SET=gemma8). DK2 is reported per setting; DK-T applies to it unchanged.
