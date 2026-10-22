@@ -1,5 +1,6 @@
 {
   "arms": [
+    "deep",
     "evalue",
     "gauss_ceiling_mvr",
     "gauss_mvr",
@@ -58,6 +59,38 @@
   ],
   "by_lambda": {
     "fixed": {
+      "deep": {
+        "n_breach_BY": 1,
+        "breaches": [
+          {
+            "design": "realistic",
+            "amplitude": 32.0,
+            "form": "linear",
+            "k": 300,
+            "q": 0.1,
+            "fdr": 0.14910270646214485,
+            "se": 0.010262015208474763,
+            "p_BY": 0.04505997693626709
+          }
+        ],
+        "by_design": {
+          "realistic": {
+            "n_breach_BY": 1,
+            "mean_fdr_q0.10": 0.124244324862957,
+            "mean_power": 0.5475139021873474
+          }
+        },
+        "cells_fdr_q0.10": {
+          "realistic|8.0|linear|100": 0.11012265831232071,
+          "realistic|8.0|linear|300": 0.13613469898700714,
+          "realistic|8.0|interaction|100": 0.13190744817256927,
+          "realistic|8.0|interaction|300": 0.15527597069740295,
+          "realistic|32.0|linear|100": 0.10432110726833344,
+          "realistic|32.0|linear|300": 0.14910271763801575,
+          "realistic|32.0|interaction|100": 0.09536705166101456,
+          "realistic|32.0|interaction|300": 0.11172296106815338
+        }
+      },
       "evalue": {
         "n_breach_BY": 0,
         "breaches": [],
@@ -165,6 +198,58 @@
       }
     },
     "cv": {
+      "deep": {
+        "n_breach_BY": 3,
+        "breaches": [
+          {
+            "design": "realistic",
+            "amplitude": 8.0,
+            "form": "interaction",
+            "k": 100,
+            "q": 0.2,
+            "fdr": 0.42461445927619934,
+            "se": 0.01712573923871218,
+            "p_BY": 1.6305981833060204e-05
+          },
+          {
+            "design": "realistic",
+            "amplitude": 32.0,
+            "form": "linear",
+            "k": 300,
+            "q": 0.2,
+            "fdr": 0.2417931526899338,
+            "se": 0.010422579694672965,
+            "p_BY": 0.04628558145109327
+          },
+          {
+            "design": "realistic",
+            "amplitude": 32.0,
+            "form": "interaction",
+            "k": 300,
+            "q": 0.2,
+            "fdr": 0.3051615238189697,
+            "se": 0.013984204298254874,
+            "p_BY": 0.0008192437143149073
+          }
+        ],
+        "by_design": {
+          "realistic": {
+            "n_breach_BY": 3,
+            "mean_fdr_q0.10": 0.11365510523319244,
+            "mean_power": 0.9613611102104187
+          }
+        },
+        "cells_fdr_q0.10": {
+          "realistic|8.0|linear|100": 0.11736849695444107,
+          "realistic|8.0|linear|300": 0.12324216216802597,
+          "realistic|8.0|interaction|100": 0.1767377108335495,
+          "realistic|8.0|interaction|300": 0.11135107278823853,
+          "realistic|32.0|linear|100": 0.0998518317937851,
+          "realistic|32.0|linear|300": 0.08541520684957504,
+          "realistic|32.0|interaction|100": 0.07440952956676483,
+          "realistic|32.0|interaction|300": 0.12086483091115952
+        }
+      },
       "evalue": {
         "n_breach_BY": 0,
         "breaches": [],
@@ -331,6 +416,10 @@
     "evalue": {
       "median_ratio_to_lambda_max": 0.019999999552965164,
       "share_at_grid_edge": 0.0
+    },
+    "deep": {
+      "median_ratio_to_lambda_max": 0.019999999552965164,
+      "share_at_grid_edge": 0.02500000037252903
     }
   },
   "dataset": "Helsinki-NLP/europarl",
@@ -407,5 +496,119 @@
     "median_selected_cv": 728.5,
     "share_at_cap_cv": 0.9
   },
-  "SB4_hurdle_restores": false
+  "SB4_hurdle_restores": false,
+  "DK": {
+    "breaches_cv": 3,
+    "DK3_deep_minus_gauss_ceiling_mvr": {
+      "ko_fdr": {
+        "mean_diff": 0.03876440525054932,
+        "se": 0.007719334001712616,
+        "p_two_sided": 0.00020258136097315484
+      },
+      "ko_pow": {
+        "mean_diff": -0.0038333177566528542,
+        "se": 0.0027505633827471796,
+        "p_two_sided": 0.18240229951832462
+      }
+    },
+    "DK3_deep_minus_gauss_mvr": {
+      "ko_fdr": {
+        "mean_diff": 0.030028653144836426,
+        "se": 0.00704891725920266,
+        "p_two_sided": 0.0021110309132412555
+      },
+      "ko_pow": {
+        "mean_diff": -0.0077361524105072025,
+        "se": 0.0018856961814782923,
+        "p_two_sided": 0.0026665461561032914
+      }
+    },
+    "DK3_deep_minus_hurdle": {
+      "ko_fdr": {
+        "mean_diff": 0.039018407464027405,
+        "se": 0.006861012862591647,
+        "p_two_sided": 0.0002992070192393518
+      },
+      "ko_pow": {
+        "mean_diff": 0.00404166579246521,
+        "se": 0.001873752731002013,
+        "p_two_sided": 0.059357587673723046
+      }
+    },
+    "DK2_repairs": false,
+    "DK1_exchange": {
+      "deep": {
+        "swap_auc": {
+          "0": 0.5031239997439345,
+          "1": 0.8571873635845669,
+          "10": 0.9999489816850539,
+          "50": 1.0,
+          "all": 1.0
+        },
+        "detected_at": {
+          "1": true,
+          "10": true,
+          "50": true,
+          "all": true
+        },
+        "null_q975": 0.5159197115277993,
+        "zero_mass_median_accuracy": 0.5196799999999999,
+        "knockoff_self_correlation": 0.8992287767413049
+      },
+      "gauss_real": {
+        "swap_auc": {
+          "0": 0.5188825653710408,
+          "1": 0.9169635839587523,
+          "10": 0.9999997153988301,
+          "50": 1.0,
+          "all": 1.0
+        },
+        "detected_at": {
+          "1": true,
+          "10": true,
+          "50": true,
+          "all": true
+        },
+        "null_q975": 0.5137494912397695,
+        "zero_mass_median_accuracy": 0.86502,
+        "knockoff_self_correlation": 0.9463068798557539
+      },
+      "gauss_mvr": {
+        "swap_auc": {
+          "0": 0.4943274150507027,
+          "1": 0.9817325886503063,
+          "10": 0.9999993362810042,
+          "50": 1.0,
+          "all": 1.0
+        },
+        "detected_at": {
+          "1": true,
+          "10": true,
+          "50": true,
+          "all": true
+        },
+        "null_q975": 0.5101899569536155,
+        "zero_mass_median_accuracy": 0.86502,
+        "knockoff_self_correlation": 0.799382297289956
+      },
+      "gauss_ceiling_mvr": {
+        "swap_auc": {
+          "0": 0.5016572793992149,
+          "1": 0.5045551967371221,
+          "10": 0.49914265476391756,
+          "50": 0.5107136146528849,
+          "all": 0.49728619656621487
+        },
+        "detected_at": {
+          "1": false,
+          "10": false,
+          "50": true,
+          "all": false
+        },
+        "null_q975": 0.5077154340912949,
+        "zero_mass_median_accuracy": null,
+        "knockoff_self_correlation": 0.8336579669821546
+      }
+    }
+  }
 }
