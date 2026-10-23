@@ -26,6 +26,7 @@
 #   GROUP=deep2 SET=all nohup scripts/deep_knockoffs.sh > logs/deep2_all.log 2>&1 &
 #       everything: SET=main on GPU_A (default 0) and SET=gemma8 on GPU_B (default 1) side by side (revision_2)
 #
+# Env: MAXPAR (datasets at a time per GPU, default 3, about 15 GB), GPU_A / GPU_B (SET=all; equal = one after the other)
 # Env: SET (main | gemma8 | focus | all, default main), GROUP (deep | deep2, default deep), GPU (default 0),
 #      THREADS (CPU threads per process, default 6)
 set -uo pipefail
@@ -37,13 +38,20 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export OMP_NUM_THREADS=$THREADS MKL_NUM_THREADS=$THREADS OPENBLAS_NUM_THREADS=$THREADS
 SET=${SET:-main}
 GROUP=${GROUP:-deep}
-if [[ $SET == all ]]; then           # everything at once: SET=main on GPU_A and SET=gemma8 on GPU_B, side by side
+MAXPAR=${MAXPAR:-3}                  # datasets at a time per GPU (each ~3-5 GB of VRAM: 3 is about 15 GB)
+export MAXPAR
+if [[ $SET == all ]]; then           # everything: SET=main on GPU_A and SET=gemma8 on GPU_B (one after the other if equal)
     GPU_A=${GPU_A:-0}; GPU_B=${GPU_B:-1}
     mkdir -p logs
-    echo "[$(date '+%F %T')] $GROUP: SET=main on GPU $GPU_A, SET=gemma8 on GPU $GPU_B"
-    SET=main GPU=$GPU_A "$0" > "logs/${GROUP}_all_main.log" 2>&1 &
-    SET=gemma8 GPU=$GPU_B "$0" > "logs/${GROUP}_all_gemma8.log" 2>&1 &
-    wait
+    echo "[$(date '+%F %T')] $GROUP: SET=main on GPU $GPU_A, SET=gemma8 on GPU $GPU_B, $MAXPAR datasets at a time per GPU"
+    if [[ $GPU_A == "$GPU_B" ]]; then
+        SET=main GPU=$GPU_A "$0" > "logs/${GROUP}_all_main.log" 2>&1
+        SET=gemma8 GPU=$GPU_B "$0" > "logs/${GROUP}_all_gemma8.log" 2>&1
+    else
+        SET=main GPU=$GPU_A "$0" > "logs/${GROUP}_all_main.log" 2>&1 &
+        SET=gemma8 GPU=$GPU_B "$0" > "logs/${GROUP}_all_gemma8.log" 2>&1 &
+        wait
+    fi
     echo "[$(date '+%F %T')] $GROUP: all done (logs/${GROUP}_all_main.log, logs/${GROUP}_all_gemma8.log)"
     exit 0
 fi
@@ -122,9 +130,13 @@ for j in "${JOBS[@]}"; do      # activation caches (data/saebench/cache, not in 
         || { stamp "CACHE FAILED: $cfg $d (see $LOG/cache.log)"; exit 1; }
 done
 grep -h "wrote " "$LOG/cache.log" | sed 's/^/  built cache: /'
-pids=()
-for j in "${JOBS[@]}"; do pipeline "$j" & pids+=($!); sleep 20; done   # staggered: the generator training is the memory peak
-for p in "${pids[@]}"; do wait "$p"; done
+stamp "at most $MAXPAR datasets at a time on GPU $GPU"
+for j in "${JOBS[@]}"; do
+    while (( $(jobs -rp | wc -l) >= MAXPAR )); do wait -n; done      # wait for a free slot
+    pipeline "$j" &
+    sleep 20                                                          # staggered: generator training is the memory peak
+done
+wait
 stamp "analyse"
 if [[ $SET == gemma8 ]]; then
     python src/stage4_repairs.py --config "$G2" --experiment saebench --stage analyse > "$LOG/analyse_gemma2.log" 2>&1 \
