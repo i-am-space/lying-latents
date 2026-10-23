@@ -2044,3 +2044,11 @@ saebench_amendment_7:
       steps): it trains, early stopping triggers or completes, draws are reproducible from the seed, cov(N, X) and
       cov(N) - V are 0 to numerical precision after the exact map, and with an untrained (zero) f the draw's second
       moments equal block MVR's.
+  revision_2:
+    date_written: "2026-10-23"
+    status: written_before_any_result
+    change: >
+      Compute is not the constraint, so every setting of the amendment (SET=main and SET=gemma8, which include the 3
+      decision datasets) is run at once instead of in two steps. The stopping rule of revision_1 is no longer a gate;
+      the count of decision datasets repaired (at least 2 of 3) is still reported, and every setting is reported
+      whatever it shows. Nothing else changes.
