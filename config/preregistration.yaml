@@ -1989,3 +1989,58 @@ saebench_amendment_7:
     To do before the real run: src/deep_knockoffs.py GatedDeepKnockoffSampler on a synthetic zero-inflated matrix
     (CPU, a few hundred steps): it trains, early stopping triggers or completes, draws are reproducible from the
     seed and after reloading the saved generators, and the zero-mass error is below v1's on the same matrix.
+  revision_1:
+    date_written: "2026-10-23"
+    status: written_before_any_result
+    what_happened: >
+      Nothing of the gated design above was run. Before any run, the v1 results were re-read: v1 matched the zero
+      atom (the 1{x = 0} rule against its knockoffs has median accuracy 0.45-0.52, i.e. chance), yet its null coin
+      was 0.58-0.61 in linear cells (Bias in Bios 1, GitHub code, matched sweep), where block MVR's is 0.49. Block
+      MVR reproduces the covariance exactly and fails only in interaction cells; v1 traded that exactness for an
+      approximate match of everything. The binding failure is therefore the lost second-order structure, not the
+      zero atom, and the gate of the design above would have broken the covariance further.
+    change: >
+      Design (1), the gate, is withdrawn; v2 is replaced by second-order-exact deep knockoffs (src/deep_knockoffs.py
+      ExactDeepKnockoffSampler, config deep_knockoffs_v2, methods deep_exact / deep_exact_control, arms deep2 and
+      deep2_ctrl with ids 8 and 9 unchanged). X~ = mu + (X - mu) A + N is the block-MVR Gaussian knockoff with its
+      Gaussian noise E V^(1/2) replaced by N = E Lt + f(X, E). Any N with E[N] = 0, cov(N, X) = 0 and cov(N) = V
+      gives (X, X~) exactly the Gaussian knockoff's second moments, so on every draw N is centred, its least-squares
+      regression on X removed and its covariance mapped to V on the whole sample (a sample-level linear map not
+      involving labels); if f learns nothing, a draw is a block-MVR knockoff. f is trained (per fold, on the other
+      fold) with: the swap MMD of v1 (full vector and 8 neighbourhoods of 64 correlated latents), weight 1; the
+      third-order moments that pairwise exchangeability implies within those neighbourhoods (E[X~_i X_a X_b] =
+      E[X_i X_a X_b] for a, b != i; E[X~_i X~_a X_b] = E[X_i X_a X_b] for b outside {i, a}; E[X_i^2 X~_i] =
+      E[X~_i^2 X_i] and E[X~_i^3] = E[X_i^3] for every latent), relative error, weight 1, which targets what block
+      MVR lacks (labels depending on products of latents); and a second-order penalty on f against the same draw's
+      Gaussian noise (zero when f = 0), weight 10. No zero floor. Kept from the design above: trunk width 256,
+      AdamW weight decay 1e-4, early stopping on 15% of the training fold (every 250 steps, patience 4, at most
+      4,000 steps), the deep2_ctrl diagnostic and rule DK7, seed stream dk2_train. Added: arm deep2_zero (method
+      deep_exact_zero, arm id 10), the same draws with f = 0, i.e. the block-MVR knockoff with the exact map only and
+      no training. The exact map alone makes the in-sample second moments exact (as fixed-X knockoffs do), which on
+      synthetic data changed the Gaussian noise by about 17% (more at p = 2,048), so it is an effect of its own; the
+      ablation separates it from the learned part (rule DK9).
+    diagnostic_before_v2: >
+      --stage deepdiag (scripts/deep_knockoffs.sh diag) reads the trained v1 generators (no retraining) and reports,
+      per fold, the second- and third-order moment errors of their knockoffs on the generator's own training rows
+      and on the held-out rows it is applied to, with the block-MVR knockoff on the same rows and noise as the
+      reference. A held-out error well above the training error confirms overfitting (then a larger unlabeled
+      training pool is the next lever, not part of this revision). Descriptive; it does not gate the v2 run.
+    order_and_stopping_rule: >
+      First the 3 decision datasets (SET=focus): Gemma-2 matched Bias in Bios 1 and GitHub code (block MVR breached)
+      and Pythia-70M EuroParl (v1 breached 12 times). v2 counts as repairing a dataset by DK2 (no BY breach under CV,
+      pooled FDR not significantly above the Gaussian control's, matched-sweep interaction coin not significantly
+      above 0.5). If it repairs at least 2 of the 3, it is run on the remaining settings of the amendment (SET=main,
+      SET=gemma8); otherwise deep knockoffs are reported as a negative result and not run further.
+    rules: >
+      DK1-DK4, DK7 and DK-T2 as above. DK8 (descriptive) now reports, per draw, the relative change made by the exact
+      map, the norm of the learned part relative to N, the third-order error of the deep2 knockoff against a block-MVR
+      draw with the same noise, and the median Spearman correlation of X_j with X~_j (a near-copy check: the linear
+      self-correlation is fixed at 1 - s_j by construction), with early-stopping steps and losses.
+      DK9 (attribution): deep2_zero's BY breaches, its FDR minus the Gaussian control's and (matched sweep) its coin.
+      If deep2 repairs a dataset and deep2_zero repairs it too, the repair is credited to the exact map, not to
+      learning; deep2 minus deep2_zero (DK3) is the effect of the learned part.
+    smoke_test_before_commit: >
+      To do before the real run: ExactDeepKnockoffSampler on a synthetic zero-inflated matrix (CPU, a few hundred
+      steps): it trains, early stopping triggers or completes, draws are reproducible from the seed, cov(N, X) and
+      cov(N) - V are 0 to numerical precision after the exact map, and with an untrained (zero) f the draw's second
+      moments equal block MVR's.

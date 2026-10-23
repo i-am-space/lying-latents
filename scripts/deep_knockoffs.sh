@@ -13,12 +13,17 @@
 # (stage34, paired with its gauss and hurdle records; saebench_amendment_6 revision_1):
 #   SET=gemma8 GPU=1 nohup scripts/deep_knockoffs.sh > logs/deep_knockoffs_gemma8.log 2>&1 &
 #
-# GROUP=deep2 runs the gated deep knockoffs v2 (saebench_amendment_7: arms deep2 and its Gaussian-control
-# diagnostic deep2_ctrl) on the same datasets and cells instead of v1:
-#   GROUP=deep2 GPU=0 nohup scripts/deep_knockoffs.sh > logs/deep2_knockoffs.log 2>&1 &
+# Deep knockoffs v2 (saebench_amendment_7 revision_1: second-order exact; arm deep2 and its Gaussian-control
+# diagnostic deep2_ctrl), same datasets and cells as v1:
+#   scripts/deep_knockoffs.sh diag      v1 generalisation gap: reads the trained v1 generators, no retraining
+#   GROUP=deep2 SET=focus GPU=0 nohup scripts/deep_knockoffs.sh > logs/deep2_focus.log 2>&1 &
+#       the 3 decision datasets: Gemma-2 matched Bias in Bios 1 and GitHub code (block MVR breached) and Pythia
+#       EuroParl (v1 deep breached most). Stopping rule (revision_1): run SET=main / gemma8 only if deep2
+#       repairs at least 2 of these 3.
+#   GROUP=deep2 GPU=0 nohup scripts/deep_knockoffs.sh > logs/deep2_knockoffs.log 2>&1 &              (SET=main)
 #   GROUP=deep2 SET=gemma8 GPU=1 nohup scripts/deep_knockoffs.sh > logs/deep2_knockoffs_gemma8.log 2>&1 &
 #
-# Env: SET (main | gemma8, default main), GROUP (deep | deep2, default deep), GPU (default 0),
+# Env: SET (main | gemma8 | focus, default main), GROUP (deep | deep2, default deep), GPU (default 0),
 #      THREADS (CPU threads per process, default 6)
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -40,7 +45,11 @@ JOBS=("$G2|--matched|LabHC/bias_in_bios_class_set1|results/saebench/stage34_matc
       "$PY||Helsinki-NLP/europarl|results/models/pythia70m/saebench/stage34"
       "$PY||LabHC/bias_in_bios_class_set1|results/models/pythia70m/saebench/stage34"
       "$PY||canrager/amazon_reviews_mcauley_1and5|results/models/pythia70m/saebench/stage34")
-if [[ $SET == gemma8 ]]; then
+if [[ $SET == focus ]]; then
+    JOBS=("$G2|--matched|LabHC/bias_in_bios_class_set1|results/saebench/stage34_matched"
+          "$G2|--matched|codeparrot/github-code|results/saebench/stage34_matched"
+          "$PY||Helsinki-NLP/europarl|results/models/pythia70m/saebench/stage34")
+elif [[ $SET == gemma8 ]]; then
     mapfile -t G8 < <(python -c "import sys; sys.path.insert(0, 'src'); from common import load_config; print('\n'.join(load_config('$G2')['saebench']['datasets']))")
     JOBS=()
     for d in "${G8[@]}"; do JOBS+=("$G2||$d|results/saebench/stage34"); done
@@ -81,6 +90,18 @@ status() {
 }
 
 if [[ "${1:-}" == status ]]; then status; exit 0; fi
+if [[ "${1:-}" == diag ]]; then      # v1 generators: moment errors on their training rows vs held-out rows
+    for j in "${JOBS[@]}"; do
+        IFS='|' read -r cfg flag d rd <<< "$j"
+        tag=$(basename "$cfg" .yaml)_${d//\//__}
+        stamp "deepdiag: $tag"
+        CUDA_VISIBLE_DEVICES=$GPU python src/stage4_repairs.py --config "$cfg" --device cuda --experiment saebench $flag \
+            --dataset "$d" --arm-group deep --stage deepdiag > "$LOG/deepdiag_${tag}.log" 2>&1 \
+            || stamp "FAILED (see $LOG/deepdiag_${tag}.log)"
+        grep -E "fold|wrote|no trained" "$LOG/deepdiag_${tag}.log"
+    done
+    exit 0
+fi
 stamp "$GROUP knockoffs: ${#JOBS[@]} pipelines on GPU $GPU, $THREADS threads each; logs in $LOG/"
 for j in "${JOBS[@]}"; do      # activation caches (data/saebench/cache, not in git): built here only if missing
     IFS='|' read -r cfg flag d rd <<< "$j"

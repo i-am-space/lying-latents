@@ -49,8 +49,9 @@ ARM_COLOR = {"gauss_real": "#c0392b", "hurdle": "#2e8b57", "binarised": "#8e44ad
              "evalue": "#e07b39", "gauss_ceiling": "#3b6ea5", "gauss_mvr": "#f1948a",
              "gauss_ceiling_mvr": "#85c1e9"}
 KNOCKOFF_METHODS = ("gaussian", "hurdle_scip", "binary_scip", "gaussian_control",
-                    "gaussian_mvr", "gaussian_control_mvr", "deep_residual", "deep_gated", "deep_gated_control")
-CONTROL_METHODS = ("gaussian_control", "gaussian_control_mvr", "deep_gated_control")
+                    "gaussian_mvr", "gaussian_control_mvr", "deep_residual", "deep_exact", "deep_exact_control",
+                    "deep_exact_zero")
+CONTROL_METHODS = ("gaussian_control", "gaussian_control_mvr", "deep_exact_control")
 
 
 # ---------------------------------------------------------------------------
@@ -410,9 +411,9 @@ def build_from_X(cfg: dict, sec: dict, X: np.ndarray, device, methods, rng: np.r
     """Standardised data, Gaussian control (drawn from rng), S matrices and samplers for a raw
     latent matrix X (rows x latents). build() calls it on the Stage 4 rows; the SAEBench run on each
     dataset's cache. Deep knockoffs (saebench_amendment_6) are built only when listed in methods; their
-    generators are trained from deep_seed, or loaded from deep_cache if it exists. Gated deep knockoffs
-    (saebench_amendment_7) likewise, on the real latents and, as a diagnostic, on the Gaussian control:
-    deep2_seeds / deep2_caches are (real, control)."""
+    generators are trained from deep_seed, or loaded from deep_cache if it exists. Deep knockoffs v2
+    (saebench_amendment_7 revision_1, second-order exact; methods deep_exact / deep_exact_control) likewise, on the
+    real latents and, as a diagnostic, on the Gaussian control: deep2_seeds / deep2_caches are (real, control)."""
     from knockpy import smatrix
     from knockpy.knockoffs import GaussianSampler
 
@@ -437,7 +438,7 @@ def build_from_X(cfg: dict, sec: dict, X: np.ndarray, device, methods, rng: np.r
     if "binary_scip" in need:
         samplers["binary_scip"] = SCIPSampler(X, "binary", sec["scip"], device)
     mvr = {}
-    if need & {"gaussian_mvr", "gaussian_control_mvr", "deep_residual", "deep_gated", "deep_gated_control"}:
+    if need & {"gaussian_mvr", "gaussian_control_mvr", "deep_residual", "deep_exact", "deep_exact_control", "deep_exact_zero"}:
         mvr = build_block_mvr(Z, Sigma, Zg, Sigma_g, sec, device, seed=mvr_seed)
     deep = None
     if methods is not None and "deep_residual" in methods:
@@ -447,17 +448,16 @@ def build_from_X(cfg: dict, sec: dict, X: np.ndarray, device, methods, rng: np.r
         deep = DeepKnockoffSampler(X, Z, mu, sd, mvr["gauss_mvr"], mvr["mvr_s"], cfg["deep_knockoffs"], device,
                                    deep_seed, cache=deep_cache)
     deep2 = {}
-    if methods is not None and need & {"deep_gated", "deep_gated_control"}:
-        from deep_knockoffs import GatedDeepKnockoffSampler
+    if methods is not None and need & {"deep_exact", "deep_exact_control", "deep_exact_zero"}:
+        from deep_knockoffs import ExactDeepKnockoffSampler
         if deep2_seeds is None:
-            raise ValueError("deep_gated needs deep2_seeds")
+            raise ValueError("deep v2 needs deep2_seeds")
         caches = deep2_caches or (None, None)
-        if "deep_gated" in need:
-            deep2["deep2"] = GatedDeepKnockoffSampler(X, Z, mu, sd, mvr["gauss_mvr"], mvr["mvr_s"],
-                                                      cfg["deep_knockoffs_v2"], device, deep2_seeds[0], cache=caches[0])
-        if "deep_gated_control" in need:          # Gaussian data: no zeros, so no gate; block MVR is already valid there
-            deep2["deep2_ctrl"] = GatedDeepKnockoffSampler(Zg, Zg, np.zeros(p), np.ones(p), mvr["gauss_ctrl_mvr"],
-                                                           mvr["mvr_s_ctrl"], cfg["deep_knockoffs_v2"], device,
+        if need & {"deep_exact", "deep_exact_zero"}:    # deep_exact_zero draws from the same sampler with f = 0
+            deep2["deep2"] = ExactDeepKnockoffSampler(Z, mvr["gauss_mvr"], cfg["deep_knockoffs_v2"], device,
+                                                      deep2_seeds[0], cache=caches[0])
+        if "deep_exact_control" in need:          # Gaussian control data, where block MVR is already valid (rule DK7)
+            deep2["deep2_ctrl"] = ExactDeepKnockoffSampler(Zg, mvr["gauss_ctrl_mvr"], cfg["deep_knockoffs_v2"], device,
                                                            deep2_seeds[1], cache=caches[1])
     return {"X": X, "Z": Z, "mu": mu, "sd": sd, "Zg": Zg, "Zb": (Zb - mb) / sb, "mb": mb, "sb": sb,
             "gauss": GaussianSampler(Z, mu=Z.mean(0), Sigma=Sigma, S=S),
@@ -490,10 +490,13 @@ def data_and_knockoffs(method: str, D: dict, seed: int):
     if method == "deep_residual":
         Zk, info = D["deep"].sample(seed)
         return D["Z"], Zk, info
-    if method == "deep_gated":
+    if method == "deep_exact":
         Zk, info = D["deep2"].sample(seed)
         return D["Z"], Zk, info
-    if method == "deep_gated_control":
+    if method == "deep_exact_zero":              # ablation: the exact map without the learned part
+        Zk, info = D["deep2"].sample(seed, learned=False)
+        return D["Z"], Zk, info
+    if method == "deep_exact_control":
         Zk, info = D["deep2_ctrl"].sample(seed)
         return D["Zg"], Zk, info
     if method == "binary_scip":
@@ -696,8 +699,9 @@ def main() -> None:
     ap.add_argument("--config", default="config/default.yaml")
     ap.add_argument("--cache", default=None)
     ap.add_argument("--device", default=None)
-    ap.add_argument("--stage", default="diagnose", choices=["diagnose", "full", "analyse", "exchange"],
-                    help="exchange (saebench only): the Stage 2 swap tests on one knockoff draw of every arm of the group")
+    ap.add_argument("--stage", default="diagnose", choices=["diagnose", "full", "analyse", "exchange", "deepdiag"],
+                    help="exchange (saebench only): the Stage 2 swap tests on one knockoff draw of every arm of the group; "
+                         "deepdiag (saebench, --arm-group deep): v1 generators' moment errors on training vs held-out rows")
     ap.add_argument("--limit-reps", type=int, default=None)
     ap.add_argument("--skip-exchangeability", action="store_true")
     ap.add_argument("--arm-group", default="gauss", help="cv / stress / saebench: which arm group to run")
@@ -1535,10 +1539,10 @@ def deep_rules(z: dict, cv: dict, out: dict, rd: Path, prefix: str, matched: boo
     stage. DK2: the deep arm repairs the dataset if it has no BY breach under CV, its pooled FDR is not
     significantly above the control's and (matched sweep) its interaction-cell coin is not significantly above
     0.5. DK3: paired deep minus control, block MVR and hurdle FDR and power. DK4: the coin, from out["coin"].
-    arm: "deep" (v1) or "deep2" (gated v2, saebench_amendment_7, same rules)."""
+    arm: "deep" (v1) or "deep2" (v2, second-order exact, saebench_amendment_7 revision_1, same rules)."""
     from reanalysis_multiplicity import two_sided_diff
     r = {"breaches_cv": cv[arm]["n_breach_BY"]}
-    for other in ("gauss_ceiling_mvr", "gauss_mvr", "hurdle", "deep"):
+    for other in ("gauss_ceiling_mvr", "gauss_mvr", "hurdle", "deep", "deep2_zero"):
         if other in cv and other != arm:
             r[f"DK3_{arm}_minus_{other}"] = {m: dict(zip(("mean_diff", "se", "p_two_sided"), two_sided_diff(
                 z[f"{m}_cv__{arm}"].mean(axis=(0, 2)), z[f"{m}_cv__{other}"].mean(axis=(0, 2)), other != "gauss_ceiling_mvr")))
@@ -1559,6 +1563,15 @@ def deep_rules(z: dict, cv: dict, out: dict, rd: Path, prefix: str, matched: boo
             for m in ("ko_fdr", "ko_pow")}
         d7 = r["DK7_ctrl_minus_gauss_ceiling_mvr"]["ko_fdr"]
         r["DK7_training_harms"] = bool(r["DK7_control_breaches_cv"] > 0 or (d7["mean_diff"] > 0 and d7["p_two_sided"] < 0.05))
+    if arm == "deep2" and "deep2_zero" in cv:     # DK9: attribution, the exact map alone (f = 0)
+        r["DK9_zero_f_breaches_cv"] = cv["deep2_zero"]["n_breach_BY"]
+        zc = {m: dict(zip(("mean_diff", "se", "p_two_sided"), two_sided_diff(
+            z[f"{m}_cv__deep2_zero"].mean(axis=(0, 2)), z[f"{m}_cv__gauss_ceiling_mvr"].mean(axis=(0, 2)), False)))
+            for m in ("ko_fdr", "ko_pow")}
+        r["DK9_zero_f_minus_gauss_ceiling_mvr"] = zc
+        if matched and "deep2_zero" in out.get("coin", {}):
+            r["DK9_zero_f_coin"] = {lab: {k: out["coin"]["deep2_zero"][lab][k] for k in ("rate", "se", "p_two_sided")}
+                                    for lab in out["coin"]["deep2_zero"]}
     ex = {}
     for g in ("deep", "deep2", "gauss", "hurdle"):
         f = rd / f"{prefix}_{g}_exchange.json"
@@ -1691,7 +1704,7 @@ def main_saebench(args) -> None:
                 c = out["coin"]
                 line += "\n      coin (share of nulls with W>0; valid = 0.50):  " + "   ".join(
                     f"{a} " + "/".join(f"{c[a][lab]['rate']:.3f}" for lab in ("all", "linear", "interaction"))
-                    for a in ("gauss_real", "gauss_mvr", "hurdle", "deep", "deep2", "deep2_ctrl", "gauss_ceiling_mvr") if a in c) + "   (all/linear/interaction)"
+                    for a in ("gauss_real", "gauss_mvr", "hurdle", "deep", "deep2", "deep2_zero", "deep2_ctrl", "gauss_ceiling_mvr") if a in c) + "   (all/linear/interaction)"
             print(line, flush=True)
         valid = [n for n, v in summary.items() if v["SB3_control_valid"]]
         agg = {"n_datasets": len(summary), "n_valid": len(valid),
@@ -1745,6 +1758,12 @@ def main_saebench(args) -> None:
     arms = [(n, m) for n, m in all_arms if n in ext["arm_groups"][group]]
     if group in ("evalue", "evalue_plus"):
         arms = []                                  # no knockoffs: no samplers are built
+    if args.stage == "deepdiag":                   # saebench_amendment_7 revision_1: the v1 generalisation gap
+        if group != "deep":
+            raise SystemExit("--stage deepdiag needs --arm-group deep")
+        gpath = rd / f"{slug(name)}_deep_generators.pt"
+        if not gpath.exists():
+            raise SystemExit(f"no trained v1 generators at {gpath}: deepdiag only reads them, it does not retrain")
     cells = cells_of(name)
     C = load_cache(cfg, name)
     X = C["X"]
@@ -1765,6 +1784,20 @@ def main_saebench(args) -> None:
                      deep2_seeds=tuple(int(cell_rng(cfg, "dk2_train", di, j).integers(2**31)) for j in (0, 1)),
                      deep2_caches=(rd / f"{slug(name)}_deep2_generators.pt", rd / f"{slug(name)}_deep2ctrl_generators.pt"))
     del C, X
+    if args.stage == "deepdiag":
+        from deep_knockoffs import generalisation_gap
+        gap = generalisation_gap(D["deep"], int(cell_rng(cfg, "dk2_train", di, 2).integers(2**31)))
+        out = {"dataset": name, "matched": matched, "positive_threshold": thr_info, "gap": gap,
+               "minutes": round((time.time() - t0) / 60, 1)}
+        (rd / f"{slug(name)}_deep_diag.json").write_text(json.dumps(out, indent=2, default=float))
+        for f_, g_ in gap.items():
+            for part in ("train", "heldout"):
+                d_, gg = g_[part]["deep"], g_[part]["gauss_mvr"]
+                print(f"  {f_} {part:8s} deep: 2nd {d_['second_order']:.4f} 3rd {d_['third_order']:.4f} | "
+                      f"block MVR: 2nd {gg['second_order']:.4f} 3rd {gg['third_order']:.4f}", flush=True)
+            print(f"  {f_} held-out / train (deep): {json.dumps({k: round(v, 2) for k, v in g_['heldout_over_train'].items()})}")
+        print(f"\nwrote {rd}/{slug(name)}_deep_diag.json ({out['minutes']} min)")
+        return
     if args.stage == "exchange":
         out = exchange_tests(cfg, D, arms, arm_ids, di)
         out.update({"dataset": name, "group": group, "positive_threshold": thr_info, "info": D["info"],

@@ -171,73 +171,128 @@ class DeepKnockoffSampler:
 
 
 # ---------------------------------------------------------------------------
-# v2: gated deep knockoffs (config/preregistration.yaml saebench_amendment_7)
+# shared diagnostics: second- and third-order moment errors of a knockoff draw
 # ---------------------------------------------------------------------------
 
-class GatedNet(nn.Module):
-    """Shared trunk with two zero-initialised heads: a value correction f and a gate correction g (both p)."""
-
-    def __init__(self, p: int, dk: dict):
-        super().__init__()
-        layers, d = [], 2 * p
-        for _ in range(dk["layers"]):
-            layers += [nn.Linear(d, dk["hidden"]), nn.LayerNorm(dk["hidden"]), nn.GELU()]
-            d = dk["hidden"]
-        self.trunk = nn.Sequential(*layers)
-        self.value, self.gate = nn.Linear(d, p), nn.Linear(d, p)
-        for head in (self.value, self.gate):
-            nn.init.zeros_(head.weight)
-            nn.init.zeros_(head.bias)
-
-    def forward(self, x: torch.Tensor):
-        h = self.trunk(x)
-        return self.value(h), self.gate(h)
+def _offdiag3(k: int, device, pair: bool) -> torch.Tensor:
+    """Mask over (i, a, b) of a k x k x k moment tensor. pair=False: a != i and b != i (swap of i alone).
+    pair=True: additionally a != b (swap of the pair {i, a}, third latent b outside it)."""
+    i = torch.arange(k, device=device)
+    m = (i[:, None, None] != i[None, :, None]) & (i[:, None, None] != i[None, None, :])
+    if pair:
+        m = m & (i[None, :, None] != i[None, None, :])
+    return m
 
 
-class GatedDeepKnockoffSampler:
-    """v2 of DeepKnockoffSampler, changing the three likely causes of v1's failure (saebench_amendment_7):
+def third_order_loss(Z: torch.Tensor, Zk: torch.Tensor, neigh: torch.Tensor, anchors) -> torch.Tensor:
+    """Relative error of the third cross-moments a valid knockoff must reproduce, on neighbourhoods of correlated
+    latents (an anchor and its most correlated latents). Pairwise exchangeability implies, for i, a, b in a
+    neighbourhood: E[X~_i X_a X_b] = E[X_i X_a X_b] (swap of i, with a, b != i) and E[X~_i X~_a X_b] =
+    E[X_i X_a X_b] (swap of {i, a}, b outside it); and, for every latent, E[X_i^2 X~_i] = E[X~_i^2 X_i] and
+    E[X~_i^3] = E[X_i^3]. Labels that depend on products of latents (interaction cells) are what a knockoff
+    lacking these moments gets wrong. Inputs are standardised; moments are of centred values."""
+    n = Z.shape[0]
+    Zc, Kc = Z - Z.mean(0), Zk - Zk.mean(0)
+    num, den = Z.new_zeros(()), Z.new_zeros(())
+    for a in anchors:
+        c = neigh[a]
+        R, K = Zc[:, c], Kc[:, c]
+        k = R.shape[1]
+        RR = (R[:, :, None] * R[:, None, :]).reshape(n, k * k)
+        KR = (K[:, :, None] * R[:, None, :]).reshape(n, k * k)
+        t_rrr = (R.T @ RR).reshape(k, k, k) / n
+        t_krr = (K.T @ RR).reshape(k, k, k) / n
+        t_kkr = (K.T @ KR).reshape(k, k, k) / n
+        m1, m2 = _offdiag3(k, Z.device, False), _offdiag3(k, Z.device, True)
+        num = num + ((t_krr - t_rrr)[m1] ** 2).sum() + ((t_kkr - t_rrr)[m2] ** 2).sum()
+        den = den + 2 * (t_rrr[m1] ** 2).sum()
+    z3 = (Zc ** 3).mean(0)
+    num = num + (((Zc ** 2 * Kc).mean(0) - (Kc ** 2 * Zc).mean(0)) ** 2).sum() + (((Kc ** 3).mean(0) - z3) ** 2).sum()
+    den = den + 2 * (z3 ** 2).sum()
+    return num / den.clamp(min=1e-12)
 
-    1. Zeros are learned, not cut. A latent with exact zeros in the data gets a fire / no-fire gate:
-       X~_j = on_j * max(value_j, smallest positive activation of j), on_j ~ Bernoulli(sigmoid(logit0_j + g_j)),
-       with logit0_j the latent's firing rate (training starts at the right zero share) and g_j learned from
-       (X, noise). The draw is exact Bernoulli (logistic noise, threshold at 0); in training its gradient passes
-       through the relaxed gate (straight-through, temperature tau). A firing-rate loss matches E[on_j] to
-       Pr(X_j > 0). In v1 a value cut to 0 had no gradient, so the zero share could not be learned.
-       Latents with no zeros (always-on ReLU latents, Gaussian data) have no gate and are clamped at their
-       smallest observed value, as v1 after revision_2.
-    2. Overfitting: a smaller trunk, weight decay, and early stopping on a held-out part of the training fold
-       (the swap MMD, moments and firing-rate terms at fixed noise); the best state is kept.
-    3. Drift towards copies: a larger decorrelation weight (v1's self-correlation rose above the block-MVR target).
-    Everything else is v1's: residual on the block-MVR Gaussian knockoff, full and neighbourhood swap MMD,
-    second-moment matching, cross-fitting over two row folds.
+
+def second_order_loss(Z: torch.Tensor, Zk: torch.Tensor) -> torch.Tensor:
+    """Relative error of the second moments a knockoff must reproduce: mean, cov(X~) = cov(X), and
+    cov(X, X~) = cov(X) off the diagonal."""
+    p = Z.shape[1]
+    Czz = cov(Z, Z)
+    nz = (Czz ** 2).sum()
+    off = ~torch.eye(p, dtype=torch.bool, device=Z.device)
+    return (((Zk.mean(0) - Z.mean(0)) ** 2).mean() + ((cov(Zk, Zk) - Czz) ** 2).sum() / nz
+            + (((cov(Z, Zk) - Czz) * off) ** 2).sum() / nz)
+
+
+@torch.no_grad()
+def moment_errors(Z: torch.Tensor, Zk: torch.Tensor, neigh: torch.Tensor, anchors) -> dict:
+    return {"second_order": float(second_order_loss(Z, Zk)), "third_order": float(third_order_loss(Z, Zk, neigh, anchors))}
+
+
+@torch.no_grad()
+def generalisation_gap(smp: "DeepKnockoffSampler", seed: int, n_anchors: int = 64) -> dict:
+    """For each v1 generator: moment errors of its knockoffs on its own training rows against the held-out rows it is
+    applied to, with the block-MVR Gaussian knockoff on the same rows (same noise) as the reference. A training error
+    far below the held-out error means the generator fits its training half and does not generalise."""
+    gen = torch.Generator(device=smp.device)
+    gen.manual_seed(int(seed))
+    n, p = smp.Z.shape
+    anchors = torch.randint(p, (n_anchors,), generator=gen, device=smp.device)
+    E = torch.randn((n, p), generator=gen, device=smp.device)
+    b = smp.base
+    out = {}
+    for f in range(2):
+        res = {}
+        for part, rows in (("train", smp.fold != f), ("heldout", smp.fold == f)):
+            Zr, Er = smp.Z[rows], E[rows]
+            deep = smp._knock(smp.nets[f], Zr, Er)
+            gauss = b.mu + (Zr - b.mu) @ b.A + Er @ b.Lt
+            res[part] = {"deep": moment_errors(Zr, deep, smp.neigh, anchors),
+                         "gauss_mvr": moment_errors(Zr, gauss, smp.neigh, anchors), "rows": int(rows.sum())}
+        res["heldout_over_train"] = {k: res["heldout"]["deep"][k] / max(res["train"]["deep"][k], 1e-12)
+                                     for k in ("second_order", "third_order")}
+        out[f"fold{f}"] = res
+    return out
+
+
+# ---------------------------------------------------------------------------
+# v2: second-order-exact deep knockoffs (config/preregistration.yaml saebench_amendment_7 revision_1)
+# ---------------------------------------------------------------------------
+
+class ExactDeepKnockoffSampler:
+    """X~ = mu + (X - mu) A + N, the block-MVR Gaussian knockoff with its Gaussian noise E V^(1/2) replaced by a learned
+    noise N = E Lt + f(X, E). Every pair (X, X~) with E[N] = 0, cov(N, X) = 0 and cov(N) = V has exactly the
+    Gaussian knockoff's second moments, whatever the law of N, so N can carry dependence on X beyond second order
+    (what the Gaussian knockoff lacks: it fails only where labels depend on products of latents) while the
+    covariance structure that keeps the Gaussian knockoff valid in linear cells is exact.
+
+    Training (per fold, on the other fold's rows; 15% of them held out for early stopping): swap MMD on the full
+    vector and on neighbourhoods (as v1), the third-order exchangeability moments (third_order_loss), and a
+    second-order penalty on N. f's last layer is zero-initialised, so training starts at the block-MVR knockoff.
+    Draws: N is computed for every row, then centred, its linear regression on X removed and its covariance mapped
+    to V exactly, on the whole sample (a sample-level linear map, like the covariance estimate the Gaussian
+    knockoff already uses; it does not involve the labels). If f learns nothing, a draw is a block-MVR knockoff
+    with exact in-sample second moments. No zero floor: v1 matched the zero atom (1{x = 0} rule at chance) yet its
+    null coin was 0.58-0.61 in linear cells, where block MVR's is 0.49, i.e. the second moments it gave up mattered
+    more than the zero atom it gained (saebench_amendment_7 revision_1).
     """
 
-    def __init__(self, X: np.ndarray, Z: np.ndarray, mu: np.ndarray, sd: np.ndarray, base, s: np.ndarray,
-                 dk: dict, device, seed: int, cache: Path | None = None):
+    def __init__(self, Z: np.ndarray, base, dk: dict, device, seed: int, cache: Path | None = None):
         n, p = Z.shape
         self.dk, self.device, self.base = dk, device, base
-        f32 = lambda a: torch.from_numpy(np.asarray(a, dtype=np.float32)).to(device)
-        self.Z = f32(Z)
-        self.mu_t, self.sd_t = f32(mu), f32(sd)
-        has_zero = (X == 0).any(0)
-        pos_min = np.where(X > 0, X, np.inf).min(0)
-        floor = np.where(has_zero, np.where(np.isfinite(pos_min), pos_min, 0.0), X.min(0))
-        self.floor_t = f32(floor)
-        self.gated = torch.from_numpy(has_zero).to(device)
-        self.fire = (X > 0).mean(0)
-        fire = np.clip(self.fire, 1e-4, 1 - 1e-4)
-        self.fire_t = f32(self.fire)
-        self.logit0 = f32(np.log(fire) - np.log1p(-fire))
-        self.zero_mass = (X == 0).mean(0)
-        self.target = f32(np.clip(1.0 - s, 0.0, 1.0))
+        self.Z = torch.from_numpy(np.asarray(Z, dtype=np.float32)).to(device)
+        Lt = base.Lt.double().cpu().numpy()
+        V = Lt.T @ Lt
+        ev, U = np.linalg.eigh(0.5 * (V + V.T))
+        self.V_t = torch.from_numpy(V.astype(np.float32)).to(device)
+        self.V_half = (U * np.sqrt(np.clip(ev, 0.0, None))) @ U.T          # symmetric square root of V
         perm = np.random.default_rng([seed, 0]).permutation(n)
         fold = np.zeros(n, dtype=np.int64)
         fold[perm[n // 2:]] = 1
         self.fold = torch.from_numpy(fold).to(device)
         C = (self.Z.T @ self.Z / n).abs()
         self.neigh = C.topk(dk["local_size"], dim=1).indices
-        self.nets = [GatedNet(p, dk).to(device) for _ in range(2)]
-        self.info: dict = {"cache": str(cache) if cache else None, "n_gated": int(has_zero.sum())}
+        self.nets = [build_net(p, dk).to(device) for _ in range(2)]
+        self.info: dict = {"cache": str(cache) if cache else None}
         if cache is not None and cache.exists():
             st = torch.load(cache, map_location=device)
             for net, sd_ in zip(self.nets, st["nets"]):
@@ -255,27 +310,21 @@ class GatedDeepKnockoffSampler:
         for net in self.nets:
             net.eval()
 
-    def _knock(self, net: nn.Module, Zb: torch.Tensor, E: torch.Tensor, U: torch.Tensor, relaxed: bool):
-        """Knockoff rows on the standardised scale, and the firing probabilities. relaxed: straight-through gate."""
-        b = self.base
-        f, g = net(torch.cat([Zb, E], dim=1))
-        t = self.mu_t + self.sd_t * (b.mu + (Zb - b.mu) @ b.A + E @ b.Lt + f)
-        value = torch.maximum(t, self.floor_t)
-        logit = self.logit0 + g
-        noise = torch.log(U) - torch.log1p(-U)                        # logistic: 1{logit + noise > 0} ~ Bernoulli(sigmoid(logit))
-        hard = (logit + noise > 0).float()
-        if relaxed:
-            soft = torch.sigmoid((logit + noise) / self.dk["gate_temperature"])
-            on = hard + soft - soft.detach()
-        else:
-            on = hard
-        on = torch.where(self.gated, on, torch.ones_like(on))
-        return (on * value - self.mu_t) / self.sd_t, torch.sigmoid(logit)
+    def _noise(self, net: nn.Module, Zb: torch.Tensor, E: torch.Tensor) -> torch.Tensor:
+        return E @ self.base.Lt + net(torch.cat([Zb, E], dim=1))
 
-    def _losses(self, net, Zb, E, U, mask, anchors, masks_loc):
+    def _knock(self, net: nn.Module, Zb: torch.Tensor, E: torch.Tensor) -> torch.Tensor:
+        """Training-time knockoff (second moments matched by penalty, not yet exactly)."""
+        b = self.base
+        return b.mu + (Zb - b.mu) @ b.A + self._noise(net, Zb, E)
+
+    def _losses(self, net, Zb, E, mask, anchors, masks_loc):
         dk, p = self.dk, Zb.shape[1]
         h = Zb.shape[0] // 2
-        Zk, prob = self._knock(net, Zb, E, U, relaxed=True)
+        G = E @ self.base.Lt                                        # the Gaussian noise of the same draw
+        F = net(torch.cat([Zb, E], dim=1))                          # the learned part
+        N = G + F
+        Zk = self.base.mu + (Zb - self.base.mu) @ self.base.A + N
         ones = torch.ones(p, dtype=torch.bool, device=self.device)
         P1 = torch.cat([Zb[:h], Zk[:h]], dim=1)
         l_full = mmd(P1, swap(Zb[h:2 * h], Zk[h:2 * h], mask), dk["mmd_scales"]) \
@@ -286,30 +335,27 @@ class GatedDeepKnockoffSampler:
             l_loc = l_loc + mmd(torch.cat([Zb[:h, c], Zk[:h, c]], dim=1), swap(Zb[h:2 * h, c], Zk[h:2 * h, c], m),
                                 dk["mmd_scales"])
         l_loc = l_loc / len(anchors)
+        l_third = third_order_loss(Zb, Zk, self.neigh, anchors)
+        # second-order penalty on the learned part, against the same draw's Gaussian noise rather than V itself: a
+        # batch of 2,048 rows estimates a 2,048 x 2,048 covariance with relative error near 1, and that sampling
+        # error is shared by N and G, so it cancels here (the term is exactly 0 when f = 0)
         Czz = cov(Zb, Zb)
-        nz = (Czz ** 2).sum()
-        off = ~torch.eye(p, dtype=torch.bool, device=self.device)
-        l_mom = (((Zk.mean(0) - Zb.mean(0)) ** 2).mean() + ((cov(Zk, Zk) - Czz) ** 2).sum() / nz
-                 + (((cov(Zb, Zk) - Czz) * off) ** 2).sum() / nz)
-        corr = cov(Zb, Zk).diagonal() / (Zb.std(0) * Zk.std(0)).clamp(min=1e-6)
-        l_dec = ((corr - self.target) ** 2).mean()
-        l_fire = (((prob.mean(0) - self.fire_t) ** 2)[self.gated]).mean() if bool(self.gated.any()) else Zb.new_zeros(())
-        loss = (dk["gamma_mmd"] * (l_full + l_loc) + dk["lambda_moments"] * l_mom
-                + dk["delta_decorrelation"] * l_dec + dk["lambda_firing"] * l_fire)
-        parts = {"mmd_full": float(l_full), "mmd_local": float(l_loc), "moments": float(l_mom),
-                 "decorrelation": float(l_dec), "firing": float(l_fire), "mean_corr": float(corr.mean())}
+        l_noise = ((F.mean(0) ** 2).mean() + (cov(F, Zb) ** 2).sum() / (Czz ** 2).sum()
+                   + ((cov(N, N) - cov(G, G)) ** 2).sum() / (self.V_t ** 2).sum())
+        loss = dk["gamma_mmd"] * (l_full + l_loc) + dk["lambda_third"] * l_third + dk["lambda_moments"] * l_noise
+        val = lambda t: float(t.detach()) if torch.is_tensor(t) else float(t)
+        parts = {"mmd_full": val(l_full), "mmd_local": val(l_loc), "third": val(l_third), "noise_moments": val(l_noise)}
         return loss, parts
 
     def _draws(self, n_rows: int, p: int, gen):
         E = torch.randn((n_rows, p), generator=gen, device=self.device)
-        U = torch.rand((n_rows, p), generator=gen, device=self.device).clamp(1e-6, 1 - 1e-6)
         mask = torch.rand(p, generator=gen, device=self.device) < 0.5
         anchors = torch.randint(p, (self.dk["local_blocks"],), generator=gen, device=self.device)
         masks_loc = [torch.rand(self.dk["local_size"], generator=gen, device=self.device) < 0.5 for _ in anchors]
-        return E, U, mask, anchors, masks_loc
+        return E, mask, anchors, masks_loc
 
     def _train(self, f: int, seed: int) -> dict:
-        """Train generator f on the rows of the other fold, with early stopping on a held-out part of them."""
+        """Train generator f on the rows of the other fold, early-stopped on a held-out part of them."""
         dk, net = self.dk, self.nets[f]
         p = self.Z.shape[1]
         rows = torch.nonzero(self.fold != f).squeeze(1)
@@ -319,17 +365,16 @@ class GatedDeepKnockoffSampler:
         gen = torch.Generator(device=self.device)
         gen.manual_seed(int(seed))
         torch.manual_seed(int(seed))
-        net.load_state_dict(GatedNet(p, dk).to(self.device).state_dict())
+        net.load_state_dict(build_net(p, dk).to(self.device).state_dict())
         opt = torch.optim.AdamW(net.parameters(), lr=dk["lr"], weight_decay=dk["weight_decay"])
         vgen = torch.Generator(device=self.device)
         vgen.manual_seed(int(seed) + 7919)
-        vdraw = self._draws(n_val, p, vgen)                       # fixed noise: validation losses are comparable
+        vdraw = self._draws(n_val, p, vgen)                        # fixed noise: validation losses are comparable
         best, best_state, bad, hist = float("inf"), None, 0, []
         t0 = time.time()
         for step in range(dk["steps"]):
             idx = tr[torch.randint(len(tr), (dk["batch"],), generator=gen, device=self.device)]
-            Zb = self.Z[idx]
-            loss, parts = self._losses(net, Zb, *self._draws(len(idx), p, gen))
+            loss, parts = self._losses(net, self.Z[idx], *self._draws(len(idx), p, gen))
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()
@@ -339,12 +384,11 @@ class GatedDeepKnockoffSampler:
                     vloss, vparts = self._losses(net, self.Z[val], *vdraw)
                 net.train()
                 vl = float(vloss)
-                r = {"step": step, "loss": float(loss), "val_loss": vl, **parts,
-                     **{f"val_{k}": v for k, v in vparts.items()}}
-                hist.append(r)
-                print(f"  deep2 fold {f} step {step:>5}  loss {r['loss']:.4f}  val {vl:.4f}  mmd {parts['mmd_full']:.4f}/"
-                      f"{parts['mmd_local']:.4f}  mom {parts['moments']:.4f}  decor {parts['decorrelation']:.4f}  "
-                      f"fire {parts['firing']:.5f}  corr {parts['mean_corr']:.3f}  ({time.time() - t0:.0f}s)", flush=True)
+                hist.append({"step": step, "loss": loss.item(), "val_loss": vl, **parts,
+                             **{f"val_{k}": v for k, v in vparts.items()}})
+                print(f"  deep2 fold {f} step {step:>5}  loss {loss.item():.4f}  val {vl:.4f}  mmd {parts['mmd_full']:.4f}/"
+                      f"{parts['mmd_local']:.4f}  third {parts['third']:.4f} (val {vparts['third']:.4f})  "
+                      f"noise {parts['noise_moments']:.4f}  ({time.time() - t0:.0f}s)", flush=True)
                 if vl < best - dk["min_delta"]:
                     best, bad = vl, 0
                     best_state = {k: v.detach().clone() for k, v in net.state_dict().items()}
@@ -358,18 +402,48 @@ class GatedDeepKnockoffSampler:
         return {"fold": f, "train_rows": int(len(tr)), "val_rows": int(n_val), "best_val_loss": best,
                 "stopped_at": hist[-1]["step"], "seconds": time.time() - t0, "history": hist}
 
+    def _exact(self, N: np.ndarray, Z: np.ndarray) -> np.ndarray:
+        """Sample-level map of N to E[N] = 0, cov(N, X) = 0 and cov(N) = V exactly (float64): centre, remove the
+        least-squares regression on X, then N1 C^(-1/2) V^(1/2) with symmetric roots (the identity when C = V)."""
+        Nc = N - N.mean(0)
+        Zc = Z - Z.mean(0)
+        beta = np.linalg.lstsq(Zc, Nc, rcond=None)[0]
+        N1 = Nc - Zc @ beta
+        C = N1.T @ N1 / (len(N1) - 1)
+        ev, U = np.linalg.eigh(0.5 * (C + C.T))
+        inv_half = (U / np.sqrt(np.clip(ev, ev.max() * 1e-10, None))) @ U.T
+        return N1 @ inv_half @ self.V_half
+
     @torch.no_grad()
-    def sample(self, seed: int) -> tuple[np.ndarray, dict]:
+    def sample(self, seed: int, learned: bool = True) -> tuple[np.ndarray, dict]:
+        """learned=False: the ablation arm deep2_zero, f = 0 (the block-MVR knockoff with the exact map only)."""
         gen = torch.Generator(device=self.device)
         gen.manual_seed(int(seed))
         n, p = self.Z.shape
         E = torch.randn((n, p), generator=gen, device=self.device)
-        U = torch.rand((n, p), generator=gen, device=self.device).clamp(1e-6, 1 - 1e-6)
-        Zk = torch.empty_like(self.Z)
-        for f in range(2):
-            r = self.fold == f
-            Zk[r] = self._knock(self.nets[f], self.Z[r], E[r], U[r], relaxed=False)[0]
-        zk = Zk.double().cpu().numpy()
-        xk = zk * self.sd_t.double().cpu().numpy() + self.mu_t.double().cpu().numpy()
-        err = np.abs(self.zero_mass - (np.abs(xk) < 1e-6).mean(0))
-        return zk, {"zero_mass_error_max": float(err.max()), "zero_mass_error_median": float(np.median(err))}
+        N = E @ self.base.Lt
+        if learned:
+            for f in range(2):
+                r = self.fold == f
+                N[r] = self._noise(self.nets[f], self.Z[r], E[r])
+        Zd = self.Z.double().cpu().numpy()
+        Nraw = N.double().cpu().numpy()
+        Nx = self._exact(Nraw, Zd)
+        b = self.base
+        mu = b.mu.double().cpu().numpy()
+        zk = mu + (Zd - mu) @ b.A.double().cpu().numpy() + Nx
+        # diagnostics (DK8): how far the exact map moved N, and the moment errors against a Gaussian draw, same noise
+        Zk_t = torch.from_numpy(zk.astype(np.float32)).to(self.device)
+        g = b.mu + (self.Z - b.mu) @ b.A + E @ b.Lt
+        anchors = torch.randint(p, (32,), generator=gen, device=self.device)
+        rank = lambda A: np.argsort(np.argsort(A, axis=0), axis=0).astype(np.float64)
+        sel = np.random.default_rng(int(seed)).choice(p, size=min(p, 256), replace=False)
+        rz, rk = rank(Zd[:, sel]), rank(zk[:, sel])
+        spearman = [float(np.corrcoef(rz[:, j], rk[:, j])[0, 1]) for j in range(len(sel))]
+        info = {"exact_map_relative_change": float(np.linalg.norm(Nx - Nraw) / max(np.linalg.norm(Nraw), 1e-12)),
+                "learned_part_relative_norm": float(np.linalg.norm(Nraw - (E @ b.Lt).double().cpu().numpy())
+                                                    / max(np.linalg.norm(Nraw), 1e-12)),
+                "third_order_error": float(third_order_loss(self.Z, Zk_t, self.neigh, anchors)),
+                "third_order_error_gauss_mvr": float(third_order_loss(self.Z, g, self.neigh, anchors)),
+                "spearman_self_corr_median": float(np.nanmedian(spearman))}
+        return zk, info
