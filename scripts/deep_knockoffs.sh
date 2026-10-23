@@ -13,7 +13,13 @@
 # (stage34, paired with its gauss and hurdle records; saebench_amendment_6 revision_1):
 #   SET=gemma8 GPU=1 nohup scripts/deep_knockoffs.sh > logs/deep_knockoffs_gemma8.log 2>&1 &
 #
-# Env: SET (main | gemma8, default main), GPU (default 0), THREADS (CPU threads per process, default 6)
+# GROUP=deep2 runs the gated deep knockoffs v2 (saebench_amendment_7: arms deep2 and its Gaussian-control
+# diagnostic deep2_ctrl) on the same datasets and cells instead of v1:
+#   GROUP=deep2 GPU=0 nohup scripts/deep_knockoffs.sh > logs/deep2_knockoffs.log 2>&1 &
+#   GROUP=deep2 SET=gemma8 GPU=1 nohup scripts/deep_knockoffs.sh > logs/deep2_knockoffs_gemma8.log 2>&1 &
+#
+# Env: SET (main | gemma8, default main), GROUP (deep | deep2, default deep), GPU (default 0),
+#      THREADS (CPU threads per process, default 6)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 [[ -f .venv/bin/activate && -z "${VIRTUAL_ENV:-}" ]] && source .venv/bin/activate
@@ -22,7 +28,9 @@ THREADS=${THREADS:-6}
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export OMP_NUM_THREADS=$THREADS MKL_NUM_THREADS=$THREADS OPENBLAS_NUM_THREADS=$THREADS
 SET=${SET:-main}
-LOG=logs/deep_knockoffs$([[ $SET == main ]] || echo "_$SET")
+GROUP=${GROUP:-deep}
+[[ $GROUP == deep || $GROUP == deep2 ]] || { echo "unknown GROUP=$GROUP"; exit 2; }
+LOG=logs/${GROUP}_knockoffs$([[ $SET == main ]] || echo "_$SET")
 mkdir -p "$LOG"
 stamp() { echo "[$(date '+%F %T')] $*"; }
 G2=config/default.yaml
@@ -52,8 +60,8 @@ step() {   # cfg flag dataset rd group stage
 pipeline() {
     local cfg flag d rd
     IFS='|' read -r cfg flag d rd <<< "$1"
-    step "$cfg" "$flag" "$d" "$rd" deep exchange
-    step "$cfg" "$flag" "$d" "$rd" deep full
+    step "$cfg" "$flag" "$d" "$rd" "$GROUP" exchange
+    step "$cfg" "$flag" "$d" "$rd" "$GROUP" full
     step "$cfg" "$flag" "$d" "$rd" gauss exchange
 }
 
@@ -63,17 +71,17 @@ status() {
         IFS='|' read -r cfg flag d rd <<< "$j"
         local s=${d//\//__} tag
         tag=$(basename "$cfg" .yaml)_$s
-        printf '%-55s deep-exchange %-3s deep-records %-3s gauss-exchange %-3s | %s\n' "$tag" \
-            "$([[ -f $rd/${s}_deep_exchange.json ]] && echo yes || echo no)" \
-            "$([[ -f $rd/${s}_deep_records.npz ]] && echo yes || echo no)" \
+        printf '%-55s %s-exchange %-3s %s-records %-3s gauss-exchange %-3s | %s\n' "$tag" \
+            "$GROUP" "$([[ -f $rd/${s}_${GROUP}_exchange.json ]] && echo yes || echo no)" \
+            "$GROUP" "$([[ -f $rd/${s}_${GROUP}_records.npz ]] && echo yes || echo no)" \
             "$([[ -f $rd/${s}_gauss_exchange.json ]] && echo yes || echo no)" \
-            "$(grep -h 'rep \|deep fold' "$LOG"/*_"$tag".log 2>/dev/null | tail -1)"
+            "$(grep -h 'rep \|deep fold\|deep2 fold' "$LOG"/*_"$tag".log 2>/dev/null | tail -1)"
     done
     grep -l "Traceback\|Error" "$LOG"/*.log 2>/dev/null | sed 's/^/  errors in: /'
 }
 
 if [[ "${1:-}" == status ]]; then status; exit 0; fi
-stamp "deep knockoffs: ${#JOBS[@]} pipelines on GPU $GPU, $THREADS threads each; logs in $LOG/"
+stamp "$GROUP knockoffs: ${#JOBS[@]} pipelines on GPU $GPU, $THREADS threads each; logs in $LOG/"
 for j in "${JOBS[@]}"; do      # activation caches (data/saebench/cache, not in git): built here only if missing
     IFS='|' read -r cfg flag d rd <<< "$j"
     CUDA_VISIBLE_DEVICES=$GPU python src/saebench/cache.py --config "$cfg" --dataset "$d" >> "$LOG/cache.log" 2>&1 \

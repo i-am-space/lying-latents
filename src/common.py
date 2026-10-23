@@ -74,6 +74,7 @@ STREAMS = [
     "sbevk_split",           # stage4_amendment_7: further random splits (per dataset, replicate, split)
     "sbevk_folds",           # stage4_amendment_7: CV folds of those splits and of the swapped E3 selection (per dataset, cell, replicate, split)
     "dk_train",              # saebench_amendment_6: deep-knockoff fold split and generator training (per dataset)
+    "dk2_train",             # saebench_amendment_7: gated deep knockoffs, fold split and training (per dataset, real/control)
 ]
 
 

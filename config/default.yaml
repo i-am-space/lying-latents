@@ -483,6 +483,7 @@ stage4_saebench:
     evalue: [evalue]              # saebench_amendment_5: e-value splitting on the same cells and labels
     evalue_plus: [evalue_nocap, evalue_k5]   # stage4_amendment_7
     deep: [deep]                  # saebench_amendment_6: deep knockoffs (deep_knockoffs below)
+    deep2: [deep2, deep2_ctrl]    # saebench_amendment_7: gated deep knockoffs, and the same on the Gaussian control
   diagnose:
     pilot_replicates: 1
 
@@ -513,6 +514,7 @@ stage4_saebench_matched:
     evalue: [evalue]              # saebench_amendment_5: e-value splitting on the same cells and labels
     evalue_plus: [evalue_nocap, evalue_k5]   # stage4_amendment_7
     deep: [deep]                  # saebench_amendment_6
+    deep2: [deep2, deep2_ctrl]    # saebench_amendment_7
   diagnose:
     pilot_replicates: 1
   calibration:
@@ -546,6 +548,33 @@ deep_knockoffs:
   gamma_mmd: 1.0                  # loss weights as Romano et al.'s defaults: MMD, second moments, decorrelation
   lambda_moments: 1.0
   delta_decorrelation: 1.0        # target corr(X_j, X~_j) = 1 - s_j of the block-MVR S
+  log_every: 250
+
+# Gated deep knockoffs (config/preregistration.yaml saebench_amendment_7): deep_knockoffs with a learned
+# fire / no-fire gate, a smaller trunk, weight decay, early stopping and a larger decorrelation weight.
+# Fixed before any run; not tuned on a result.
+deep_knockoffs_v2:
+  arms:                           # appended after deep_knockoffs' arm: arm ids 8, 9
+    - [deep2, deep_gated]
+    - [deep2_ctrl, deep_gated_control]   # trained on the Gaussian control, where block MVR is already valid
+  hidden: 256                     # v1: 1024
+  layers: 2
+  steps: 4000                     # maximum; early stopping usually ends sooner
+  batch: 2048
+  lr: 3.0e-4
+  weight_decay: 1.0e-4            # AdamW; v1: Adam, none
+  mmd_scales: [0.25, 0.5, 1.0, 2.0, 4.0]
+  local_blocks: 8
+  local_size: 64
+  gamma_mmd: 1.0
+  lambda_moments: 1.0
+  delta_decorrelation: 5.0        # v1: 1.0 (self-correlation rose above the block-MVR target)
+  lambda_firing: 10.0             # mean firing probability vs Pr(X_j > 0), gated latents
+  gate_temperature: 0.5           # relaxed gate in training (straight-through); draws are exact Bernoulli
+  val_fraction: 0.15              # of the training fold, held out for early stopping
+  eval_every: 250
+  patience: 4                     # evaluations without improvement
+  min_delta: 1.0e-4
   log_every: 250
 
 paths:

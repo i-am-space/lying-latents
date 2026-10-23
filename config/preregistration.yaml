@@ -1928,3 +1928,64 @@ saebench_amendment_6:
       value instead of 0; latents with zeros are unchanged. Both runs are stopped, their generators and partial
       outputs deleted, and every dataset of both settings rerun from the start with the fix, so all deep results use
       one method. Nothing else changes.
+
+# ===========================================================================
+# SAEBench AMENDMENT 7 - gated deep knockoffs (written BEFORE any run)
+# ===========================================================================
+# Appended; no earlier line is altered. saebench_amendment_6 (deep knockoffs v1) and its results are unchanged.
+
+saebench_amendment_7:
+  meta:
+    date_written: "2026-10-23"
+    status: written_before_run
+    trigger: >
+      Deep knockoffs v1 (saebench_amendment_6) repaired 0 of 13 dataset settings and had higher FDR than the
+      block-MVR knockoffs they start from on almost every dataset. Their diagnostics point at three causes:
+      (1) the zero share is not learned: v1 cuts values below the floor to 0 with a hard step, which passes no
+      gradient, and the per-latent zero-mass error is median 0.03-0.09, max up to 0.54; (2) overfitting: a
+      1,024-wide network (about 6 million parameters) trained for about 1,300 passes over about 6,250 rows per
+      fold, with no held-out check; (3) drift towards copies: the knockoff self-correlation rose during training
+      from about 0.85 to 0.90-0.95, above the block-MVR target. v1 is frozen (DK-T); this is a new variant.
+  design:
+    method: >
+      src/deep_knockoffs.py GatedDeepKnockoffSampler, settings config deep_knockoffs_v2 (fixed here). As v1
+      (residual on the block-MVR Gaussian knockoff, full and neighbourhood swap MMD, second-moment matching,
+      decorrelation towards 1 - s_j, two-fold cross-fitting), with: (1) a fire / no-fire gate for every latent
+      with exact zeros in the data: X~_j = on_j * max(value_j, smallest positive activation of j), on_j drawn
+      exactly as Bernoulli(sigmoid(logit0_j + g_j)) with logit0_j the latent's firing rate and g_j a learned head;
+      in training the gradient passes through a relaxed gate (straight-through, temperature 0.5); a firing-rate
+      loss (weight 10) matches the mean firing probability to Pr(X_j > 0). Latents with no zeros have no gate and
+      are clamped at their smallest observed value. (2) Trunk width 256 (v1 1,024), AdamW weight decay 1e-4, and
+      early stopping: 15% of the training fold held out, the loss evaluated there every 250 steps at fixed noise,
+      stop after 4 evaluations without improvement, keep the best state (maximum 4,000 steps). (3) Decorrelation
+      weight 5 (v1 1). Seeds: stream dk2_train (dataset, 0 real / 1 control); knockoff draws from the experiment's
+      knockoff stream with arm ids 8 (deep2) and 9 (deep2_ctrl).
+    diagnostic_arm: >
+      deep2_ctrl trains the same generator on the Gaussian control data, where its starting point (block-MVR
+      knockoffs) is already valid. If training is sound it should leave FDR at the control's level; if FDR rises
+      there, the training procedure itself damages knockoffs (rule DK7). deep2 and deep2_ctrl run in one arm group.
+    settings: >
+      Exactly saebench_amendment_6's settings, datasets, cells, replicates and streams: Gemma-2 matched sweep
+      (Bias in Bios 1, GitHub code; stage34_matched, sb4m_*), Pythia-70M unthresholded (EuroParl, Bias in Bios 1,
+      Amazon category; stage34, sb34_*), and the 8 Gemma-2 datasets on saebench_amendment_2's cells (stage34,
+      sb34_*). Paired with the v1 deep, Gaussian and hurdle records.
+    stages: >
+      Per dataset: --stage exchange then --stage full, arm group deep2; then --stage analyse. Script
+      scripts/deep_knockoffs.sh with GROUP=deep2.
+  decision_rules:
+    - id: DK1-DK4
+      rule: "As saebench_amendment_6, applied to arm deep2 (output key DK_v2), with deep2 minus deep (v1) added to DK3."
+    - id: DK7
+      rule: "Training harms valid knockoffs if deep2_ctrl has any Benjamini-Yekutieli breach under CV, or its pooled FDR is significantly above gauss_ceiling_mvr's (paired over replicates, two-sided 0.05). Reported per dataset; if it holds on a majority, a deep2 failure is attributed to the training procedure, not to the data."
+    - id: DK8
+      rule: "Descriptive: zero-mass error (median, max), knockoff self-correlation, the step at which early stopping ended and the training and validation losses, against v1's."
+    - id: DK-T2
+      rule: "No change to the network, losses, weights, early-stopping settings, datasets or cells after any real-data result; a failed run is fixed only for crashes and reported."
+  interpretation_constraints:
+    - "A learned sampler has no exchangeability guarantee; its validity is what the swap tests and the benchmark measure."
+    - "One more network configuration; a failure is of this generator, not of every learned sampler."
+    - "The settings were chosen from v1's diagnostics, not from any v2 result."
+  smoke_test_before_commit: >
+    To do before the real run: src/deep_knockoffs.py GatedDeepKnockoffSampler on a synthetic zero-inflated matrix
+    (CPU, a few hundred steps): it trains, early stopping triggers or completes, draws are reproducible from the
+    seed and after reloading the saved generators, and the zero-mass error is below v1's on the same matrix.
