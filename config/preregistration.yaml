@@ -2052,3 +2052,87 @@ saebench_amendment_7:
       decision datasets) is run at once instead of in two steps. The stopping rule of revision_1 is no longer a gate;
       the count of decision datasets repaired (at least 2 of 3) is still reported, and every setting is reported
       whatever it shows. Nothing else changes.
+
+# ===========================================================================
+# STAGE 5 AMENDMENT 1 - interventional FDR control (written BEFORE any run)
+# ===========================================================================
+# Appended; no earlier line is altered. Plan: stage5_interventional_fdr.pdf (22 Oct 2026), with the fixes below.
+
+stage5_amendment_1:
+  meta:
+    date_written: "2026-10-24"
+    status: written_before_run
+    trigger: >
+      Observational knockoff discovery on SAE latents is not reliably valid (Gaussian block MVR breaches in strong
+      interaction cells; the hurdle on the ReLU SAE; deep knockoffs v1 on 9 of 13 datasets) and, even when valid,
+      answers an associational question. Stage 5 tests the causal one inside the model, with FDR control that needs
+      no model of the latents.
+  estimand: >
+    m(x) = the model's probability of the correct class among the task's label tokens (first token of " <word>")
+    at the end of a few-shot prompt; Delta_j(x) = m(x) - m(x; intervention on latent j), in [-1, 1]; tau_j = E_x
+    Delta_j(x) over the task's texts. H_j: tau_j <= delta. One-sided by design: a latent whose removal helps the
+    task is not claimed, and averaging the correct-class probability over classes avoids the sign problem of a
+    two-class logit difference (a latent supporting one class is non-null through the inputs of that class).
+  intervention: >
+    At the SAE layer (resid_post), on every token of the query (head, text, tail; never the BOS or the fixed
+    demonstrations): residual += (new_j - a_j) W_dec[j], so the SAE error term is kept. Primary: conditional
+    resampling from a token-level hurdle sampler of a_j given the 64 latents most co-active with j on split-A query
+    tokens (ridge logistic firing model, ridge log-normal size model, clipped to the observed range; marginal if
+    fewer than 20 positive or zero tokens). Sensitivity: zero ablation and token-mean ablation, on the candidates
+    with 1,000 inputs from each of B and O. The meaning of tau_j depends on the intervention; the test's validity
+    does not. Computation: the later layers are replayed from the layer's residual stream with the call arguments
+    captured from the same forward pass; the pilot checks the replay against model(...) with and without an
+    intervention (tolerance 1e-3 on class probabilities) and the pair is not run if it fails.
+  data_and_splits: >
+    Tasks: SST-2 (train split), AG News, Bias in Bios class set 1, EuroParl (SAEBench task texts); label words in
+    config stage5.tasks (the SAEBench codes checked against sae_bench 0.6.0 dataset_info). One seeded shuffle
+    (stream s5_split) gives one demonstration per class, pilot 300, A 1,000, B pool 2,500, O 2,500; the
+    observational baselines use A and the unused texts (at most 12,500). Models: Gemma-2-2B (Gemma Scope L20 16k)
+    and Gemma-3-1B (Gemma Scope 2 L22 16k), float32. Pythia-70M is not prompted (audit only).
+  procedure: >
+    Screening on A: the attribution-patching score of every latent (first-order drop of m under zero ablation,
+    mean over A); the K = 250 highest positive scores are the hypotheses. Testing on B: for each hypothesis a
+    betting e-value for the bounded mean (aGRAPA bets, predictable, capped at 0.5 / (1 + delta); Waudby-Smith and
+    Ramdas 2024) and e-BH over the K (Wang and Ramdas 2022), at alpha 0.05, 0.10, 0.20. Valid under any dependence
+    between hypotheses, given random inputs and A independent of B.
+  delta: >
+    0.05 x SD of m over the pilot inputs (primary); 0.02 and 0.10 x SD as sensitivity. Fixed on the pilot split.
+  gate: >
+    A model-task pair is run only if the pilot's balanced prompted accuracy is at least 0.70 and the replay
+    equivalence check passes.
+  validation: >
+    Oracle tau_j: the mean of Delta_j over the 2,500 split-O inputs for every latent in U (candidates and every
+    baseline's evaluated latents); true non-null if oracle tau_j > delta. The procedure is rerun on 200 subsamples of
+    the B pool at n = 100, 250, 500, 1,000, 2,000 (stream s5_order); realised FDR (mean FDP) and power against the
+    oracle. Sensitivity: latents with |tau_j - delta| < 2 SE of the oracle left out.
+  baselines: >
+    (1) Zero-null e-values: the same procedure with delta = 0 (an ablation e-process with a zero-effect null, as
+    Khera 2026), scored against the minimum-effect truth and against tau_j > 0. (2) Attribution-patching top k (k =
+    10, 25, 50; Marks et al. 2025). (3) Gaussian equicorrelated knockoffs with L1-logistic C = 0.5 on the pooled
+    latents (Enkhbayar 2025), one-vs-rest per class, union of selections. (4) Observational e-value splitting (our
+    Stage 4 procedure), the same way. Observational selections larger than 100 latents are evaluated on a random
+    subsample of 100 (stream s5_obs). Observational baselines run only where the model has a pooled-latent cache for
+    the task.
+  decision_rules:
+    - id: S5-1
+      rule: "Validity: per model-task pair and n, alpha, a breach if realised FDR exceeds alpha by more than 2 SE over replicates (primary intervention, primary delta). Reported for every pair; the claim of exact FDR control is supported if there is no breach."
+    - id: S5-2
+      rule: "Power: realised power against the oracle as a function of n (descriptive)."
+    - id: S5-3
+      rule: "Baselines: each baseline's FDP against the same oracle; the zero-null baseline's FDP against the minimum-effect truth and against tau_j > 0 (descriptive; the paper's comparison)."
+    - id: S5-4
+      rule: "Sensitivity: the same rules under zero and mean ablation, the delta grid and the oracle band (descriptive)."
+    - id: S5-T
+      rule: "No change to the estimand, interventions, splits, K, delta rule, e-value, alphas or tasks after any pilot result beyond the pre-registered gate."
+  deferred: >
+    Group testing of clusters of correlated latents (the plan's extension) needs a hierarchical FDR procedure; it is
+    not part of this amendment.
+  interpretation_constraints:
+    - "The causal claim is about the model's computation on this prompt format and these texts, under the stated intervention."
+    - "Power is relative to the latents in U; latents never screened are not counted."
+    - "Novelty relative to Khera (ICML 2026 workshop) to be checked before the paper's framing is fixed."
+  smoke_test_before_commit: >
+    Done on CPU with tiny random Gemma-2 / Gemma-3 models (transformers 4.57.6) and a mock JumpReLU SAE: replay
+    matches model(...) to 1e-7 with and without interventions (sliding-window and soft-capped layers included);
+    pilot, screen, baselines (no cache), delta with a crash and resume, evaluate run end to end; e-values are
+    calibrated on null data (mean e <= 1) and e-BH matches a brute-force implementation.

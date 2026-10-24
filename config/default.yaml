@@ -578,6 +578,81 @@ deep_knockoffs_v2:
   min_delta: 1.0e-4
   log_every: 250
 
+# Stage 5: interventional FDR control (config/preregistration.yaml stage5_amendment_1). Prompted classification on
+# the model; each hypothesis H_j: tau_j <= delta, tau_j the mean drop in the correct-class probability when latent j
+# is intervened on at the SAE layer over the query's tokens. Screening on split A, betting e-values and e-BH on
+# split B, an oracle tau_j from split O. Fixed before any run.
+stage5:
+  splits:                         # disjoint, from one seeded shuffle of the task's texts (stream s5_split)
+    pilot: 300                    # gate (prompted accuracy), delta, timing, the equivalence check
+    screen: 1000                  # split A: attribution scores of every latent, token statistics for the samplers
+    test_pool: 2500               # split B pool: the procedure's inputs (replicates subsample it)
+    oracle: 2500                  # split O: the oracle tau_j
+    obs_max_rows: 12500           # observational baselines: split A and every unused text, at most this many
+  shots_per_class: 1              # few-shot demonstrations in the fixed prompt prefix (never intervened on)
+  max_demo_tokens: 40
+  candidates: 250                 # K: top latents by attribution score on split A; the hypotheses e-BH tests
+  baseline_cap: 100               # latents per observational baseline kept for the oracle (random subsample if more)
+  atp_topk: [10, 25, 50]          # attribution-patching baseline (Marks et al.): top k by the split-A score
+  interventions:
+    primary: resample             # conditional resampling from a token-level hurdle sampler of a_j | a_-j
+    sensitivity: [zero, mean]     # run on the candidates only, with the pools below
+    sensitivity_pool: 1000        # inputs from each of B and O for the sensitivity interventions
+  resample:
+    neighbours: 64                # covariates: the latents most co-active with j (|phi| on split-A query tokens)
+    logistic_ridge: 1.0           # ridge on the firing model (standardised log1p covariates)
+    size_ridge: 1.0               # ridge on the log-size model
+    min_positive: 20              # fewer positive tokens than this: marginal hurdle (no covariates)
+  delta:
+    sd_fraction: 0.05             # primary delta = 0.05 x SD of the metric over the pilot inputs
+    sd_fraction_grid: [0.02, 0.05, 0.10]   # sensitivity
+  evalue:
+    method: agrapa                # betting e-value for a bounded mean (Waudby-Smith & Ramdas 2024), predictable bets
+    bet_cap: 0.5                  # lambda_t <= bet_cap / (1 + delta): wealth never below half its value per step
+    prior_variance: 0.25          # pseudo-observation for the running variance at t = 1
+  alphas: [0.05, 0.10, 0.20]
+  test_sizes: [100, 250, 500, 1000, 2000]
+  replicates: 200                 # procedure reruns per test size (subsamples of the split-B pool, stream s5_order)
+  oracle_band_se: 2.0             # sensitivity: latents with |tau_j - delta| < 2 SE are left out of FDR and power
+  gate:
+    min_balanced_accuracy: 0.70   # prompted accuracy on the pilot split; below it the task-model pair is not run
+    equivalence_atol: 1.0e-3      # replayed vs full-forward class probabilities (no intervention and one intervention)
+  replay_batch: 32                # interventions per replay batch
+  observational:                  # baselines on the pooled-latent caches (one-vs-rest per class, union of selections)
+    knockoff_C: 0.5               # Enkhbayar (2025): Gaussian equicorrelated knockoffs, L1-logistic with C = 0.5
+  tasks:
+    sst2:
+      source: sst2
+      instruction: "Classify the sentiment of each movie review as positive or negative."
+      head: "Review: "
+      tail: "\nSentiment:"
+      max_query_tokens: 64
+      labels: {"0": negative, "1": positive}
+    ag_news:
+      source: saebench
+      dataset: fancyzhx/ag_news
+      instruction: "Classify each news article into one of these topics: World, Sports, Business, Technology."
+      head: "Article: "
+      tail: "\nTopic:"
+      max_query_tokens: 96
+      labels: {"0": World, "1": Sports, "2": Business, "3": Technology}   # SAEBench / HF ag_news codes
+    bias_in_bios:
+      source: saebench
+      dataset: LabHC/bias_in_bios_class_set1
+      instruction: "Classify each biography by the person's occupation: accountant, architect, attorney, dentist, or filmmaker."
+      head: "Biography: "
+      tail: "\nOccupation:"
+      max_query_tokens: 96
+      labels: {"0": accountant, "1": architect, "2": attorney, "6": dentist, "9": filmmaker}   # sae_bench profession_dict
+    europarl:
+      source: saebench
+      dataset: Helsinki-NLP/europarl
+      instruction: "Identify the language of each sentence: English, French, German, Spanish, or Dutch."
+      head: "Sentence: "
+      tail: "\nLanguage:"
+      max_query_tokens: 64
+      labels: {en: English, fr: French, de: German, es: Spanish, nl: Dutch}
+
 paths:
   cache_dir: data/cache
   results_dir: results

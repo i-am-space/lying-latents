@@ -75,6 +75,10 @@ STREAMS = [
     "sbevk_folds",           # stage4_amendment_7: CV folds of those splits and of the swapped E3 selection (per dataset, cell, replicate, split)
     "dk_train",              # saebench_amendment_6: deep-knockoff fold split and generator training (per dataset)
     "dk2_train",             # saebench_amendment_7: deep knockoffs v2, fold split, training, diagnostic (per dataset, 0 real / 1 control / 2 deepdiag)
+    "s5_split",              # stage5_amendment_1: the seeded shuffle of a task's texts into demos / pilot / A / B / O (per task)
+    "s5_order",              # stage5_amendment_1: procedure replicates, subsamples of the split-B pool (per task, size, replicate)
+    "s5_resample",           # stage5_amendment_1: resampling-intervention draws (per task, intervention, input)
+    "s5_obs",                # stage5_amendment_1: observational baselines (knockoff draws, e-value splits, subsampling)
 ]
 
 
