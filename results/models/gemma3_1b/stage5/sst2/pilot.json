@@ -1,0 +1,75 @@
+{
+  "task": "sst2",
+  "model": "google/gemma-3-1b-pt",
+  "n": 300,
+  "classes": [
+    "0",
+    "1"
+  ],
+  "label_words": [
+    "negative",
+    "positive"
+  ],
+  "label_ids": [
+    5676,
+    4414
+  ],
+  "balanced_accuracy": 0.8722826086956521,
+  "recall_by_class": {
+    "0": 0.75,
+    "1": 0.9945652173913043
+  },
+  "mean_m": 0.7359785169363022,
+  "sd_m": 0.16808487275407646,
+  "delta": 0.008404243637703824,
+  "delta_grid": {
+    "0.02": 0.003361697455081529,
+    "0.05": 0.008404243637703824,
+    "0.1": 0.01680848727540765
+  },
+  "equivalence": [
+    {
+      "input": 29485,
+      "latent": 227,
+      "no_intervention": 3.4868717193603516e-06,
+      "zero_ablation": 1.1324882507324219e-06,
+      "ablation_effect": 0.01674705743789673
+    },
+    {
+      "input": 42607,
+      "latent": 1543,
+      "no_intervention": 9.685754776000977e-07,
+      "zero_ablation": 3.5762786865234375e-07,
+      "ablation_effect": 0.009419143199920654
+    },
+    {
+      "input": 60460,
+      "latent": 227,
+      "no_intervention": 1.3709068298339844e-06,
+      "zero_ablation": 2.2649765014648438e-06,
+      "ablation_effect": 0.014903455972671509
+    }
+  ],
+  "equivalence_max": 3.4868717193603516e-06,
+  "gate": {
+    "passed": true,
+    "balanced_accuracy": 0.8722826086956521,
+    "min": 0.7,
+    "equivalence_ok": true
+  },
+  "seconds_per_base": 0.03503751754760742,
+  "seconds_per_replay_batch": 0.015335440635681152,
+  "projected_delta_hours": 0.5044665932655334,
+  "prompt_tokens_median": 69.5,
+  "example_prompt": "<bos>Classify the sentiment of each movie review as positive or negative.\n\nReview: 's informative and breathtakingly spectacular \nSentiment: positive\n\nReview: say the obvious : abandon all hope of a good movie ye who enter here \nSentiment: negative\n\nReview: unrelentingly grim -- and equally engrossing \nSentiment:",
+  "query_start": 55,
+  "splits": {
+    "demo": 2,
+    "pilot": 300,
+    "A": 1000,
+    "B": 2500,
+    "O": 2500,
+    "obs": 12500
+  },
+  "minutes": 0.28
+}

@@ -1,0 +1,429 @@
+{
+  "task": "europarl",
+  "model": "google/gemma-3-1b-pt",
+  "delta": 0.009145858419920962,
+  "specs": {
+    "prereg": {
+      "K": 250,
+      "bet_cap": 0.5
+    },
+    "v2": {
+      "K": 50,
+      "bet_cap": 0.9
+    }
+  },
+  "resample": {
+    "counts": {
+      "candidates": 250,
+      "tau_positive": 221,
+      "tau_above_2se": 196,
+      "tau_above_delta": 9,
+      "tau_above_delta_in_top_v2": 9
+    },
+    "prereg": {
+      "primary": {
+        "100": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0,
+          "mean_selected": 0.0,
+          "mean_true": 9.0
+        },
+        "250": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0155,
+          "mean_selected": 0.14,
+          "mean_true": 9.08
+        },
+        "500": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.3128,
+          "mean_selected": 2.855,
+          "mean_true": 9.145
+        },
+        "1000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.5412,
+          "mean_selected": 5.01,
+          "mean_true": 9.28
+        },
+        "2000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.6593,
+          "mean_selected": 6.0,
+          "mean_true": 9.145
+        }
+      },
+      "breaches": [],
+      "zero_null": {
+        "100": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.0
+        },
+        "250": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.525
+        },
+        "500": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 4.785
+        },
+        "1000": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 6.015
+        },
+        "2000": {
+          "fdr_vs_min_effect": 0.3683,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 14.525
+        }
+      },
+      "stress_p_any_rejection": {
+        "250": 0.0,
+        "1000": 0.0,
+        "2000": 0.0
+      }
+    },
+    "v2": {
+      "primary": {
+        "100": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0078,
+          "mean_selected": 0.07,
+          "mean_true": 9.0
+        },
+        "250": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.2843,
+          "mean_selected": 2.58,
+          "mean_true": 9.08
+        },
+        "500": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.5767,
+          "mean_selected": 5.265,
+          "mean_true": 9.145
+        },
+        "1000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.6481,
+          "mean_selected": 6.0,
+          "mean_true": 9.28
+        },
+        "2000": {
+          "fdr": 0.0007,
+          "fdr_se": 0.0007,
+          "power": 0.6593,
+          "mean_selected": 6.005,
+          "mean_true": 9.145
+        }
+      },
+      "breaches": [],
+      "zero_null": {
+        "100": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.235
+        },
+        "250": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 4.995
+        },
+        "500": {
+          "fdr_vs_min_effect": 0.0471,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 8.04
+        },
+        "1000": {
+          "fdr_vs_min_effect": 0.4407,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 16.695
+        },
+        "2000": {
+          "fdr_vs_min_effect": 0.6033,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 23.05
+        }
+      },
+      "stress_p_any_rejection": {
+        "250": 0.0,
+        "1000": 0.0,
+        "2000": 0.0
+      }
+    },
+    "baselines2": {
+      "note": "no pooled-latent cache for this model and task: observational baselines not run"
+    }
+  },
+  "zero": {
+    "counts": {
+      "candidates": 250,
+      "tau_positive": 228,
+      "tau_above_2se": 201,
+      "tau_above_delta": 10,
+      "tau_above_delta_in_top_v2": 10
+    },
+    "prereg": {
+      "primary": {
+        "100": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0,
+          "mean_selected": 0.0,
+          "mean_true": 10.215
+        },
+        "250": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0125,
+          "mean_selected": 0.12,
+          "mean_true": 10.12
+        },
+        "500": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.2886,
+          "mean_selected": 2.865,
+          "mean_true": 9.99
+        },
+        "1000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.6152,
+          "mean_selected": 6.0,
+          "mean_true": 9.86
+        }
+      },
+      "breaches": [],
+      "zero_null": {
+        "100": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.0
+        },
+        "250": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.495
+        },
+        "500": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 5.585
+        },
+        "1000": {
+          "fdr_vs_min_effect": 0.0064,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 6.045
+        }
+      },
+      "stress_p_any_rejection": {
+        "250": 0.0,
+        "1000": 0.0,
+        "2000": 0.0
+      }
+    },
+    "v2": {
+      "primary": {
+        "100": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0055,
+          "mean_selected": 0.055,
+          "mean_true": 10.215
+        },
+        "250": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.2646,
+          "mean_selected": 2.655,
+          "mean_true": 10.12
+        },
+        "500": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.6017,
+          "mean_selected": 5.975,
+          "mean_true": 9.99
+        },
+        "1000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.6152,
+          "mean_selected": 6.0,
+          "mean_true": 9.86
+        }
+      },
+      "breaches": [],
+      "zero_null": {
+        "100": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.185
+        },
+        "250": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 5.78
+        },
+        "500": {
+          "fdr_vs_min_effect": 0.1445,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 10.07
+        },
+        "1000": {
+          "fdr_vs_min_effect": 0.5015,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 19.8
+        }
+      },
+      "stress_p_any_rejection": {
+        "250": 0.0,
+        "1000": 0.0,
+        "2000": 0.0
+      }
+    }
+  },
+  "mean": {
+    "counts": {
+      "candidates": 250,
+      "tau_positive": 164,
+      "tau_above_2se": 137,
+      "tau_above_delta": 11,
+      "tau_above_delta_in_top_v2": 11
+    },
+    "prereg": {
+      "primary": {
+        "100": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0,
+          "mean_selected": 0.0,
+          "mean_true": 10.775
+        },
+        "250": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0119,
+          "mean_selected": 0.115,
+          "mean_true": 10.67
+        },
+        "500": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.3567,
+          "mean_selected": 3.8,
+          "mean_true": 10.725
+        },
+        "1000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.6225,
+          "mean_selected": 6.535,
+          "mean_true": 10.59
+        }
+      },
+      "breaches": [],
+      "zero_null": {
+        "100": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.0
+        },
+        "250": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.455
+        },
+        "500": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 5.695
+        },
+        "1000": {
+          "fdr_vs_min_effect": 0.0022,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 8.07
+        }
+      },
+      "stress_p_any_rejection": {
+        "250": 0.0,
+        "1000": 0.0,
+        "2000": 0.0
+      }
+    },
+    "v2": {
+      "primary": {
+        "100": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0034,
+          "mean_selected": 0.035,
+          "mean_true": 10.775
+        },
+        "250": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.3432,
+          "mean_selected": 3.635,
+          "mean_true": 10.67
+        },
+        "500": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.6569,
+          "mean_selected": 6.995,
+          "mean_true": 10.725
+        },
+        "1000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.6662,
+          "mean_selected": 7.0,
+          "mean_true": 10.59
+        }
+      },
+      "breaches": [],
+      "zero_null": {
+        "100": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.15
+        },
+        "250": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 6.71
+        },
+        "500": {
+          "fdr_vs_min_effect": 0.1311,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 11.12
+        },
+        "1000": {
+          "fdr_vs_min_effect": 0.4352,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 18.865
+        }
+      },
+      "stress_p_any_rejection": {
+        "250": 0.0,
+        "1000": 0.005,
+        "2000": 0.0
+      }
+    }
+  }
+}

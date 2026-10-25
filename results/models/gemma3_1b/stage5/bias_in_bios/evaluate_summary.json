@@ -1,0 +1,198 @@
+{
+  "task": "bias_in_bios",
+  "model": "google/gemma-3-1b-pt",
+  "delta": 0.01607290805879881,
+  "resample": {
+    "n_true_candidates": 3,
+    "n_true_U": 3,
+    "primary": {
+      "100": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+      },
+      "250": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+      },
+      "500": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+      },
+      "1000": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+      },
+      "2000": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.3283,
+        "mean_selected": 0.985
+      }
+    },
+    "breaches_primary": [],
+    "zero_null": {
+      "100": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 0.0
+      },
+      "250": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 0.0
+      },
+      "500": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 0.0
+      },
+      "1000": {
+        "fdr_vs_min_effect": 0.0925,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 3.4
+      },
+      "2000": {
+        "fdr_vs_min_effect": 0.397,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 5.0
+      }
+    },
+    "baselines": {
+      "atp_top10": {
+        "fdr": 0.7,
+        "fdr_se": 0.0,
+        "power": 1.0,
+        "mean_selected": 10.0,
+        "p_any_false": 1.0
+      },
+      "atp_top25": {
+        "fdr": 0.88,
+        "fdr_se": 0.0,
+        "power": 1.0,
+        "mean_selected": 25.0,
+        "p_any_false": 1.0
+      },
+      "atp_top50": {
+        "fdr": 0.94,
+        "fdr_se": 0.0,
+        "power": 1.0,
+        "mean_selected": 50.0,
+        "p_any_false": 1.0
+      }
+    }
+  },
+  "zero": {
+    "n_true_candidates": 6,
+    "n_true_U": 6,
+    "primary": {
+      "100": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+      },
+      "250": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+      },
+      "500": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.165,
+        "mean_selected": 0.99
+      },
+      "1000": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.1667,
+        "mean_selected": 1.0
+      }
+    },
+    "breaches_primary": [],
+    "zero_null": {
+      "100": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 0.0
+      },
+      "250": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 0.2
+      },
+      "500": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 2.2
+      },
+      "1000": {
+        "fdr_vs_min_effect": 0.1429,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 7.0
+      }
+    }
+  },
+  "mean": {
+    "n_true_candidates": 5,
+    "n_true_U": 5,
+    "primary": {
+      "100": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+      },
+      "250": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+      },
+      "500": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.001,
+        "mean_selected": 0.005
+      },
+      "1000": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.2,
+        "mean_selected": 1.0
+      }
+    },
+    "breaches_primary": [],
+    "zero_null": {
+      "100": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 0.0
+      },
+      "250": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 0.0
+      },
+      "500": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 1.2
+      },
+      "1000": {
+        "fdr_vs_min_effect": 0.1667,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 6.0
+      }
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "task": "europarl",
+  "model": "google/gemma-3-1b-pt",
+  "n": 300,
+  "classes": [
+    "en",
+    "fr",
+    "de",
+    "es",
+    "nl"
+  ],
+  "label_words": [
+    "English",
+    "French",
+    "German",
+    "Spanish",
+    "Dutch"
+  ],
+  "label_ids": [
+    5422,
+    7830,
+    9115,
+    14361,
+    23196
+  ],
+  "balanced_accuracy": 0.816329241562688,
+  "recall_by_class": {
+    "en": 0.5370370370370371,
+    "fr": 0.9206349206349206,
+    "de": 0.9375,
+    "es": 0.9122807017543859,
+    "nl": 0.7741935483870968
+  },
+  "mean_m": 0.5399351071566343,
+  "sd_m": 0.18291716839841923,
+  "delta": 0.009145858419920962,
+  "delta_grid": {
+    "0.02": 0.0036583433679683846,
+    "0.05": 0.009145858419920962,
+    "0.1": 0.018291716839841925
+  },
+  "equivalence": [
+    {
+      "input": 3199,
+      "latent": 1207,
+      "no_intervention": 3.7550926208496094e-06,
+      "zero_ablation": 2.0489096641540527e-06,
+      "ablation_effect": 0.01835101842880249
+    },
+    {
+      "input": 6511,
+      "latent": 857,
+      "no_intervention": 4.187226295471191e-06,
+      "zero_ablation": 3.337860107421875e-06,
+      "ablation_effect": 0.0756622850894928
+    },
+    {
+      "input": 3389,
+      "latent": 1207,
+      "no_intervention": 2.7045607566833496e-06,
+      "zero_ablation": 3.4570693969726562e-06,
+      "ablation_effect": 0.023708581924438477
+    }
+  ],
+  "equivalence_max": 4.187226295471191e-06,
+  "gate": {
+    "passed": true,
+    "balanced_accuracy": 0.816329241562688,
+    "min": 0.7,
+    "equivalence_ok": true
+  },
+  "seconds_per_base": 0.03632712364196777,
+  "seconds_per_replay_batch": 0.05295360088348389,
+  "projected_delta_hours": 1.624353031317393,
+  "prompt_tokens_median": 230.0,
+  "example_prompt": "<bos>Identify the language of each sentence: English, French, German, Spanish, or Dutch.\n\nSentence: Il serait utile de consigner au proc\u00e8s-verbal du Parlement la mani\u00e8re dont les gens per\u00e7oivent ce que nous venons de faire, \u00e0 la lumi\u00e8re de leur propre analyse politique.\nLanguage: French\n\nSentence: Zun\u00e4chst die indirekten steuerlichen Bestimmungen und vor kurzem, dank Kommissar Monti, die direkten Bestimmungen und insbesondere den Verhaltenskodex.\nLanguage: German\n\nSentence: En consecuencia, en nombre de mi Grupo, expreso un juicio favorable sobre el informe Theato; sin embargo, considero que, en el aspecto substancial, se trata de un tema que ha\nLanguage: Spanish\n\nSentence: Elk jaar hebben wij hetzelfde probleem.\nLanguage: Dutch\n\nSentence: I am pleased to see that we have today arrived at a compromise motion.\nLanguage: English\n\nSentence: Les subventions ne suffisent pas pour faire du d\u00e9veloppement, quand font d\u00e9faut les infrastructures ou les services publics.\nLanguage:",
+  "query_start": 194,
+  "splits": {
+    "demo": 5,
+    "pilot": 300,
+    "A": 1000,
+    "B": 2500,
+    "O": 2500,
+    "obs": 7195
+  },
+  "minutes": 0.46
+}

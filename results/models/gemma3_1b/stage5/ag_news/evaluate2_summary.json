@@ -1,0 +1,429 @@
+{
+  "task": "ag_news",
+  "model": "google/gemma-3-1b-pt",
+  "delta": 0.00882522204208244,
+  "specs": {
+    "prereg": {
+      "K": 250,
+      "bet_cap": 0.5
+    },
+    "v2": {
+      "K": 50,
+      "bet_cap": 0.9
+    }
+  },
+  "resample": {
+    "counts": {
+      "candidates": 250,
+      "tau_positive": 234,
+      "tau_above_2se": 210,
+      "tau_above_delta": 8,
+      "tau_above_delta_in_top_v2": 8
+    },
+    "prereg": {
+      "primary": {
+        "100": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0,
+          "mean_selected": 0.0,
+          "mean_true": 8.0
+        },
+        "250": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0638,
+          "mean_selected": 0.51,
+          "mean_true": 8.005
+        },
+        "500": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.1985,
+          "mean_selected": 1.59,
+          "mean_true": 8.01
+        },
+        "1000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.2471,
+          "mean_selected": 2.0,
+          "mean_true": 8.105
+        },
+        "2000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.4207,
+          "mean_selected": 3.43,
+          "mean_true": 8.205
+        }
+      },
+      "breaches": [],
+      "zero_null": {
+        "100": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.0
+        },
+        "250": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.83
+        },
+        "500": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 1.995
+        },
+        "1000": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 4.94
+        },
+        "2000": {
+          "fdr_vs_min_effect": 0.4539,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 15.345
+        }
+      },
+      "stress_p_any_rejection": {
+        "250": 0.0,
+        "1000": 0.0,
+        "2000": 0.0
+      }
+    },
+    "v2": {
+      "primary": {
+        "100": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0156,
+          "mean_selected": 0.125,
+          "mean_true": 8.0
+        },
+        "250": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.2124,
+          "mean_selected": 1.7,
+          "mean_true": 8.005
+        },
+        "500": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.2566,
+          "mean_selected": 2.055,
+          "mean_true": 8.01
+        },
+        "1000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.4783,
+          "mean_selected": 3.865,
+          "mean_true": 8.105
+        },
+        "2000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.6108,
+          "mean_selected": 5.0,
+          "mean_true": 8.205
+        }
+      },
+      "breaches": [],
+      "zero_null": {
+        "100": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.315
+        },
+        "250": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 2.0
+        },
+        "500": {
+          "fdr_vs_min_effect": 0.0183,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 6.985
+        },
+        "1000": {
+          "fdr_vs_min_effect": 0.602,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 20.42
+        },
+        "2000": {
+          "fdr_vs_min_effect": 0.7896,
+          "fdr_vs_tau_above_2se": 0.0019,
+          "mean_selected": 38.995
+        }
+      },
+      "stress_p_any_rejection": {
+        "250": 0.0,
+        "1000": 0.0,
+        "2000": 0.0
+      }
+    },
+    "baselines2": {
+      "note": "no pooled-latent cache for this model and task: observational baselines not run"
+    }
+  },
+  "zero": {
+    "counts": {
+      "candidates": 250,
+      "tau_positive": 241,
+      "tau_above_2se": 208,
+      "tau_above_delta": 12,
+      "tau_above_delta_in_top_v2": 12
+    },
+    "prereg": {
+      "primary": {
+        "100": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0,
+          "mean_selected": 0.0,
+          "mean_true": 12.175
+        },
+        "250": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0368,
+          "mean_selected": 0.45,
+          "mean_true": 12.26
+        },
+        "500": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.1266,
+          "mean_selected": 1.555,
+          "mean_true": 12.32
+        },
+        "1000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.3125,
+          "mean_selected": 3.875,
+          "mean_true": 12.44
+        }
+      },
+      "breaches": [],
+      "zero_null": {
+        "100": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.0
+        },
+        "250": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.795
+        },
+        "500": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 2.17
+        },
+        "1000": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 8.04
+        }
+      },
+      "stress_p_any_rejection": {
+        "250": 0.0,
+        "1000": 0.0,
+        "2000": 0.0
+      }
+    },
+    "v2": {
+      "primary": {
+        "100": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.012,
+          "mean_selected": 0.145,
+          "mean_true": 12.175
+        },
+        "250": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.135,
+          "mean_selected": 1.65,
+          "mean_true": 12.26
+        },
+        "500": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.3158,
+          "mean_selected": 3.88,
+          "mean_true": 12.32
+        },
+        "1000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.5321,
+          "mean_selected": 6.58,
+          "mean_true": 12.44
+        }
+      },
+      "breaches": [],
+      "zero_null": {
+        "100": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.405
+        },
+        "250": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 3.145
+        },
+        "500": {
+          "fdr_vs_min_effect": 0.0423,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 12.31
+        },
+        "1000": {
+          "fdr_vs_min_effect": 0.5808,
+          "fdr_vs_tau_above_2se": 0.0021,
+          "mean_selected": 29.74
+        }
+      },
+      "stress_p_any_rejection": {
+        "250": 0.0,
+        "1000": 0.0,
+        "2000": 0.0
+      }
+    }
+  },
+  "mean": {
+    "counts": {
+      "candidates": 250,
+      "tau_positive": 191,
+      "tau_above_2se": 161,
+      "tau_above_delta": 11,
+      "tau_above_delta_in_top_v2": 11
+    },
+    "prereg": {
+      "primary": {
+        "100": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0,
+          "mean_selected": 0.0,
+          "mean_true": 10.73
+        },
+        "250": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.037,
+          "mean_selected": 0.38,
+          "mean_true": 10.73
+        },
+        "500": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.1378,
+          "mean_selected": 1.46,
+          "mean_true": 10.765
+        },
+        "1000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.1862,
+          "mean_selected": 2.0,
+          "mean_true": 10.825
+        }
+      },
+      "breaches": [],
+      "zero_null": {
+        "100": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.0
+        },
+        "250": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.765
+        },
+        "500": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 1.995
+        },
+        "1000": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 7.955
+        }
+      },
+      "stress_p_any_rejection": {
+        "250": 0.0,
+        "1000": 0.0,
+        "2000": 0.0
+      }
+    },
+    "v2": {
+      "primary": {
+        "100": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.0148,
+          "mean_selected": 0.15,
+          "mean_true": 10.73
+        },
+        "250": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.1504,
+          "mean_selected": 1.595,
+          "mean_true": 10.73
+        },
+        "500": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.2074,
+          "mean_selected": 2.21,
+          "mean_true": 10.765
+        },
+        "1000": {
+          "fdr": 0.0,
+          "fdr_se": 0.0,
+          "power": 0.5323,
+          "mean_selected": 5.68,
+          "mean_true": 10.825
+        }
+      },
+      "breaches": [],
+      "zero_null": {
+        "100": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 0.34
+        },
+        "250": {
+          "fdr_vs_min_effect": 0.0,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 2.015
+        },
+        "500": {
+          "fdr_vs_min_effect": 0.0959,
+          "fdr_vs_tau_above_2se": 0.0,
+          "mean_selected": 10.79
+        },
+        "1000": {
+          "fdr_vs_min_effect": 0.6421,
+          "fdr_vs_tau_above_2se": 0.0016,
+          "mean_selected": 30.31
+        }
+      },
+      "stress_p_any_rejection": {
+        "250": 0.0,
+        "1000": 0.0,
+        "2000": 0.0
+      }
+    }
+  }
+}
