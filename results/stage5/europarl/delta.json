@@ -1,0 +1,25 @@
+{
+  "U": 266,
+  "n_candidates": 250,
+  "pools": {
+    "B": 2500,
+    "O": 2500
+  },
+  "primary": "resample",
+  "sensitivity": [
+    "zero",
+    "mean"
+  ],
+  "sensitivity_pool": 1000,
+  "resample": {
+    "latents": 266,
+    "marginal": 4,
+    "median_firing_rate": 0.02720171695240947,
+    "fit_seconds": 291.8
+  },
+  "accuracy": {
+    "B": 0.94,
+    "O": 0.9436
+  },
+  "minutes": 358.9
+}

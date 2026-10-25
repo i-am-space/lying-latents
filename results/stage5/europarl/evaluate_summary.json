@@ -1,0 +1,258 @@
+{
+  "task": "europarl",
+  "model": "google/gemma-2-2b",
+  "delta": 0.009649513243600527,
+  "resample": {
+    "n_true_candidates": 4,
+    "n_true_U": 4,
+    "primary": {
+      "100": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+      },
+      "250": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0025,
+        "mean_selected": 0.01
+      },
+      "500": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.5,
+        "mean_selected": 2.0
+      },
+      "1000": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.5,
+        "mean_selected": 2.0
+      },
+      "2000": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.7475,
+        "mean_selected": 2.99
+      }
+    },
+    "breaches_primary": [],
+    "zero_null": {
+      "100": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 0.0
+      },
+      "250": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 0.3
+      },
+      "500": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 2.0
+      },
+      "1000": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 3.0
+      },
+      "2000": {
+        "fdr_vs_min_effect": 0.5612,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 9.1
+      }
+    },
+    "baselines": {
+      "atp_top10": {
+        "fdr": 0.7,
+        "fdr_se": 0.0,
+        "power": 0.75,
+        "mean_selected": 10.0,
+        "p_any_false": 1.0
+      },
+      "atp_top25": {
+        "fdr": 0.88,
+        "fdr_se": 0.0,
+        "power": 0.75,
+        "mean_selected": 25.0,
+        "p_any_false": 1.0
+      },
+      "atp_top50": {
+        "fdr": 0.92,
+        "fdr_se": 0.0,
+        "power": 1.0,
+        "mean_selected": 50.0,
+        "p_any_false": 1.0
+      },
+      "knockoff_q0.05": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0,
+        "p_any_false": 0.0,
+        "n_selected": 0,
+        "evaluated_subsample": false,
+        "fdp_vs_tau_positive": 0.0
+      },
+      "knockoff_q0.1": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0,
+        "p_any_false": 0.0,
+        "n_selected": 0,
+        "evaluated_subsample": false,
+        "fdp_vs_tau_positive": 0.0
+      },
+      "knockoff_q0.2": {
+        "fdr": 1.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 23.0,
+        "p_any_false": 1.0,
+        "n_selected": 23,
+        "evaluated_subsample": false,
+        "fdp_vs_tau_positive": 0.5652
+      },
+      "evalue_obs_q0.05": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0,
+        "p_any_false": 0.0,
+        "n_selected": 0,
+        "evaluated_subsample": false,
+        "fdp_vs_tau_positive": 0.0
+      },
+      "evalue_obs_q0.1": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0,
+        "p_any_false": 0.0,
+        "n_selected": 0,
+        "evaluated_subsample": false,
+        "fdp_vs_tau_positive": 0.0
+      },
+      "evalue_obs_q0.2": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0,
+        "p_any_false": 0.0,
+        "n_selected": 0,
+        "evaluated_subsample": false,
+        "fdp_vs_tau_positive": 0.0
+      }
+    }
+  },
+  "zero": {
+    "n_true_candidates": 7,
+    "n_true_U": 7,
+    "primary": {
+      "100": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+      },
+      "250": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.1414,
+        "mean_selected": 0.99
+      },
+      "500": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.2879,
+        "mean_selected": 2.015
+      },
+      "1000": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.5714,
+        "mean_selected": 4.0
+      }
+    },
+    "breaches_primary": [],
+    "zero_null": {
+      "100": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 0.0
+      },
+      "250": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 1.1
+      },
+      "500": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 3.9
+      },
+      "1000": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 6.0
+      }
+    }
+  },
+  "mean": {
+    "n_true_candidates": 7,
+    "n_true_U": 7,
+    "primary": {
+      "100": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+      },
+      "250": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.1443,
+        "mean_selected": 1.01
+      },
+      "500": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.2843,
+        "mean_selected": 1.99
+      },
+      "1000": {
+        "fdr": 0.0,
+        "fdr_se": 0.0,
+        "power": 0.7143,
+        "mean_selected": 5.0
+      }
+    },
+    "breaches_primary": [],
+    "zero_null": {
+      "100": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 0.0
+      },
+      "250": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 1.1
+      },
+      "500": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 4.1
+      },
+      "1000": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_selected": 6.0
+      }
+    }
+  }
+}

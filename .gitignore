@@ -5,3 +5,7 @@ __pycache__/
 .ipynb_checkpoints/
 wandb/
 data/saebench/
+# Stage 5: sparse token activations (10-40 MB each, rebuilt by --stage screen), debug runs, checkpoints
+results/**/stage5/*/screen.npz
+results/**/stage5/*__limit*/
+results/**/stage5/*/*checkpoint*

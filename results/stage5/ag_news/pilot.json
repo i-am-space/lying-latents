@@ -1,0 +1,83 @@
+{
+  "task": "ag_news",
+  "model": "google/gemma-2-2b",
+  "n": 300,
+  "classes": [
+    "0",
+    "1",
+    "2",
+    "3"
+  ],
+  "label_words": [
+    "World",
+    "Sports",
+    "Business",
+    "Technology"
+  ],
+  "label_ids": [
+    3855,
+    12886,
+    7211,
+    9967
+  ],
+  "balanced_accuracy": 0.8409201220965278,
+  "recall_by_class": {
+    "0": 0.9493670886075949,
+    "1": 0.8488372093023255,
+    "2": 0.8571428571428571,
+    "3": 0.7083333333333334
+  },
+  "mean_m": 0.6630779246737559,
+  "sd_m": 0.22239282790072024,
+  "delta": 0.011119641395036012,
+  "delta_grid": {
+    "0.02": 0.004447856558014405,
+    "0.05": 0.011119641395036012,
+    "0.1": 0.022239282790072024
+  },
+  "equivalence": [
+    {
+      "input": 3460,
+      "latent": 8684,
+      "no_intervention": 2.4139881134033203e-06,
+      "zero_ablation": 1.6689300537109375e-06,
+      "ablation_effect": 0.004881739616394043
+    },
+    {
+      "input": 7622,
+      "latent": 1659,
+      "no_intervention": 3.427267074584961e-07,
+      "zero_ablation": 5.781650543212891e-06,
+      "ablation_effect": 0.017370179295539856
+    },
+    {
+      "input": 3735,
+      "latent": 12808,
+      "no_intervention": 1.430511474609375e-06,
+      "zero_ablation": 9.5367431640625e-07,
+      "ablation_effect": 0.011829674243927002
+    }
+  ],
+  "equivalence_max": 5.781650543212891e-06,
+  "gate": {
+    "passed": true,
+    "balanced_accuracy": 0.8409201220965278,
+    "min": 0.7,
+    "equivalence_ok": true
+  },
+  "seconds_per_base": 0.07505404949188232,
+  "seconds_per_replay_batch": 0.317496657371521,
+  "projected_delta_hours": 9.540947940614489,
+  "prompt_tokens_median": 268.0,
+  "example_prompt": "<bos>Classify each news article into one of these topics: World, Sports, Business, Technology.\n\nArticle: Soldering plays Spadea next LYON, France -- Robin Soderling made sure none of the top four seeds would reach the semifinals of the Lyon Tennis Grand Prix. Soderling upset the highest seed\nTopic: Sports\n\nArticle: Infineon Execs Plead Guilty NEW YORK - With four of its executives pleading guilty to price-fixing charges today, Infineon will have a hard time arguing that it didn #39;\nTopic: Technology\n\nArticle: Iran dug tunnel for military nuclear work-magazine BERLIN - Iran is working on a secret nuclear programme for military purposes despite promising the European Union it would halt all activities related to uranium enrichment, the news magazine\nTopic: World\n\nArticle: Iraq to get \\$436m emergency loan The International Monetary Fund (IMF) has approved an emergency loan of \\$436m (232m) to Iraq, the first from\nTopic: Business\n\nArticle: Gators Fire Ron Zook After Two-Plus Years Florida #39;s head football coach Ron Zook tries to maintain his composure during his remarks to the media following his firing by the University of Florida Monday, Oct. 25, 2004 in Gainesville, Fla.\nTopic:",
+  "query_start": 212,
+  "splits": {
+    "demo": 4,
+    "pilot": 300,
+    "A": 1000,
+    "B": 2500,
+    "O": 2500,
+    "obs": 4696
+  },
+  "minutes": 2.0
+}

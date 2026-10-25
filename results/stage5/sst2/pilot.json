@@ -1,0 +1,75 @@
+{
+  "task": "sst2",
+  "model": "google/gemma-2-2b",
+  "n": 300,
+  "classes": [
+    "0",
+    "1"
+  ],
+  "label_words": [
+    "negative",
+    "positive"
+  ],
+  "label_ids": [
+    8322,
+    6222
+  ],
+  "balanced_accuracy": 0.9460269865067467,
+  "recall_by_class": {
+    "0": 0.9137931034482759,
+    "1": 0.9782608695652174
+  },
+  "mean_m": 0.7925481516122818,
+  "sd_m": 0.15214468324782174,
+  "delta": 0.007607234162391088,
+  "delta_grid": {
+    "0.02": 0.003042893664956435,
+    "0.05": 0.007607234162391088,
+    "0.1": 0.015214468324782175
+  },
+  "equivalence": [
+    {
+      "input": 29485,
+      "latent": 11519,
+      "no_intervention": 1.1920928955078125e-06,
+      "zero_ablation": 3.904104232788086e-06,
+      "ablation_effect": 0.008249878883361816
+    },
+    {
+      "input": 42607,
+      "latent": 6912,
+      "no_intervention": 3.516674041748047e-06,
+      "zero_ablation": 4.410743713378906e-06,
+      "ablation_effect": 0.0029468536376953125
+    },
+    {
+      "input": 60460,
+      "latent": 11519,
+      "no_intervention": 2.7418136596679688e-06,
+      "zero_ablation": 2.8014183044433594e-06,
+      "ablation_effect": 0.007166445255279541
+    }
+  ],
+  "equivalence_max": 4.410743713378906e-06,
+  "gate": {
+    "passed": true,
+    "balanced_accuracy": 0.9460269865067467,
+    "min": 0.7,
+    "equivalence_ok": true
+  },
+  "seconds_per_base": 0.041648149490356445,
+  "seconds_per_replay_batch": 0.07199287414550781,
+  "projected_delta_hours": 2.1976328558391995,
+  "prompt_tokens_median": 68.0,
+  "example_prompt": "<bos>Classify the sentiment of each movie review as positive or negative.\n\nReview: 's informative and breathtakingly spectacular \nSentiment: positive\n\nReview: say the obvious : abandon all hope of a good movie ye who enter here \nSentiment: negative\n\nReview: unrelentingly grim -- and equally engrossing \nSentiment:",
+  "query_start": 54,
+  "splits": {
+    "demo": 2,
+    "pilot": 300,
+    "A": 1000,
+    "B": 2500,
+    "O": 2500,
+    "obs": 12500
+  },
+  "minutes": 0.6
+}

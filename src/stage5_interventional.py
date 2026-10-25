@@ -20,6 +20,14 @@ Stages (each resumes; outputs in <results_dir>/stage5/<task>/):
              against the oracle tau_j from split O; the baselines against the same oracle; sensitivity analyses
   summary    one JSON over the tasks of a model config
 
+stage5_amendment_2 (new outputs; the stages above and their files are unchanged):
+  baselines2 observational baselines over several knockoff draws / e-value splits, each class at alpha / C
+  delta2     Delta_j(x) (primary intervention) for the latents baselines2 selects that are not in U
+  evaluate2  CPU only: replicates re-split B + O into test and oracle inputs; the pre-registered specification
+             (K = 250, bet cap 0.5) and v2 (K = 50, bet cap 0.9); a boundary stress test (every latent's Delta
+             shifted to mean delta, so every rejection is false); tau > 2 SE counts; baselines2 against the oracle
+  --stage v2 runs baselines2, delta2, evaluate2
+
 Usage: python src/stage5_interventional.py --config config/default.yaml --task sst2 --stage all
 """
 from __future__ import annotations
@@ -38,6 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))   # src/
 from common import ROOT, cache_path, load_config, results_dir, stream_rng   # noqa: E402
 
 STAGES = ("pilot", "screen", "baselines", "delta", "evaluate")
+V2_STAGES = ("baselines2", "delta2", "evaluate2")              # stage5_amendment_2
 INTERVENTIONS = ("resample", "zero", "mean")
 
 
@@ -385,15 +394,19 @@ def fdp_tpr(sel: np.ndarray, true: np.ndarray, keep: np.ndarray | None = None):
 # ---------------------------------------------------------------------------
 
 class Ctx:
-    def __init__(self, cfg: dict, tname: str, limit: int | None = None):
+    def __init__(self, cfg: dict, tname: str, limit: int | None = None, light: bool = False):
+        """light: no texts or splits (evaluate / evaluate2 read only the saved stage outputs)."""
         self.cfg, self.task = cfg, tname
         self.s5 = cfg["stage5"]
         self.tc = self.s5["tasks"][tname]
         self.ti = list(self.s5["tasks"]).index(tname)
         self.out = results_dir(cfg) / "stage5" / tname
         self.out.mkdir(parents=True, exist_ok=True)
-        self.texts, self.y, self.classes = task_texts(cfg, tname)
-        self.splits = make_splits(cfg, tname, self.y, limit)
+        if light:
+            self.texts = self.y = self.classes = self.splits = None
+        else:
+            self.texts, self.y, self.classes = task_texts(cfg, tname)
+            self.splits = make_splits(cfg, tname, self.y, limit)
         self.limit = limit
         self.runner = self.prompts = None
 
@@ -885,6 +898,346 @@ def summarise(ev: dict, alphas) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# stage5_amendment_2: baselines2, delta2, evaluate2
+# ---------------------------------------------------------------------------
+
+def stage_baselines2(ctx: Ctx) -> dict:
+    """The observational baselines over several independent knockoff draws and e-value splits, each class at
+    alpha / C (the union's FDP is at most the sum of the per-class FDPs, so its FDR is <= alpha). Latents selected
+    in any draw are evaluated (at most baseline_cap per baseline, a random subsample if more); those not already
+    in U are listed in "extra" for delta2."""
+    require_gate(ctx)
+    s5, oc = ctx.s5, ctx.s5["observational"]
+    U = {int(j) for j in ctx.load_json("baselines.json")["U"]}
+    ob = _obs_cache(ctx)
+    if ob is None:
+        out = {"observational_note": "no pooled-latent cache for this model and task: observational baselines not run",
+               "extra": []}
+        ctx.write_json("baselines2.json", out)
+        print(f"  baselines2: {out['observational_note']}", flush=True)
+        return out
+    X, retained, cpath = ob
+    rows = ctx.splits["obs"]
+    X = X[rows].astype(np.float64)
+    yv = ctx.y[rows]
+    mu, sd = X.mean(0), X.std(0)
+    keep = sd > 1e-8
+    Z = (X[:, keep] - mu[keep]) / sd[keep]
+    ids = retained[keep]
+    p = Z.shape[1]
+    classes = range(len(ctx.classes)) if len(ctx.classes) > 2 else [1]
+    C = len(classes)
+    alphas = s5["alphas"]
+    qc = {q: (q / C if oc.get("per_class_alpha", True) else q) for q in alphas}
+    D = int(oc["draws"])
+    from sklearn.linear_model import LogisticRegression
+    from knockpy.knockoffs import GaussianSampler
+    from planted_fdr import compute_knockoff_plus_threshold
+    from stage4_repairs import evalue_discoveries
+    ev, lasso = ctx.cfg["stage4_repairs"]["evalue"], ctx.cfg["stage4_repairs"]["lasso"]
+    dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    Zt = torch.as_tensor(Z, dtype=torch.float32, device=dev)
+    sampler = GaussianSampler(X=Z, method="equicorrelated")       # knockoffs do not depend on y: one sampler
+    draws = {"knockoff": [], "evalue_obs": []}
+    t0 = time.time()
+    for d in range(D):
+        per = {name: {str(q): set() for q in alphas} for name in draws}
+        for ci, c in enumerate(classes):
+            yb = (yv == c).astype(np.float64)
+            np.random.seed(int(stream_rng(ctx.cfg, "s5_obs", ctx.ti, 3, d, ci).integers(2**31)))
+            Zk = sampler.sample_knockoffs()
+            fit = LogisticRegression(penalty="l1", C=oc["knockoff_C"], solver="liblinear", max_iter=2000)
+            fit.fit(np.hstack([Z, Zk]), yb)
+            w = np.abs(fit.coef_[0])
+            W = w[:p] - w[p:]
+            for q in alphas:
+                tau = compute_knockoff_plus_threshold(W, qc[q])
+                if np.isfinite(tau):
+                    per["knockoff"][str(q)] |= set(ids[W >= tau].tolist())
+            split = stream_rng(ctx.cfg, "s5_obs", ctx.ti, 4, d, ci).permutation(len(yb))
+            disc = evalue_discoveries(Zt, torch.as_tensor(yb, dtype=torch.float32, device=dev), split, ev, lasso,
+                                      [qc[q] for q in alphas])
+            for q in alphas:
+                per["evalue_obs"][str(q)] |= set(ids[sorted(disc[qc[q]])].tolist())
+        for name in draws:
+            draws[name].append({q: sorted(int(j) for j in v) for q, v in per[name].items()})
+        print(f"  baselines2 draw {d + 1}/{D} ({time.time() - t0:.0f}s): "
+              + "; ".join(f"{k} {[len(v) for v in per[k].values()]}" for k in per), flush=True)
+    cap = oc["baseline_cap"]
+    out = {"classes": C, "alpha_per_class": {str(q): qc[q] for q in alphas}, "draws": D, "baselines": {}}
+    for bi, (name, dl) in enumerate(draws.items()):
+        union = sorted(set().union(*[set(v) for dsel in dl for v in dsel.values()]))
+        sub = union
+        if len(union) > cap:
+            sub = sorted(stream_rng(ctx.cfg, "s5_obs", ctx.ti, 5, bi).choice(union, size=cap, replace=False).tolist())
+        out["baselines"][name] = {"draws": dl, "evaluated": [int(j) for j in sub], "n_union": len(union),
+                                  "subsampled": len(union) > cap}
+    out["extra"] = sorted(set().union(*[set(v["evaluated"]) for v in out["baselines"].values()]) - U)
+    out.update({"observational_cache": cpath, "observational_rows": int(len(rows)),
+                "minutes": round((time.time() - t0) / 60, 2)})
+    ctx.write_json("baselines2.json", out)
+    print(f"  baselines2: {len(out['extra'])} latents not in U go to delta2 ({out['minutes']} min)", flush=True)
+    return out
+
+
+def stage_delta2(ctx: Ctx) -> dict:
+    """Delta_j(x) under the primary intervention for baselines2's extra latents, on the same split-B and split-O
+    inputs as delta (same row order), with its own resampling draws (stream s5_resample, pool index 2 / 3)."""
+    require_gate(ctx)
+    s5, R = ctx.s5, ctx.runner
+    E = np.asarray(ctx.load_json("baselines2.json")["extra"], dtype=np.int64)
+    prim = s5["interventions"]["primary"]
+    pools = [("B", ctx.splits["B"]), ("O", ctx.splits["O"])]
+    res = {p: np.full((len(r), len(E)), np.nan, dtype=np.float32) for p, r in pools}
+    t0 = time.time()
+    if len(E):
+        scr = np.load(ctx.path("screen.npz"))
+        bank = ResampleBank({k: scr[k] for k in ("indptr", "idx", "val")}, E, R.W_dec.shape[0], s5["resample"]).to(R.device)
+        print(f"  resampling sampler: {bank.summary()}", flush=True)
+        Et = torch.as_tensor(E, device=R.device)
+        W_E = R.W_dec[Et]
+        C = s5["replay_batch"]
+        ck = ctx.path("delta2_checkpoint.npz")
+        done = {"B": 0, "O": 0}
+        if ck.exists():
+            zc = np.load(ck, allow_pickle=True)
+            if list(zc["E"]) == list(E):
+                res = {p: zc[p] for p in res}
+                done = json.loads(str(zc["done"]))
+                print(f"  resuming: {done}", flush=True)
+        last_ck = time.time()
+        for pi, (pname, rows) in enumerate(pools):
+            for k in range(done[pname], len(rows)):
+                i = int(rows[k])
+                ids, q0 = ctx.prompts.build(ctx.texts[i])
+                h, caps = R.base(ids)
+                Aq = R.encode(h)[q0:]
+                a_cur = Aq[:, Et].T.contiguous()                                       # (E, Q)
+                with torch.no_grad():
+                    m0 = float(correct_prob(R.replay(h[None], caps), ctx.y[i])[0])
+                gen = torch.Generator(device=R.device)
+                gen.manual_seed(int(stream_rng(ctx.cfg, "s5_resample", ctx.ti, pi + 2, k).integers(2**62)))
+                d = (_new_values(prim, torch.arange(len(E), device=R.device), a_cur, Aq, bank, gen) - a_cur).to(h.dtype)
+                outv = np.empty(len(E), dtype=np.float32)
+                for s0 in range(0, len(E), C):
+                    dd = d[s0: s0 + C]
+                    H = h[None].repeat(len(dd), 1, 1)
+                    H[:, q0:, :] += dd[:, :, None] * W_E[s0: s0 + C][:, None, :].to(h.dtype)
+                    with torch.no_grad():
+                        mm = correct_prob(R.replay(H, caps), ctx.y[i])
+                    outv[s0: s0 + len(dd)] = (m0 - mm).cpu().numpy()
+                res[pname][k] = outv
+                done[pname] = k + 1
+                if time.time() - last_ck > 600 or k + 1 == len(rows):
+                    tmp = ck.with_suffix(".tmp.npz")
+                    np.savez(tmp, E=E, done=np.asarray(json.dumps(done)), **res)
+                    tmp.replace(ck)
+                    last_ck = time.time()
+                    print(f"  delta2 {pname} {k + 1}/{len(rows)}  ({(time.time() - t0) / 60:.1f} min)", flush=True)
+        ck.unlink(missing_ok=True)
+    np.savez(ctx.path("delta2.npz"), E=E, **{f"{p}__{prim}": v for p, v in res.items()})
+    out = {"extra": int(len(E)), "primary": prim, "minutes": round((time.time() - t0) / 60, 1)}
+    ctx.write_json("delta2.json", out)
+    print(f"  delta2: {len(E)} latents ({out['minutes']} min)", flush=True)
+    return out
+
+
+def _selections(X: np.ndarray, delta: float, cap: float, ev: dict, alphas) -> dict:
+    """e-BH selections at each alpha from betting e-values on X (..., n, K)."""
+    e = np.exp(np.minimum(betting_log_evalues(X, delta, cap, ev["prior_variance"]), 700.0))
+    return {a: ebh(e, a) for a in alphas}
+
+
+def _summ_rep(sel: np.ndarray, true: np.ndarray, keep: np.ndarray | None = None, alpha: float | None = None) -> dict:
+    """As _summ, with a truth (and band) per replicate: sel, true, keep are (R, K). Power is averaged over the
+    replicates whose oracle has at least one true hypothesis."""
+    if keep is not None:
+        sel, true = sel & keep, true & keep
+    ns, nt = sel.sum(-1), true.sum(-1)
+    fdp = (sel & ~true).sum(-1) / np.maximum(ns, 1)
+    tpr = (sel & true).sum(-1) / np.maximum(nt, 1)
+    R = len(fdp)
+    fdr, se = float(fdp.mean()), float(fdp.std(ddof=1) / math.sqrt(R)) if R > 1 else 0.0
+    d = {"fdr": fdr, "fdr_se": se, "power": float(tpr[nt > 0].mean()) if (nt > 0).any() else 0.0,
+         "mean_selected": float(ns.mean()), "mean_true": float(nt.mean()), "p_any_false": float((fdp > 0).mean())}
+    if alpha is not None:
+        d["breach"] = bool(fdr - alpha > 2 * se)
+    return d
+
+
+def _eval_baselines2(ctx: Ctx, P: np.ndarray, U, delta0: float, k_se: float) -> dict:
+    """baselines2's selections, draw by draw, against the oracle from all B + O inputs (the baselines never see
+    them). A draw that selects nothing has FDP 0; a draw whose selections all fall outside the evaluated subsample
+    is left out."""
+    p2 = ctx.path("baselines2.json")
+    if not p2.exists():
+        return {"note": "baselines2 not run"}
+    b2 = json.loads(p2.read_text())
+    if "baselines" not in b2:
+        return {"note": b2.get("observational_note", "")}
+    prim = ctx.s5["interventions"]["primary"]
+    N = P.shape[0]
+    T = {int(j): (float(t), float(s)) for j, t, s in zip(U, P.mean(0), P.std(0, ddof=1) / math.sqrt(N))}
+    if b2["extra"]:
+        if not ctx.path("delta2.npz").exists():
+            return {"note": "delta2 not run: baselines2's extra latents have no Delta yet"}
+        z2 = np.load(ctx.path("delta2.npz"))
+        P2 = np.vstack([z2[f"B__{prim}"], z2[f"O__{prim}"]]).astype(np.float64)
+        T.update({int(j): (float(t), float(s)) for j, t, s in
+                  zip(z2["E"], P2.mean(0), P2.std(0, ddof=1) / math.sqrt(len(P2)))})
+    out = {}
+    for name, v in b2["baselines"].items():
+        ev_set = set(v["evaluated"])
+        for q in v["draws"][0]:
+            f_min, f_2se, f_pos, ntrue, nsel = [], [], [], [], []
+            for dsel in v["draws"]:
+                nsel.append(len(dsel[q]))
+                lat = [j for j in dsel[q] if j in ev_set]
+                if dsel[q] and not lat:
+                    continue
+                if not lat:                              # nothing selected: FDP 0
+                    for lst in (f_min, f_2se, f_pos, ntrue):
+                        lst.append(0)
+                    continue
+                t = np.array([T[j][0] for j in lat])
+                s = np.array([T[j][1] for j in lat])
+                f_min.append(float((t <= delta0).mean()))
+                f_2se.append(float((t <= k_se * s).mean()))
+                f_pos.append(float((t <= 0).mean()))
+                ntrue.append(int((t > delta0).sum()))
+            m = len(f_min)
+            out[f"{name}_q{q}"] = {
+                "fdr_vs_min_effect": float(np.mean(f_min)) if m else None,
+                "fdr_se": float(np.std(f_min, ddof=1) / math.sqrt(m)) if m > 1 else 0.0,
+                "fdr_vs_tau_above_2se": float(np.mean(f_2se)) if m else None,
+                "fdr_vs_tau_positive": float(np.mean(f_pos)) if m else None,
+                "mean_true_selected": float(np.mean(ntrue)) if m else None,
+                "mean_selected": float(np.mean(nsel)), "share_draws_selecting": float(np.mean(np.asarray(nsel) > 0)),
+                "draws_evaluated": m, "draws": len(v["draws"]), "alpha_per_class": b2["alpha_per_class"][q],
+                "evaluated_subsample": v["subsampled"]}
+    return out
+
+
+def stage_evaluate2(ctx: Ctx) -> dict:
+    """CPU only, from delta.npz (and delta2.npz). Per intervention:
+    - re-split replicates: B and O pooled; replicate r at size n tests on n random inputs and takes its oracle tau_j
+      (and SE) from the other N - n, so replicates differ in both test data and truth (they still resample one
+      finite pool: the SE describes that resampling, not fresh draws of texts);
+    - two specifications: prereg (K = 250 candidates, bet cap 0.5) and v2 (the top K = 50, bet cap 0.9);
+    - a boundary stress test: each latent's Delta shifted to mean exactly delta over the pool, inputs drawn with
+      replacement, so every hypothesis is null and every rejection is false; P(any rejection) is the FDR;
+    - counts of tau > 0, tau > 2 SE and tau > delta from all N inputs; baselines2 against the same oracle."""
+    pilot = require_gate(ctx)
+    s5, v2 = ctx.s5, ctx.s5["v2"]
+    z = np.load(ctx.path("delta.npz"))
+    U, Kc = z["U"], int(z["n_candidates"])
+    prim = s5["interventions"]["primary"]
+    alphas, ns, R, ev = s5["alphas"], s5["test_sizes"], s5["replicates"], s5["evalue"]
+    specs = {"prereg": (Kc, float(ev["bet_cap"])), "v2": (min(int(v2["candidates"]), Kc), float(v2["bet_cap"]))}
+    delta0, k_se, Rs, chunk = pilot["delta"], float(v2["se_mult"]), int(v2["stress_replicates"]), 25
+    grid = {"primary": delta0, **{f"sd_{k}": v for k, v in pilot["delta_grid"].items()}, "zero_null": 0.0}
+    out = {"task": ctx.task, "model": ctx.cfg["model"]["name"], "delta": delta0, "U": int(len(U)), "candidates": Kc,
+           "specs": {k: {"K": a, "bet_cap": b} for k, (a, b) in specs.items()}, "alphas": alphas, "test_sizes": ns,
+           "replicates": R, "stress_replicates": Rs, "interventions": {}}
+    t0 = time.time()
+    for ii, kind in enumerate([prim] + list(s5["interventions"]["sensitivity"])):
+        P = np.vstack([z[f"B__{kind}"], z[f"O__{kind}"]]).astype(np.float64)
+        if np.isnan(P).any():
+            raise SystemExit(f"{ctx.task}: delta.npz {kind} has missing values")
+        N = P.shape[0]
+        tau_all, se_all = P.mean(0)[:Kc], P.std(0, ddof=1)[:Kc] / math.sqrt(N)
+        res = {"N": N, "counts": {"candidates": Kc, "tau_positive": int((tau_all > 0).sum()),
+                                  "tau_above_2se": int((tau_all > k_se * se_all).sum()),
+                                  "tau_above_delta": int((tau_all > delta0).sum()),
+                                  "tau_above_delta_in_top_v2": int((tau_all[:specs["v2"][0]] > delta0).sum())}}
+        rs = {sp: {g: {} for g in grid} for sp in specs}
+        for n in ns:
+            if n > N - v2["min_oracle"]:
+                continue
+            acc = {(sp, g): {a: [] for a in alphas} for sp in specs for g in grid}
+            tau_r, se_r = [], []
+            for r0 in range(0, R, chunk):
+                perms = [stream_rng(ctx.cfg, "s5_order", ctx.ti, 1000 + ii, n, r).permutation(N)
+                         for r in range(r0, min(R, r0 + chunk))]
+                tau_r += [P[pm[n:], :Kc].mean(0) for pm in perms]
+                se_r += [P[pm[n:], :Kc].std(0, ddof=1) / math.sqrt(N - n) for pm in perms]
+                Xte = P[np.stack([pm[:n] for pm in perms])][:, :, :Kc]                 # (chunk, n, Kc)
+                for sp, (Kk, cap) in specs.items():
+                    for g, dl in grid.items():
+                        for a, s in _selections(Xte[:, :, :Kk], dl, cap, ev, alphas).items():
+                            acc[(sp, g)][a].append(s)
+            tau_r, se_r = np.stack(tau_r), np.stack(se_r)
+            for sp, (Kk, cap) in specs.items():
+                t_, s_ = tau_r[:, :Kk], se_r[:, :Kk]
+                for g, dl in grid.items():
+                    ref = delta0 if g == "zero_null" else dl
+                    true, band = t_ > ref, np.abs(t_ - ref) >= s5["oracle_band_se"] * s_
+                    rec = {}
+                    for a in alphas:
+                        sel = np.concatenate(acc[(sp, g)][a])
+                        am = None if g == "zero_null" else a
+                        rec[str(a)] = {"vs_oracle": _summ_rep(sel, true, alpha=am),
+                                       "vs_oracle_band": _summ_rep(sel, true, band, alpha=am)}
+                        if g == "zero_null":             # against its own estimand, counted with and without noise
+                            rec[str(a)]["vs_tau_above_2se"] = _summ_rep(sel, t_ > k_se * s_, alpha=a)
+                            rec[str(a)]["vs_tau_positive"] = _summ_rep(sel, t_ > 0, alpha=a)
+                    rs[sp][g][str(n)] = rec
+        res["resplit"] = rs
+        st = {}
+        for si, (sp, (Kk, cap)) in enumerate(specs.items()):
+            Xn = P[:, :Kk] - P[:, :Kk].mean(0) + delta0
+            st[sp] = {}
+            for n in v2["stress_sizes"]:
+                anyr, nrej = {a: [] for a in alphas}, {a: [] for a in alphas}
+                for r0 in range(0, Rs, chunk):
+                    c = min(Rs, r0 + chunk) - r0
+                    idx = stream_rng(ctx.cfg, "s5_order", ctx.ti, 2000 + ii, si, n, r0).integers(0, N, (c, n))
+                    for a, s in _selections(Xn[idx], delta0, cap, ev, alphas).items():
+                        anyr[a].append(s.any(-1))
+                        nrej[a].append(s.sum(-1))
+                st[sp][str(n)] = {}
+                for a in alphas:
+                    x = np.concatenate(anyr[a]).astype(float)
+                    st[sp][str(n)][str(a)] = {"p_any_rejection": float(x.mean()), "se": float(x.std(ddof=1) / math.sqrt(len(x))),
+                                              "mean_rejections": float(np.concatenate(nrej[a]).mean())}
+        res["stress"] = st
+        if ii == 0:
+            res["baselines2"] = _eval_baselines2(ctx, P, U, delta0, k_se)
+        out["interventions"][kind] = res
+        print(f"  evaluate2 {kind}: done ({(time.time() - t0) / 60:.1f} min)", flush=True)
+    out["minutes"] = round((time.time() - t0) / 60, 1)
+    ctx.write_json("evaluate2.json", out)
+    ctx.write_json("evaluate2_summary.json", summarise2(out))
+    print(json.dumps(summarise2(out), indent=1)[:4000], flush=True)
+    return out
+
+
+def summarise2(ev: dict) -> dict:
+    """evaluate2's headline numbers at alpha 0.10: per intervention and specification, realised FDR and power by n
+    (primary delta), breaches anywhere in the grid, the zero-null baseline, the stress test, and baselines2."""
+    s = {"task": ev["task"], "model": ev["model"], "delta": ev["delta"], "specs": ev["specs"]}
+    a = "0.1" if 0.1 in ev["alphas"] else str(ev["alphas"][0])
+    rnd = lambda x: round(x, 4) if isinstance(x, float) else x
+    for kind, r in ev["interventions"].items():
+        d = {"counts": r["counts"]}
+        for sp, gr in r["resplit"].items():
+            d[sp] = {
+                "primary": {n: {k: rnd(v[a]["vs_oracle"][k]) for k in ("fdr", "fdr_se", "power", "mean_selected", "mean_true")}
+                            for n, v in gr["primary"].items()},
+                "breaches": [f"{g}_n{n}_a{al}" for g, gv in gr.items() for n, nv in gv.items() for al, w in nv.items()
+                             if w["vs_oracle"].get("breach")],
+                "zero_null": {n: {"fdr_vs_min_effect": rnd(v[a]["vs_oracle"]["fdr"]),
+                                  "fdr_vs_tau_above_2se": rnd(v[a]["vs_tau_above_2se"]["fdr"]),
+                                  "mean_selected": rnd(v[a]["vs_oracle"]["mean_selected"])} for n, v in gr["zero_null"].items()},
+                "stress_p_any_rejection": {n: rnd(v[a]["p_any_rejection"]) for n, v in r["stress"][sp].items()}}
+        if "baselines2" in r:
+            d["baselines2"] = {k: ({kk: rnd(vv) for kk, vv in v.items()} if isinstance(v, dict) else v)
+                               for k, v in r["baselines2"].items()}
+        s[kind] = d
+    return s
+
+
+# ---------------------------------------------------------------------------
 # stage: summary over tasks
 # ---------------------------------------------------------------------------
 
@@ -898,6 +1251,8 @@ def stage_summary(cfg: dict) -> dict:
         elif (d / "pilot.json").exists():
             p = json.loads((d / "pilot.json").read_text())
             out["tasks"][t] = {"gate": p["gate"], "status": "gate failed" if not p["gate"]["passed"] else "incomplete"}
+        if (d / "evaluate2_summary.json").exists():                  # stage5_amendment_2
+            out.setdefault("tasks_v2", {})[t] = json.loads((d / "evaluate2_summary.json").read_text())
     (base / "stage5_summary.json").write_text(json.dumps(out, indent=2, default=_json_default))
     print(f"wrote {base / 'stage5_summary.json'}")
     return out
@@ -911,7 +1266,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Stage 5: interventional FDR control for SAE latents")
     ap.add_argument("--config", default="config/default.yaml")
     ap.add_argument("--task", default=None, help="one of stage5.tasks (not needed for --stage summary)")
-    ap.add_argument("--stage", default="all", choices=list(STAGES) + ["all", "summary"])
+    ap.add_argument("--stage", default="all", choices=list(STAGES) + list(V2_STAGES) + ["all", "v2", "summary"],
+                    help="all: the stage5_amendment_1 stages; v2: baselines2, delta2, evaluate2 (stage5_amendment_2)")
     ap.add_argument("--limit", type=int, default=None, help="debug: cap every split at N inputs (results not valid)")
     args = ap.parse_args()
     cfg = load_config(args.config)
@@ -921,22 +1277,25 @@ def main() -> None:
     if args.task not in cfg["stage5"]["tasks"]:
         raise SystemExit(f"--task must be one of {list(cfg['stage5']['tasks'])}")
     torch.manual_seed(int(stream_rng(cfg, "s5_resample", 999).integers(2**31)))
-    ctx = Ctx(cfg, args.task, args.limit)
-    if args.limit:
-        ctx.out = ctx.out.parent / f"{args.task}__limit{args.limit}"
-        ctx.out.mkdir(parents=True, exist_ok=True)
-    stages = list(STAGES) if args.stage == "all" else [args.stage]
+    stages = {"all": list(STAGES), "v2": list(V2_STAGES)}.get(args.stage, [args.stage])
     done_file = {"pilot": "pilot.json", "screen": "screen.json", "baselines": "baselines.json",
-                 "delta": "delta.json", "evaluate": "evaluate.json"}
-    todo = [s for s in stages if args.stage != "all" or not ctx.path(done_file[s]).exists()]
-    need_model = [s for s in todo if s in ("pilot", "screen", "baselines", "delta")]
+                 "delta": "delta.json", "evaluate": "evaluate.json", "baselines2": "baselines2.json",
+                 "delta2": "delta2.json", "evaluate2": "evaluate2.json"}
+    out_dir = results_dir(cfg) / "stage5" / (f"{args.task}__limit{args.limit}" if args.limit else args.task)
+    todo = [s for s in stages if args.stage not in ("all", "v2") or not (out_dir / done_file[s]).exists()]
+    ctx = Ctx(cfg, args.task, args.limit, light=all(s in ("evaluate", "evaluate2") for s in todo))
+    if args.limit:
+        ctx.out = out_dir
+        ctx.out.mkdir(parents=True, exist_ok=True)
+    need_model = [s for s in todo if s in ("pilot", "screen", "baselines", "delta", "delta2")]
     if need_model:
         from cache_activations import load_model_and_sae
         tok, model, sae = load_model_and_sae(cfg)
         ctx.attach(tok, model, sae)
     print(f"stage 5 | {cfg['model']['name']} | task {args.task} | stages {todo} | out {ctx.out}", flush=True)
     fns = {"pilot": stage_pilot, "screen": stage_screen, "baselines": stage_baselines, "delta": stage_delta,
-           "evaluate": stage_evaluate}
+           "evaluate": stage_evaluate, "baselines2": stage_baselines2, "delta2": stage_delta2,
+           "evaluate2": stage_evaluate2}
     for s in todo:
         print(f"\n=== {s} ===", flush=True)
         r = fns[s](ctx)

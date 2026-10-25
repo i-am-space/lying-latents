@@ -7,6 +7,10 @@
 #   nohup scripts/stage5.sh > logs/stage5.log 2>&1 &
 #   scripts/stage5.sh status
 #
+# stage5_amendment_2 (after the run above): baselines2 -> delta2 (GPU, only baselines2's new latents) -> evaluate2
+# (CPU), same pairs and GPUs; pairs whose stage5_amendment_1 run is incomplete are skipped:
+#   nohup scripts/stage5.sh v2 > logs/stage5_v2.log 2>&1 &
+#
 # Env: GPU_A (default 0), GPU_B (default 1), THREADS (default 8)
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -27,26 +31,32 @@ status() {
         rd=$(python -c "import sys; sys.path.insert(0,'src'); from common import load_config; print(load_config('$cfg')['paths']['results_dir'])")
         for t in sst2 ag_news bias_in_bios europarl; do
             d=$rd/stage5/$t; s=""
-            for f in pilot screen baselines delta evaluate; do [[ -f $d/$f.json ]] && s="$s $f"; done
+            for f in pilot screen baselines delta evaluate baselines2 delta2 evaluate2; do [[ -f $d/$f.json ]] && s="$s $f"; done
             gate=$([[ -f $d/pilot.json ]] && python -c "import json; print('gate', json.load(open('$d/pilot.json'))['gate']['passed'])" || echo "")
-            printf '%-36s %-14s done:%-40s %s\n' "$(basename "$cfg" .yaml)" "$t" "$s" "$gate"
+            printf '%-36s %-14s done:%-66s %s\n' "$(basename "$cfg" .yaml)" "$t" "$s" "$gate"
         done
     done
     grep -l "Traceback" "$LOG"/*.log 2>/dev/null | sed 's/^/  errors in: /'
 }
 if [[ "${1:-}" == status ]]; then status; exit 0; fi
+MODE=all; [[ "${1:-}" == v2 ]] && MODE=v2
 
 worker() {   # gpu jobs...
     local gpu=$1; shift
     for job in "$@"; do
         read -r cfg task <<< "$job"
         tag=$(basename "$cfg" .yaml)_$task
+        if [[ $MODE == v2 ]]; then
+            rd=$(python -c "import sys; sys.path.insert(0,'src'); from common import load_config; print(load_config('$cfg')['paths']['results_dir'])")
+            [[ -f $rd/stage5/$task/evaluate.json ]] || { stamp "GPU $gpu skip: $tag (stage5_amendment_1 run incomplete)"; continue; }
+            tag=${tag}_v2
+        fi
         stamp "GPU $gpu start: $tag"
-        CUDA_VISIBLE_DEVICES=$gpu python src/stage5_interventional.py --config "$cfg" --task "$task" --stage all \
+        CUDA_VISIBLE_DEVICES=$gpu python src/stage5_interventional.py --config "$cfg" --task "$task" --stage $MODE \
             > "$LOG/$tag.log" 2>&1 && stamp "GPU $gpu finished: $tag" || stamp "GPU $gpu FAILED: $tag (see $LOG/$tag.log)"
     done
 }
-stamp "stage 5: GPU $GPU_A and GPU $GPU_B"
+stamp "stage 5 ($MODE): GPU $GPU_A and GPU $GPU_B"
 worker "$GPU_A" "${WORKER_A[@]}" &
 worker "$GPU_B" "${WORKER_B[@]}" &
 wait

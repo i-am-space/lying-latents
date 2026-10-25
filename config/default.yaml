@@ -620,6 +620,16 @@ stage5:
   replay_batch: 32                # interventions per replay batch
   observational:                  # baselines on the pooled-latent caches (one-vs-rest per class, union of selections)
     knockoff_C: 0.5               # Enkhbayar (2025): Gaussian equicorrelated knockoffs, L1-logistic with C = 0.5
+    draws: 10                     # stage5_amendment_2 (baselines2): independent knockoff draws / e-value splits
+    per_class_alpha: true         # stage5_amendment_2: each class at alpha / C, so the union's FDR is <= alpha
+    baseline_cap: 150             # stage5_amendment_2: latents per baseline evaluated (union over draws and alphas)
+  v2:                             # stage5_amendment_2: evaluate2 (CPU, from delta.npz / delta2.npz)
+    candidates: 50                # K for the v2 specification: the top 50 of the 250 screened candidates
+    bet_cap: 0.9                  # v2 bet cap (prereg 0.5); a factor is never below 1 - 0.9
+    min_oracle: 1000              # re-split: at least this many inputs left for each replicate's oracle
+    stress_sizes: [250, 1000, 2000]
+    stress_replicates: 200
+    se_mult: 2.0                  # "tau > 0" is counted as tau > 2 SE
   tasks:
     sst2:
       source: sst2

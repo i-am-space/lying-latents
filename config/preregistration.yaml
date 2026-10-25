@@ -2136,3 +2136,63 @@ stage5_amendment_1:
     matches model(...) to 1e-7 with and without interventions (sliding-window and soft-capped layers included);
     pilot, screen, baselines (no cache), delta with a crash and resume, evaluate run end to end; e-values are
     calibrated on null data (mean e <= 1) and e-BH matches a brute-force implementation.
+
+# ===========================================================================
+# STAGE 5 AMENDMENT 2 - evaluation fixes, power specification, fairer baselines
+# ===========================================================================
+# Appended; no earlier line is altered. Written after the Gemma-2-2B results of stage5_amendment_1 were read
+# (4 tasks), and BEFORE any Gemma-3-1B result (sst2 finished, bias_in_bios / ag_news / europarl running) was opened.
+
+stage5_amendment_2:
+  meta:
+    date_written: "2026-10-25"
+    status: written_after_gemma2_before_gemma3
+    trigger: >
+      A review of the Gemma-2 results raised four points. (1) The 200 replicates subsample one 2,500-input pool
+      and are scored against one oracle split, so they are close to one experiment: "FDR 0 +- 0" and the 2-SE
+      breach rule rest on an SE that is not a fresh-data SE; with only 1-7 latents above delta the procedure was
+      also rarely at risk of a false discovery. (2) No power at n <= 250. A CPU check on delta.npz showed that the
+      bet cap (0.5 / (1 + delta)) binds for the latents with real effects (growth-rate-optimal bets are about 5-10)
+      while prior_variance (0.25) changes power by at most 0.03; the true latents rank 0-5 (one at 34) of the 250
+      attribution-ranked candidates. (3) "tau > 0 for 222-246 of 250" counts noisy point estimates. (4) The
+      observational baselines ran one knockoff draw / e-value split, merged per-class selections each made at
+      alpha (the union is not FDR-controlled at alpha), and select from a different latent pool and context.
+  changes:
+    evaluate2: >
+      New stage, CPU only, from delta.npz (and delta2.npz); evaluate.json is unchanged. (a) Re-split replicates:
+      for each intervention B and O are pooled (N = 5,000 primary, 2,000 sensitivity); replicate r at size n tests
+      on n random inputs and takes its oracle tau_j and SE from the other N - n (n <= N - 1,000), stream s5_order
+      (task, 1000 + intervention, n, r). Replicates still resample one finite pool; the SE describes that
+      resampling, and the stress test below is the validity check. (b) Boundary stress test: each latent's Delta is
+      shifted so its mean over the pool is exactly delta (primary), inputs are drawn with replacement (stream
+      s5_order (task, 2000 + intervention, spec, n, chunk)), n = 250, 1,000, 2,000, 200 replicates; every
+      hypothesis is null, so P(any rejection) is the FDR. (c) tau > 2 SE (all N inputs) is reported next to
+      tau > 0, and the zero-null baseline is scored against tau > 2 SE as well as tau > 0.
+    v2_specification: >
+      K = 50 (the top 50 of the 250 screened candidates; no new screening) and bet cap 0.9 / (1 + delta) (a wealth
+      factor is never below 0.1; validity is unchanged, the bets stay predictable and nonnegative). prior_variance,
+      the screening score, the intervention, the metric, delta and alphas are unchanged.
+    baselines2: >
+      Gaussian equicorrelated knockoffs (C = 0.5) and observational e-value splitting over 10 independent draws /
+      splits (stream s5_obs (task, 3 / 4, draw, class)), each class at alpha / C so the union over classes has FDR
+      <= alpha (its FDP is at most the sum of the per-class FDPs). One knockoff sampler per task (knockoffs do not
+      depend on y). Up to 150 latents per baseline (union over draws and alphas; random subsample if more, stream
+      s5_obs (task, 5, baseline)) are evaluated; those not in U get Delta from delta2 (primary intervention, the
+      same B and O inputs, stream s5_resample (task, 2 / 3, input)). Reported per alpha: mean FDP over draws (a
+      draw selecting nothing has FDP 0), its SE, the share of draws selecting anything, FDP against tau > 2 SE and
+      tau > 0. The remaining differences (pooled raw-text activations, 2,048 retained latents, an associational
+      target) are stated, not corrected.
+  decision_rules:
+    - id: S5-5
+      rule: "Validity under re-split replicates: per model-task pair, specification (prereg, v2), n, alpha and delta in the grid, a breach if realised FDR exceeds alpha by more than 2 SE. Reported for every pair."
+    - id: S5-6
+      rule: "Stress test: P(any rejection) at the boundary, per pair, specification, n and alpha; the claim of FDR control at the boundary is supported if P(any rejection) <= alpha + 2 SE everywhere."
+    - id: S5-7
+      rule: "Power (descriptive): realised power by n for prereg and v2. On Gemma-2 the v2 specification was chosen after reading its results and is exploratory there; prereg remains Gemma-2's primary analysis. On Gemma-3, v2 is the primary analysis (confirmatory), prereg is reported alongside."
+    - id: S5-8
+      rule: "Baselines (descriptive): baselines2 replaces baselines in the paper's comparison; the stage5_amendment_1 single-draw numbers are kept in evaluate.json and reported in the appendix."
+    - id: S5-T2
+      rule: "No change to the above after any Gemma-3 result is opened."
+  smoke_test_before_commit: >
+    evaluate2 run on the laptop CPU on the four Gemma-2 tasks (200 replicates, about 1 minute per task). baselines2
+    and delta2 not run before commit (they need the pooled-latent caches and the model).

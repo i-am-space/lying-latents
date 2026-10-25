@@ -1,0 +1,87 @@
+{
+  "task": "bias_in_bios",
+  "model": "google/gemma-2-2b",
+  "n": 300,
+  "classes": [
+    "0",
+    "1",
+    "2",
+    "6",
+    "9"
+  ],
+  "label_words": [
+    "accountant",
+    "architect",
+    "attorney",
+    "dentist",
+    "filmmaker"
+  ],
+  "label_ids": [
+    82632,
+    19507,
+    18229,
+    37458,
+    100262
+  ],
+  "balanced_accuracy": 0.8487820216455824,
+  "recall_by_class": {
+    "0": 0.5074626865671642,
+    "1": 0.9322033898305084,
+    "2": 1.0,
+    "6": 0.896551724137931,
+    "9": 0.9076923076923077
+  },
+  "mean_m": 0.7773545259725748,
+  "sd_m": 0.2945168867490295,
+  "delta": 0.014725844337451475,
+  "delta_grid": {
+    "0.02": 0.00589033773498059,
+    "0.05": 0.014725844337451475,
+    "0.1": 0.02945168867490295
+  },
+  "equivalence": [
+    {
+      "input": 5064,
+      "latent": 13723,
+      "no_intervention": 1.1920928955078125e-07,
+      "zero_ablation": 4.172325134277344e-07,
+      "ablation_effect": 0.039833128452301025
+    },
+    {
+      "input": 8989,
+      "latent": 8684,
+      "no_intervention": 1.9669532775878906e-06,
+      "zero_ablation": 1.7881393432617188e-06,
+      "ablation_effect": 0.004990309476852417
+    },
+    {
+      "input": 9463,
+      "latent": 6912,
+      "no_intervention": 8.940696716308594e-07,
+      "zero_ablation": 1.8477439880371094e-06,
+      "ablation_effect": 0.05100017786026001
+    }
+  ],
+  "equivalence_max": 1.9669532775878906e-06,
+  "gate": {
+    "passed": true,
+    "balanced_accuracy": 0.8487820216455824,
+    "min": 0.7,
+    "equivalence_ok": true
+  },
+  "seconds_per_base": 0.09633815288543701,
+  "seconds_per_replay_batch": 0.42484354972839355,
+  "projected_delta_hours": 12.761097384823692,
+  "prompt_tokens_median": 336.5,
+  "example_prompt": "<bos>Classify each biography by the person's occupation: accountant, architect, attorney, dentist, or filmmaker.\n\nBiography: She completed her undergraduate degree in English and Spanish (1995-1998) at the Florida State University. She also completed her masters in International Affairs (1998-\nOccupation: attorney\n\nBiography: Her dream is to direct it. Now a semi-finalist in the FILMMAKERS INTERNATIONAL SCREENWRITING AWARDS( (Jan.2018) http://screenplaycontest.net/1\nOccupation: filmmaker\n\nBiography: She currently manages tax and financial statement engagements while concentrating in DB&B's tax department. She has extensive experience with for-profit financial statement reviews and compilations. Her concentrations include corporate tax, pass\nOccupation: accountant\n\nBiography: She has nearly two decades of experience in the challenging dentistry field and her expertise resides in family dentistry and mentoring. Dr. Drain received her dental medicine doctor degree from Case School of Dental Medicine/Case Western\nOccupation: dentist\n\nBiography: He is supporting various teams with the definition and the development of their workflows and business rules. He considers himself an expert in data quality management and workflow execution. He is a practitioner of Camunda since \nOccupation: architect\n\nBiography: Prior to NLSP, she was a fellow at the University of the District of Columbia David A. Clarke School of Law\u2019s Community Development Law Clinic where she supervised students in representing housing cooperatives, small businesses and non-profit organizations. Through the fellowship, she received an LL.M. in Clinical Education, Systems Change and Social Justice in which she focused on providing legal resources and advice to worker-owned cooperatives.\nOccupation:",
+  "query_start": 263,
+  "splits": {
+    "demo": 5,
+    "pilot": 300,
+    "A": 1000,
+    "B": 2500,
+    "O": 2500,
+    "obs": 7195
+  },
+  "minutes": 2.65
+}
