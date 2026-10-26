@@ -1,0 +1,68 @@
+{
+  "dataset": "Helsinki-NLP/europarl",
+  "info": {
+    "n": 12500,
+    "p": 2048,
+    "s_equicorrelated": 0.046931943771814325,
+    "median_zero_mass": 0.70864,
+    "sampler_setup_seconds": 126.91213369369507
+  },
+  "replicates": 10,
+  "cells": [
+    [
+      "realistic",
+      8.0,
+      "linear",
+      100
+    ],
+    [
+      "realistic",
+      8.0,
+      "linear",
+      300
+    ],
+    [
+      "realistic",
+      8.0,
+      "interaction",
+      100
+    ],
+    [
+      "realistic",
+      8.0,
+      "interaction",
+      300
+    ],
+    [
+      "realistic",
+      32.0,
+      "linear",
+      100
+    ],
+    [
+      "realistic",
+      32.0,
+      "linear",
+      300
+    ],
+    [
+      "realistic",
+      32.0,
+      "interaction",
+      100
+    ],
+    [
+      "realistic",
+      32.0,
+      "interaction",
+      300
+    ]
+  ],
+  "selected_on_A_median": 755.0,
+  "seconds_per_replicate": {
+    "evalue_nocap": 52.759064731597924,
+    "evalue_k5": 263.7953236579895
+  },
+  "positive_threshold": null,
+  "minutes": 66.7
+}

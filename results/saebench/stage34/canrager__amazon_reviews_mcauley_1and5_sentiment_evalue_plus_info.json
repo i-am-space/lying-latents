@@ -1,0 +1,68 @@
+{
+  "dataset": "canrager/amazon_reviews_mcauley_1and5_sentiment",
+  "info": {
+    "n": 5000,
+    "p": 2048,
+    "s_equicorrelated": 0.08384443682880624,
+    "median_zero_mass": 0.3187,
+    "sampler_setup_seconds": 14.591491222381592
+  },
+  "replicates": 10,
+  "cells": [
+    [
+      "realistic",
+      8.0,
+      "linear",
+      100
+    ],
+    [
+      "realistic",
+      8.0,
+      "linear",
+      300
+    ],
+    [
+      "realistic",
+      8.0,
+      "interaction",
+      100
+    ],
+    [
+      "realistic",
+      8.0,
+      "interaction",
+      300
+    ],
+    [
+      "realistic",
+      32.0,
+      "linear",
+      100
+    ],
+    [
+      "realistic",
+      32.0,
+      "linear",
+      300
+    ],
+    [
+      "realistic",
+      32.0,
+      "interaction",
+      100
+    ],
+    [
+      "realistic",
+      32.0,
+      "interaction",
+      300
+    ]
+  ],
+  "selected_on_A_median": 475.0,
+  "seconds_per_replicate": {
+    "evalue_nocap": 29.729597172737122,
+    "evalue_k5": 148.64798586368562
+  },
+  "positive_threshold": null,
+  "minutes": 26.5
+}

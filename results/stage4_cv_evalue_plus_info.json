@@ -1,0 +1,9 @@
+{
+  "replicates": 10,
+  "selected_on_A_median": 904.0,
+  "seconds_per_replicate": {
+    "evalue_nocap": 46.36732201576233,
+    "evalue_k5": 231.83661007881165
+  },
+  "minutes": 61.7
+}

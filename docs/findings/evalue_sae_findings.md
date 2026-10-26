@@ -67,5 +67,8 @@ Across three models and 14 datasets, no method is both valid and powerful on SAE
 
 - The e-values' validity rests on the half-B logistic refit being correctly specified, which it is not
   for the interaction cells; they hold there empirically.
+- Even in linear cells the half-B Wald z-scores are anti-conservative at these latents-per-row ratios
+  (null variance 1.69 on AG News with the cap). The zero breaches are empirical, carried by the
+  conservative calibrator and e-BH, not guaranteed. See `evalue_variants_findings.md`.
 - The powers are with the pre-registered 500 cap.
 - 3 datasets per new model.

@@ -1005,7 +1005,7 @@ def analyse_cv(cfg, sec, rd: Path) -> dict:
                         for a, v in lamz.items()}
     out["cells_q0.10"] = {lam: {a: {f"{amp}|{form}|{k}": float(z[f"ko_fdr_{lam}__{a}"][ia, jf, kk, :, qs.index(0.10)].mean())
                                     for ia, amp in enumerate(amps) for jf, form in enumerate(forms) for kk, k in enumerate(ks)}
-                                for a in arms} for lam in ("fixed", "cv")}
+                                for a in arms if f"ko_fdr_{lam}__{a}" in z} for lam in ("fixed", "cv")}
     return out
 
 

@@ -1,0 +1,68 @@
+{
+  "dataset": "fancyzhx/ag_news",
+  "info": {
+    "n": 10000,
+    "p": 2048,
+    "s_equicorrelated": 0.07062523681396585,
+    "median_zero_mass": 0.6687,
+    "sampler_setup_seconds": 14.43715214729309
+  },
+  "replicates": 10,
+  "cells": [
+    [
+      "realistic",
+      8.0,
+      "linear",
+      100
+    ],
+    [
+      "realistic",
+      8.0,
+      "linear",
+      300
+    ],
+    [
+      "realistic",
+      8.0,
+      "interaction",
+      100
+    ],
+    [
+      "realistic",
+      8.0,
+      "interaction",
+      300
+    ],
+    [
+      "realistic",
+      32.0,
+      "linear",
+      100
+    ],
+    [
+      "realistic",
+      32.0,
+      "linear",
+      300
+    ],
+    [
+      "realistic",
+      32.0,
+      "interaction",
+      100
+    ],
+    [
+      "realistic",
+      32.0,
+      "interaction",
+      300
+    ]
+  ],
+  "selected_on_A_median": 716.0,
+  "seconds_per_replicate": {
+    "evalue_nocap": 30.426741442680356,
+    "evalue_k5": 152.1337072134018
+  },
+  "positive_threshold": null,
+  "minutes": 27.1
+}
