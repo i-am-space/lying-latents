@@ -16,8 +16,8 @@ The headline numbers are in `evaluate2_summary.json`. The amendment-1 analysis i
 
 1. **FDR is controlled everywhere.** The grid is 2 models × 4 tasks × 2 specifications × 3 interventions × the δ grid × n = 100–2,000 × α ∈ {0.05, 0.1, 0.2}.
    - No breach anywhere.
-   - Realised FDR is at most 0.002, and 0.000 almost everywhere.
-   - In the boundary stress test, every latent's Δ is shifted so its mean is exactly δ, which makes every rejection false. P(any rejection) is at most 0.005 in every setting.
+   - Realised FDR is at most 0.003 (any α), and 0.000 everywhere except a few Gemma-3 cells (3 tasks, all ≤ 0.003).
+   - In the boundary stress test, every latent's Δ is shifted so its mean is exactly δ, which makes every rejection false. P(any rejection) is at most 0.010 in every setting (at α = 0.1: at most 0.005).
 2. **Power is usable, and the v2 specification (K = 50, bet cap 0.9) is confirmed on Gemma-3.** v2 was chosen after reading Gemma-2. On Gemma-3, where it is the pre-registered primary analysis, v2's power is higher than the original specification's on all 4 tasks at n = 1,000 and 2,000, with no loss of validity. At n = 2,000 (resampling, α = 0.1), power is 0.62–1.00 on Gemma-2 and 0.34–0.66 on Gemma-3.
 3. **Few latents matter alone, most matter a little.**
    - Of the 250 attribution-ranked candidates, only 1–12 per task have an effect above δ (0.05 SD of the metric, about 1 percentage point of correct-class probability).
@@ -61,8 +61,10 @@ The headline numbers are in `evaluate2_summary.json`. The amendment-1 analysis i
 
 | Model | Breaches (S5-1, S5-5) | Max realised FDR | Max stress P(any rejection) |
 |---|---|---|---|
-| Gemma-2 (4 tasks) | 0 | 0.000 | 0.005 (EuroParl, v2, zero / mean ablation) |
-| Gemma-3 (4 tasks) | 0 | 0.002 (Bias in Bios, v2, mean ablation, n = 1,000) | 0.005 (SST-2 and EuroParl, v2, mean ablation) |
+| Gemma-2 (4 tasks) | 0 | 0.000 | 0.010 (EuroParl, v2, mean ablation, n = 2,000, α = 0.2) |
+| Gemma-3 (4 tasks) | 0 | 0.003 (Bias in Bios, v2, mean ablation, n = 1,000, α = 0.2) | 0.005 (SST-2 and EuroParl, v2, mean ablation) |
+
+Per-task values: `results/figures/table_stage5_validity.tex`. Figures: `results/figures/fig20_stage5_power.png` (power), `fig21_stage5_zero_null.png` (zero null), `fig22_stage5_effects.png` (effect sizes); script `src/stage5_figures.py`.
 
 The re-split replicates still resample one finite pool. Their SE is often 0, because the same strong latents are selected in every replicate. The stress test is therefore the main validity evidence. The e-values are conservative by construction (Markov's inequality), which matches a near-zero rejection rate at the boundary.
 
