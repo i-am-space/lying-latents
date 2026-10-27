@@ -27,10 +27,10 @@ The headline numbers are in `evaluate2_summary.json`. The amendment-1 analysis i
    - At n = 2,000 its FDR against the minimum-effect truth is 0.66–0.96 on Gemma-2 and 0.60–0.84 on Gemma-3.
    - At small n it is 0, and it rises with n and with power.
    - Against its own target (τ > 2 SE) it stays at about 0. So it is valid, but it answers a question that labels nearly every latent causal once there is enough data.
-5. **Observational selection does not find the latents that drive the model.** These are Gemma-2's baselines, over 10 draws, each class at α / C.
-   - Gaussian knockoffs select nothing on 3 of 4 tasks. On SST-2 at q = 0.1 they select 34 latents, none above δ; 42% have no detectable effect and 31% have τ ≤ 0.
-   - Observational e-values select 0–7 latents per task. 70–100% of them are below δ, though most have a small real effect.
-   - Neither ever selects a latent above δ.
+5. **Observational selection does not find the latents that drive the model.** Baselines over 10 draws, each class at α / C: 4 Gemma-2 tasks, and 3 Gemma-3 tasks (no Gemma-3 SST-2 cache).
+   - Gaussian knockoffs select nothing on 6 of 7 tasks. On Gemma-2 SST-2 at q = 0.1 they select 34 latents, none above δ; 42% have no detectable effect and 31% have τ ≤ 0.
+   - Observational e-values select 0–7 latents per task. Where they select, 70–100% of their picks are below δ, with one exception: Gemma-3 AG News, where they pick one above-δ latent in about half the draws. On Gemma-3 Bias in Bios, about half their picks have no detectable effect.
+   - Power against the oracle (q = 0.1) shows the gap. Knockoffs find 0 of the above-δ latents on every task and both models. Observational e-values find 0–0.10 of them, with one exception: on Gemma-2 Bias in Bios, the single above-δ latent is selected in every draw. Ours finds 0.34–1.00 at n = 2,000.
 
 **What this establishes:** within-model causal claims about individual SAE latents can be made with exact, finite-sample FDR control, without a model of the latents' distribution. The procedure is valid in a stress test on real models, and confirmed on a second model with a pre-registered specification. Both widely used alternatives fail on our real data:
 - observational knockoffs answer an associational question, and their samplers are themselves invalid (Stages 3–4);
@@ -109,7 +109,9 @@ FDR against the minimum-effect truth (τ > δ) by n; against τ > 2 SE it is ≤
 | Gemma-3 | Bias in Bios | 0.16 | 0.56 | 0.84 |
 | Gemma-3 | EuroParl | 0.05 | 0.44 | 0.60 |
 
-## 6. Observational baselines (Gemma-2, baselines2: 10 draws, each class at α / C)
+## 6. Observational baselines (baselines2: 10 draws, each class at α / C)
+
+### Gemma-2
 
 Columns are FDP measured three ways: against τ > δ, against τ > 2 SE, and against τ > 0. "Selected" is the mean number of latents per draw.
 
@@ -123,7 +125,31 @@ Columns are FDP measured three ways: against τ > δ, against τ > 2 SE, and aga
 | Bias in Bios | e-values | 4 | 1 | 0.70–0.73 · 0 · 0 |
 | EuroParl | both | 0 | 0 | — |
 
-On SST-2, knockoffs selected 93 latents outside U, which delta2 evaluated. The amendment-1 single-draw numbers (classes merged at q) are in `evaluate.json`. They were less favourable to the baselines (FDP 0.6–1.0), which is why the comparison was redone.
+### Gemma-3
+
+No SST-2 run: there is no Gemma-3 SST-2 cache. Columns as above.
+
+| Task | Method, q | Selected | Draws selecting | FDP: τ > δ / τ > 2 SE / τ > 0 |
+|---|---|---|---|---|
+| AG News | knockoffs | 0 | 0 | — |
+| AG News | e-values 0.05 / 0.1 / 0.2 | 0.4 / 0.5 / 0.6 | 0.4 / 0.5 / 0.6 | 0 · 0 · 0 (the selected latent is above δ) |
+| Bias in Bios | knockoffs | 0 | 0 | — |
+| Bias in Bios | e-values 0.05 / 0.1 / 0.2 | 3.8 / 3.9 / 4.2 | 1 | 0.93 / 0.93 / 0.91 · 0.48 / 0.50 / 0.51 · 0.27 / 0.26 / 0.25 |
+| EuroParl | both | 0 | 0 | — |
+
+### Power against the oracle (q = 0.1; ours: v2, resampling, n = 2,000)
+
+| Model | Task | τ > δ | Knockoffs | Obs. e-values | Ours |
+|---|---|---|---|---|---|
+| Gemma-2 | SST-2 | 3 | 0 | 0 | 0.99 |
+| Gemma-2 | AG News | 4 | 0 | 0.03 | 0.75 |
+| Gemma-2 | Bias in Bios | 1 | 0 | 1.00 | 1.00 |
+| Gemma-2 | EuroParl | 5 | 0 | 0 | 0.62 |
+| Gemma-3 | AG News | 8 | 0 | 0.06 | 0.61 |
+| Gemma-3 | Bias in Bios | 3 | 0 | 0.10 | 0.34 |
+| Gemma-3 | EuroParl | 9 | 0 | 0 | 0.66 |
+
+On Gemma-2 SST-2, knockoffs selected 93 latents outside U, which delta2 evaluated. The amendment-1 single-draw numbers (classes merged at q) are in `evaluate.json`. They were less favourable to the baselines (FDP 0.6–1.0), which is why the comparison was redone.
 
 Differences that remain:
 - The baselines see mean-pooled activations of the raw text and only the 2,048 retained latents; our method sees the latents inside the prompt.
@@ -134,7 +160,11 @@ These differences are stated, not corrected.
 ## 7. Deviations and notes
 
 - **Gemma-3 runs:** a co-tenant took GPU 1, so Gemma-3 AG News and EuroParl ran out of memory at load. They were rerun on GPU 0 with nothing changed.
-- **Gemma-3 has no observational baselines:** there are no Gemma-3 pooled-latent caches on the run machine. To do: rsync them and rerun `--stage v2`.
+- **Gemma-3 observational baselines:** `baselines2` was run on a teammate's machine, which has the Gemma-3 caches (commit 895a1cc).
+  - There is no Gemma-3 SST-2 cache, so SST-2 has none.
+  - Knockoffs select nothing on AG News, Bias in Bios or EuroParl.
+  - Observational e-values select on average 0.4–0.6 latents on AG News, about 4 on Bias in Bios, and none on EuroParl.
+  - The 3 Bias in Bios latents outside U were measured by `delta2` on srijam (8 min), followed by `evaluate2` (about 3 min per task).
 - **v2 is exploratory on Gemma-2:** it was chosen after reading Gemma-2's results (the `stage5_amendment_2` trigger records the CPU checks behind the choice), and Gemma-2's primary analysis stays prereg. On Gemma-3, v2 is confirmatory.
 - **Runtime** on an RTX 5000 Ada:
   - Gemma-2 `delta`: 2–9 h per task;

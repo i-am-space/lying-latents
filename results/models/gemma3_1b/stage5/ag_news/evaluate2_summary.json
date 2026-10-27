@@ -165,7 +165,84 @@
       }
     },
     "baselines2": {
-      "note": "no pooled-latent cache for this model and task: observational baselines not run"
+      "knockoff_q0.05": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_se": 0.0,
+        "fdr_vs_tau_above_2se": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_true_selected": 0.0,
+        "mean_selected": 0.0,
+        "share_draws_selecting": 0.0,
+        "draws_evaluated": 10,
+        "draws": 10,
+        "alpha_per_class": 0.0125,
+        "evaluated_subsample": false
+      },
+      "knockoff_q0.1": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_se": 0.0,
+        "fdr_vs_tau_above_2se": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_true_selected": 0.0,
+        "mean_selected": 0.0,
+        "share_draws_selecting": 0.0,
+        "draws_evaluated": 10,
+        "draws": 10,
+        "alpha_per_class": 0.025,
+        "evaluated_subsample": false
+      },
+      "knockoff_q0.2": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_se": 0.0,
+        "fdr_vs_tau_above_2se": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_true_selected": 0.0,
+        "mean_selected": 0.0,
+        "share_draws_selecting": 0.0,
+        "draws_evaluated": 10,
+        "draws": 10,
+        "alpha_per_class": 0.05,
+        "evaluated_subsample": false
+      },
+      "evalue_obs_q0.05": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_se": 0.0,
+        "fdr_vs_tau_above_2se": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_true_selected": 0.4,
+        "mean_selected": 0.4,
+        "share_draws_selecting": 0.4,
+        "draws_evaluated": 10,
+        "draws": 10,
+        "alpha_per_class": 0.0125,
+        "evaluated_subsample": false
+      },
+      "evalue_obs_q0.1": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_se": 0.0,
+        "fdr_vs_tau_above_2se": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_true_selected": 0.5,
+        "mean_selected": 0.5,
+        "share_draws_selecting": 0.5,
+        "draws_evaluated": 10,
+        "draws": 10,
+        "alpha_per_class": 0.025,
+        "evaluated_subsample": false
+      },
+      "evalue_obs_q0.2": {
+        "fdr_vs_min_effect": 0.0,
+        "fdr_se": 0.0,
+        "fdr_vs_tau_above_2se": 0.0,
+        "fdr_vs_tau_positive": 0.0,
+        "mean_true_selected": 0.6,
+        "mean_selected": 0.6,
+        "share_draws_selecting": 0.6,
+        "draws_evaluated": 10,
+        "draws": 10,
+        "alpha_per_class": 0.05,
+        "evaluated_subsample": false
+      }
     }
   },
   "zero": {
