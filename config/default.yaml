@@ -630,6 +630,13 @@ stage5:
     stress_sizes: [250, 1000, 2000]
     stress_replicates: 200
     se_mult: 2.0                  # "tau > 0" is counted as tau > 2 SE
+  baselines3:                     # stage5_amendment_3: does a better knockoff sampler pick latents the model uses?
+    samplers: [gauss_equi, gauss_mvr, hurdle]   # Enkhbayar's Gaussian, block-MVR Gaussian, hurdle SCIP (stage4_repairs)
+    statistics: [fixed, cv]       # fixed: L1-logistic lambda = 1 / (C n), C = knockoff_C; cv: Stage 4's 5-fold CV lambda
+    knockoff_C: 0.5
+    draws: 10                     # paired: the same rows, classes and CV folds for every sampler
+    mvr_max_block: 512
+    cap: 100                      # latents evaluated per sampler x statistic (union over draws and alphas)
   tasks:
     sst2:
       source: sst2

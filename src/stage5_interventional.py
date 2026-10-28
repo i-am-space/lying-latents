@@ -47,6 +47,7 @@ from common import ROOT, cache_path, load_config, results_dir, stream_rng   # no
 
 STAGES = ("pilot", "screen", "baselines", "delta", "evaluate")
 V2_STAGES = ("baselines2", "delta2", "evaluate2")              # stage5_amendment_2
+V3_STAGES = ("baselines3", "delta3", "evaluate3")              # stage5_amendment_3
 INTERVENTIONS = ("resample", "zero", "mean")
 
 
@@ -1238,6 +1239,292 @@ def summarise2(ev: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# stage5_amendment_3: baselines3, delta3, evaluate3 (does a better knockoff sampler pick latents the model uses?)
+# ---------------------------------------------------------------------------
+
+def stage_baselines3(ctx: Ctx) -> dict:
+    """Knockoff selections on the task's real labels from three samplers, paired draw by draw: Gaussian
+    equicorrelated (Enkhbayar 2025), block-MVR Gaussian (our best Gaussian) and hurdle SCIP (stage4_repairs). Every
+    sampler sees the same rows; one knockoff draw per sampler and draw (knockoffs do not depend on y) serves every
+    class; each class is tested at alpha / C (one-vs-rest) and the union over classes is the draw's selection. Two
+    statistics: the fixed L1-logistic penalty of Enkhbayar (lambda = 1 / (C n), FISTA) and the 5-fold CV lambda of
+    Stage 4 (stage3_followups.cv_lasso, folds from stream s5_obs). W = |b_j| - |b~_j|, Knockoff+ at alpha / C."""
+    require_gate(ctx)
+    s5, b3 = ctx.s5, ctx.s5["baselines3"]
+    ob = _obs_cache(ctx)
+    if ob is None:
+        out = {"note": "no pooled-latent cache for this model and task: baselines3 not run", "extra": []}
+        ctx.write_json("baselines3.json", out)
+        print(f"  baselines3: {out['note']}", flush=True)
+        return out
+    from knockpy import smatrix
+    from knockpy.knockoffs import GaussianSampler
+    from knockoff_audit import estimate_cov
+    from planted_fdr import compute_knockoff_plus_threshold
+    from planted_fdr_controls import fit_lasso_checked
+    from stage3_followups import GaussKnockoffGPU, cv_lasso
+    from stage4_repairs import SCIPSampler
+    X, retained, cpath = ob
+    rows = ctx.splits["obs"]
+    X = X[rows].astype(np.float64)
+    yv = ctx.y[rows]
+    mu, sd = X.mean(0), X.std(0)
+    keep = sd > 1e-8
+    Xr = X[:, keep]
+    Z = (Xr - mu[keep]) / sd[keep]
+    ids = retained[keep]
+    n, p = Z.shape
+    classes = range(len(ctx.classes)) if len(ctx.classes) > 2 else [1]
+    C = len(classes)
+    alphas = s5["alphas"]
+    qc = {q: q / C for q in alphas}
+    D = int(b3["draws"])
+    dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    Zt = torch.as_tensor(Z, dtype=torch.float32, device=dev)
+    t0 = time.time()
+    # samplers, built once per task
+    equi = GaussianSampler(X=Z, method="equicorrelated")
+    Sigma = estimate_cov(Z, ctx.cfg["stage4_repairs"]["covariance"])
+    np.random.seed(int(stream_rng(ctx.cfg, "s5_obs", ctx.ti, 30).integers(2**31)))   # knockpy's MVR solver uses numpy's global state
+    S = np.asarray(smatrix.compute_smatrix(Sigma, method="mvr", how_approx="blockdiag", max_block=b3["mvr_max_block"]))
+    mvr = GaussKnockoffGPU(Zt, Sigma, S)
+    scip = SCIPSampler(Xr, "hurdle", ctx.cfg["stage4_repairs"]["scip"], dev)
+    print(f"  baselines3: n {n}, p {p}, classes {C}; samplers built ({time.time() - t0:.0f}s)", flush=True)
+
+    def draw(name: str, seed: int) -> np.ndarray:
+        if name == "gauss_equi":
+            np.random.seed(seed)
+            return equi.sample_knockoffs()
+        if name == "gauss_mvr":
+            return mvr.sample(seed).double().cpu().numpy()
+        Xk, _ = scip.sample(seed)
+        return (Xk - mu[keep]) / sd[keep]
+
+    samplers, stats = list(b3["samplers"]), list(b3["statistics"])
+    lam_fixed = 1.0 / (float(b3["knockoff_C"]) * n)
+    cvsec = {"lambda_ratios": ctx.cfg["stage4_cv"]["cv"]["lambda_ratios"], "folds": ctx.cfg["stage4_cv"]["cv"]["folds"],
+             "lasso": ctx.cfg["stage4_cv"]["cv"]["lasso"]}
+    lasso = ctx.cfg["stage4_cv"]["cv"]["lasso"]
+    sel = {f"{s}__{st}": [] for s in samplers for st in stats}
+    corr = {s: [] for s in samplers}
+    for d in range(D):
+        for si, s in enumerate(samplers):
+            Zk = draw(s, int(stream_rng(ctx.cfg, "s5_obs", ctx.ti, 31, d, si).integers(2**31)))
+            corr[s].append(float(np.mean(np.sum((Z - Z.mean(0)) * (Zk - Zk.mean(0)), 0)
+                                         / np.maximum(np.sqrt(np.sum((Z - Z.mean(0)) ** 2, 0) * np.sum((Zk - Zk.mean(0)) ** 2, 0)), 1e-12))))
+            Phi = torch.as_tensor(np.hstack([Z, Zk]), dtype=torch.float32, device=dev)
+            per = {st: {str(q): set() for q in alphas} for st in stats}
+            for ci, c in enumerate(classes):
+                yt = torch.as_tensor((yv == c).astype(np.float32), device=dev)
+                for st in stats:
+                    if st == "fixed":
+                        w = fit_lasso_checked(Phi, yt, lam_fixed, lasso["max_iter"], lasso["tol"])[0]
+                    else:   # the same folds for every sampler: paired
+                        w = cv_lasso(Phi, yt, cvsec, stream_rng(ctx.cfg, "s5_obs", ctx.ti, 32, d, ci))[0]
+                    wa = w.abs().cpu().numpy()
+                    W = wa[:p] - wa[p:]
+                    for q in alphas:
+                        tau = compute_knockoff_plus_threshold(W, qc[q])
+                        if np.isfinite(tau):
+                            per[st][str(q)] |= set(ids[W >= tau].tolist())
+            for st in stats:
+                sel[f"{s}__{st}"].append({q: sorted(int(j) for j in v) for q, v in per[st].items()})
+            del Phi
+        print(f"  baselines3 draw {d + 1}/{D} ({(time.time() - t0) / 60:.1f} min): "
+              + "; ".join(f"{k} {[len(v) for v in sel[k][-1].values()]}" for k in sel), flush=True)
+    cap = int(b3["cap"])
+    U = {int(j) for j in ctx.load_json("baselines.json")["U"]}
+    out = {"classes": C, "alpha_per_class": {str(q): qc[q] for q in alphas}, "draws": D, "rows": int(n),
+           "lambda_fixed": lam_fixed, "self_correlation": {s: float(np.mean(v)) for s, v in corr.items()},
+           "observational_cache": cpath, "baselines": {}}
+    for bi, (name, dl) in enumerate(sel.items()):
+        union = sorted(set().union(*[set(v) for dsel in dl for v in dsel.values()]))
+        sub = union
+        if len(union) > cap:
+            sub = sorted(stream_rng(ctx.cfg, "s5_obs", ctx.ti, 33, bi).choice(union, size=cap, replace=False).tolist())
+        out["baselines"][name] = {"draws": dl, "evaluated": [int(j) for j in sub], "n_union": len(union),
+                                  "subsampled": len(union) > cap}
+    out["extra"] = sorted(set().union(*[set(v["evaluated"]) for v in out["baselines"].values()]) - U)
+    out["minutes"] = round((time.time() - t0) / 60, 1)
+    ctx.write_json("baselines3.json", out)
+    print(f"  baselines3: {len(out['extra'])} latents not in U go to delta3 ({out['minutes']} min)", flush=True)
+    return out
+
+
+def stage_delta3(ctx: Ctx) -> dict:
+    """Delta_j(x) under the primary intervention for baselines3's latents not in U, on the split-O inputs (the oracle
+    rows; delta's row order), with its own resampling draws (stream s5_resample, pool index 4)."""
+    require_gate(ctx)
+    s5, R = ctx.s5, ctx.runner
+    b3 = ctx.load_json("baselines3.json")
+    E = np.asarray(b3.get("extra", []), dtype=np.int64)
+    prim = s5["interventions"]["primary"]
+    rows = ctx.splits["O"]
+    res = np.full((len(rows), len(E)), np.nan, dtype=np.float32)
+    t0 = time.time()
+    if len(E):
+        scr = np.load(ctx.path("screen.npz"))
+        bank = ResampleBank({k: scr[k] for k in ("indptr", "idx", "val")}, E, R.W_dec.shape[0], s5["resample"]).to(R.device)
+        print(f"  resampling sampler: {bank.summary()}", flush=True)
+        Et = torch.as_tensor(E, device=R.device)
+        W_E = R.W_dec[Et]
+        C = s5["replay_batch"]
+        ck = ctx.path("delta3_checkpoint.npz")
+        start = 0
+        if ck.exists():
+            zc = np.load(ck)
+            if list(zc["E"]) == list(E):
+                res, start = zc["res"], int(zc["done"])
+                print(f"  resuming at {start}/{len(rows)}", flush=True)
+        last_ck = time.time()
+        for k in range(start, len(rows)):
+            i = int(rows[k])
+            ids, q0 = ctx.prompts.build(ctx.texts[i])
+            h, caps = R.base(ids)
+            Aq = R.encode(h)[q0:]
+            a_cur = Aq[:, Et].T.contiguous()
+            with torch.no_grad():
+                m0 = float(correct_prob(R.replay(h[None], caps), ctx.y[i])[0])
+            gen = torch.Generator(device=R.device)
+            gen.manual_seed(int(stream_rng(ctx.cfg, "s5_resample", ctx.ti, 4, k).integers(2**62)))
+            d = (_new_values(prim, torch.arange(len(E), device=R.device), a_cur, Aq, bank, gen) - a_cur).to(h.dtype)
+            outv = np.empty(len(E), dtype=np.float32)
+            for s0 in range(0, len(E), C):
+                dd = d[s0: s0 + C]
+                H = h[None].repeat(len(dd), 1, 1)
+                H[:, q0:, :] += dd[:, :, None] * W_E[s0: s0 + C][:, None, :].to(h.dtype)
+                with torch.no_grad():
+                    mm = correct_prob(R.replay(H, caps), ctx.y[i])
+                outv[s0: s0 + len(dd)] = (m0 - mm).cpu().numpy()
+            res[k] = outv
+            if time.time() - last_ck > 600 or k + 1 == len(rows):
+                tmp = ck.with_suffix(".tmp.npz")
+                np.savez(tmp, E=E, res=res, done=k + 1)
+                tmp.replace(ck)
+                last_ck = time.time()
+                print(f"  delta3 O {k + 1}/{len(rows)}  ({(time.time() - t0) / 60:.1f} min)", flush=True)
+        ck.unlink(missing_ok=True)
+    np.savez(ctx.path("delta3.npz"), E=E, **{f"O__{prim}": res})
+    out = {"extra": int(len(E)), "rows": int(len(rows)), "primary": prim, "minutes": round((time.time() - t0) / 60, 1)}
+    ctx.write_json("delta3.json", out)
+    print(f"  delta3: {len(E)} latents ({out['minutes']} min)", flush=True)
+    return out
+
+
+def stage_evaluate3(ctx: Ctx) -> dict:
+    """CPU only. Oracle tau_j and SE from the split-O inputs for every latent (delta: U; delta2: baselines2's extra
+    latents; delta3: baselines3's). Per sampler and statistic, draw by draw at each alpha: the share of selections
+    with tau > delta, tau > 2 SE and tau > 0, the number selected, and recall of U's latents with tau > delta. Paired
+    contrasts (same draw, same rows, same folds): hurdle - block MVR (primary) and hurdle - equicorrelated, on the
+    share with tau > 2 SE, over the draws where both select (task level), and pooled over tasks in the summary stage."""
+    pilot = require_gate(ctx)
+    s5, b3c = ctx.s5, ctx.s5["baselines3"]
+    b3 = ctx.load_json("baselines3.json")
+    if "baselines" not in b3:
+        ctx.write_json("evaluate3.json", {"task": ctx.task, "note": b3.get("note", "")})
+        return {}
+    prim = s5["interventions"]["primary"]
+    delta0, k_se = pilot["delta"], float(s5["v2"]["se_mult"])
+    T = {}
+    z = np.load(ctx.path("delta.npz"))
+    for src_ids, P in [(z["U"], z[f"O__{prim}"])]:
+        P = P.astype(np.float64)
+        T.update({int(j): (float(t), float(s)) for j, t, s in zip(src_ids, P.mean(0), P.std(0, ddof=1) / math.sqrt(len(P)))})
+    if ctx.path("delta2.npz").exists():
+        z2 = np.load(ctx.path("delta2.npz"))
+        if len(z2["E"]):
+            P = z2[f"O__{prim}"].astype(np.float64)
+            T.update({int(j): (float(t), float(s)) for j, t, s in zip(z2["E"], P.mean(0), P.std(0, ddof=1) / math.sqrt(len(P)))})
+    z3 = np.load(ctx.path("delta3.npz"))
+    if len(z3["E"]):
+        P = z3[f"O__{prim}"].astype(np.float64)
+        T.update({int(j): (float(t), float(s)) for j, t, s in zip(z3["E"], P.mean(0), P.std(0, ddof=1) / math.sqrt(len(P)))})
+    U = [int(j) for j in z["U"]]
+    true_U = {j for j in U if T[j][0] > delta0}
+    rec = {}
+    for name, v in b3["baselines"].items():
+        ev_set = set(v["evaluated"])
+        rec[name] = {}
+        for q in v["draws"][0]:
+            rows = []
+            for dsel in v["draws"]:
+                lat = [j for j in dsel[q] if j in ev_set]
+                t = np.array([T[j][0] for j in lat]) if lat else np.zeros(0)
+                s = np.array([T[j][1] for j in lat]) if lat else np.zeros(0)
+                rows.append({"n_selected": len(dsel[q]), "n_evaluated": len(lat),
+                             "share_above_delta": float((t > delta0).mean()) if lat else None,
+                             "share_above_2se": float((t > k_se * s).mean()) if lat else None,
+                             "share_positive": float((t > 0).mean()) if lat else None,
+                             "recall_above_delta": float(len(set(dsel[q]) & true_U) / max(len(true_U), 1))})
+            rec[name][q] = rows
+    def agg(rows):
+        f = lambda k: [r[k] for r in rows if r[k] is not None]
+        m = lambda x: float(np.mean(x)) if x else None
+        return {"mean_selected": m([r["n_selected"] for r in rows]), "share_draws_selecting": m([r["n_selected"] > 0 for r in rows]),
+                "share_above_delta": m(f("share_above_delta")), "share_above_2se": m(f("share_above_2se")),
+                "share_positive": m(f("share_positive")), "recall_above_delta": m([r["recall_above_delta"] for r in rows]),
+                "draws_with_selection": len(f("share_above_2se"))}
+    summary = {name: {q: agg(rows) for q, rows in by_q.items()} for name, by_q in rec.items()}
+    contrasts = {}
+    for st in b3c["statistics"]:
+        for other in ("gauss_mvr", "gauss_equi"):
+            a, b = f"hurdle__{st}", f"{other}__{st}"
+            if a not in rec or b not in rec:
+                continue
+            for q in rec[a]:
+                diffs = [ra["share_above_2se"] - rb["share_above_2se"] for ra, rb in zip(rec[a][q], rec[b][q])
+                         if ra["share_above_2se"] is not None and rb["share_above_2se"] is not None]
+                dsel = [ra["n_selected"] - rb["n_selected"] for ra, rb in zip(rec[a][q], rec[b][q])]
+                drec = [ra["recall_above_delta"] - rb["recall_above_delta"] for ra, rb in zip(rec[a][q], rec[b][q])]
+                contrasts[f"hurdle_minus_{other}__{st}__q{q}"] = {
+                    "share_above_2se_diff": float(np.mean(diffs)) if diffs else None,
+                    "share_above_2se_diffs": diffs, "n_paired_draws": len(diffs),
+                    "n_selected_diff": float(np.mean(dsel)), "recall_above_delta_diff": float(np.mean(drec))}
+    out = {"task": ctx.task, "model": ctx.cfg["model"]["name"], "delta": delta0, "oracle_rows": int(z[f"O__{prim}"].shape[0]),
+           "n_true_U": len(true_U), "self_correlation": b3["self_correlation"], "draws": rec, "summary": summary,
+           "contrasts": contrasts}
+    ctx.write_json("evaluate3.json", out)
+    a = "0.1"
+    print(f"  evaluate3 {ctx.task} (q = 0.1): " + "; ".join(
+        f"{k} sel {v[a]['mean_selected']:.1f}, >2SE {v[a]['share_above_2se']}, >delta {v[a]['share_above_delta']}, "
+        f"recall {v[a]['recall_above_delta']:.2f}" for k, v in summary.items() if a in v), flush=True)
+    return out
+
+
+def stage_summary3(cfg_paths: list) -> dict:
+    """stage5_amendment_3 rule B3-1, over every model and task: the paired hurdle - block-MVR difference in the share
+    of selections with tau > 2 SE (CV statistic, q = 0.1), pooled over (task, draw) pairs where both select; a
+    one-sample t-test of the pooled differences against 0 (two-sided), and per task."""
+    from scipy import stats as sstats
+    rows, per_task, out = [], {}, {"tasks": {}}
+    for cp in cfg_paths:
+        cfg = load_config(cp)
+        for t in cfg["stage5"]["tasks"]:
+            f = results_dir(cfg) / "stage5" / t / "evaluate3.json"
+            if not f.exists():
+                continue
+            e = json.loads(f.read_text())
+            key = f"{cfg['model']['name']}/{t}"
+            out["tasks"][key] = {k: e.get(k) for k in ("summary", "contrasts", "n_true_U", "self_correlation", "note")}
+            for name, c in (e.get("contrasts") or {}).items():
+                if name.startswith("hurdle_minus_gauss_mvr__cv__q0.1"):
+                    rows += c["share_above_2se_diffs"]
+                    per_task[key] = c["share_above_2se_diff"]
+    if rows:
+        tt = sstats.ttest_1samp(rows, 0.0)
+        out["B3_1"] = {"pooled_mean_diff": float(np.mean(rows)), "n_pairs": len(rows),
+                       "p_two_sided": float(tt.pvalue) if len(rows) > 1 else None, "per_task": per_task,
+                       "hurdle_better": bool(np.mean(rows) > 0 and len(rows) > 1 and tt.pvalue < 0.05)}
+    else:
+        out["B3_1"] = {"note": "no (task, draw) pair where both samplers select: the contrast is undefined", "per_task": per_task}
+    dest = ROOT / "results" / "stage5_baselines3_summary.json"
+    dest.write_text(json.dumps(out, indent=2, default=_json_default))
+    print(json.dumps(out.get("B3_1"), indent=1, default=_json_default))
+    print(f"wrote {dest}")
+    return out
+
+
+# ---------------------------------------------------------------------------
 # stage: summary over tasks
 # ---------------------------------------------------------------------------
 
@@ -1266,28 +1553,33 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Stage 5: interventional FDR control for SAE latents")
     ap.add_argument("--config", default="config/default.yaml")
     ap.add_argument("--task", default=None, help="one of stage5.tasks (not needed for --stage summary)")
-    ap.add_argument("--stage", default="all", choices=list(STAGES) + list(V2_STAGES) + ["all", "v2", "summary"],
-                    help="all: the stage5_amendment_1 stages; v2: baselines2, delta2, evaluate2 (stage5_amendment_2)")
+    ap.add_argument("--stage", default="all", choices=list(STAGES) + list(V2_STAGES) + list(V3_STAGES) + ["all", "v2", "v3", "summary", "summary3"],
+                    help="all: the stage5_amendment_1 stages; v2: baselines2, delta2, evaluate2 (stage5_amendment_2); "
+                         "v3: baselines3, delta3, evaluate3 (stage5_amendment_3); summary3: rule B3-1 over both models")
     ap.add_argument("--limit", type=int, default=None, help="debug: cap every split at N inputs (results not valid)")
     args = ap.parse_args()
     cfg = load_config(args.config)
     if args.stage == "summary":
         stage_summary(cfg)
         return
+    if args.stage == "summary3":
+        stage_summary3([ROOT / "config" / "default.yaml", ROOT / "config" / "models" / "gemma3_1b.yaml"])
+        return
     if args.task not in cfg["stage5"]["tasks"]:
         raise SystemExit(f"--task must be one of {list(cfg['stage5']['tasks'])}")
     torch.manual_seed(int(stream_rng(cfg, "s5_resample", 999).integers(2**31)))
-    stages = {"all": list(STAGES), "v2": list(V2_STAGES)}.get(args.stage, [args.stage])
+    stages = {"all": list(STAGES), "v2": list(V2_STAGES), "v3": list(V3_STAGES)}.get(args.stage, [args.stage])
     done_file = {"pilot": "pilot.json", "screen": "screen.json", "baselines": "baselines.json",
                  "delta": "delta.json", "evaluate": "evaluate.json", "baselines2": "baselines2.json",
-                 "delta2": "delta2.json", "evaluate2": "evaluate2.json"}
+                 "delta2": "delta2.json", "evaluate2": "evaluate2.json", "baselines3": "baselines3.json",
+                 "delta3": "delta3.json", "evaluate3": "evaluate3.json"}
     out_dir = results_dir(cfg) / "stage5" / (f"{args.task}__limit{args.limit}" if args.limit else args.task)
-    todo = [s for s in stages if args.stage not in ("all", "v2") or not (out_dir / done_file[s]).exists()]
-    ctx = Ctx(cfg, args.task, args.limit, light=all(s in ("evaluate", "evaluate2") for s in todo))
+    todo = [s for s in stages if args.stage not in ("all", "v2", "v3") or not (out_dir / done_file[s]).exists()]
+    ctx = Ctx(cfg, args.task, args.limit, light=all(s in ("evaluate", "evaluate2", "evaluate3") for s in todo))
     if args.limit:
         ctx.out = out_dir
         ctx.out.mkdir(parents=True, exist_ok=True)
-    need_model = [s for s in todo if s in ("pilot", "screen", "baselines", "delta", "delta2")]
+    need_model = [s for s in todo if s in ("pilot", "screen", "baselines", "delta", "delta2", "delta3")]
     if need_model:
         from cache_activations import load_model_and_sae
         tok, model, sae = load_model_and_sae(cfg)
@@ -1295,7 +1587,8 @@ def main() -> None:
     print(f"stage 5 | {cfg['model']['name']} | task {args.task} | stages {todo} | out {ctx.out}", flush=True)
     fns = {"pilot": stage_pilot, "screen": stage_screen, "baselines": stage_baselines, "delta": stage_delta,
            "evaluate": stage_evaluate, "baselines2": stage_baselines2, "delta2": stage_delta2,
-           "evaluate2": stage_evaluate2}
+           "evaluate2": stage_evaluate2, "baselines3": stage_baselines3, "delta3": stage_delta3,
+           "evaluate3": stage_evaluate3}
     for s in todo:
         print(f"\n=== {s} ===", flush=True)
         r = fns[s](ctx)

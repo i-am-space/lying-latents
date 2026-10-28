@@ -2196,3 +2196,47 @@ stage5_amendment_2:
   smoke_test_before_commit: >
     evaluate2 run on the laptop CPU on the four Gemma-2 tasks (200 replicates, about 1 minute per task). baselines2
     and delta2 not run before commit (they need the pooled-latent caches and the model).
+
+# ===========================================================================
+# STAGE 5 AMENDMENT 3 - knockoff samplers against the interventional oracle (written BEFORE any run)
+# ===========================================================================
+# Appended; no earlier line is altered.
+
+stage5_amendment_3:
+  meta:
+    date_written: "2026-10-28"
+    status: written_before_run
+    trigger: >
+      Stages 2-4 compared knockoff samplers (Gaussian, hurdle) by exchangeability and FDR on planted labels. Stage 5
+      measured each latent's causal effect on prompted tasks (an oracle tau_j). Whether a better observational
+      sampler also picks latents the model uses has not been measured: baselines2 scored only Gaussian
+      equicorrelated knockoffs at Enkhbayar's fixed penalty, which selected nothing on 6 of 7 tasks.
+  hypothesis: >
+    Gaussian knockoffs' excess false discoveries are null latents that co-fire with the signal latents (Stage 3).
+    Such latents should have little or no causal effect on the model. Hurdle knockoffs reproduce co-firing better,
+    so a larger share of their selections should have a real causal effect (oracle tau_j > 2 SE).
+  design: >
+    Tasks with a pooled-latent cache (Gemma-2: SST-2, AG News, Bias in Bios, EuroParl; Gemma-3: AG News, Bias in
+    Bios, EuroParl), the observational rows of stage5_amendment_1 (split A and unused texts), the 2,048 retained
+    latents standardised. Samplers: Gaussian equicorrelated (knockpy, as Enkhbayar), block-MVR Gaussian (Ledoit-Wolf
+    covariance, knockpy blockdiag MVR, max block 512) and hurdle SCIP (stage4_repairs settings). Statistics: fixed
+    L1-logistic penalty lambda = 1 / (0.5 n) and Stage 4's 5-fold CV lambda (stage3_followups.cv_lasso), both by
+    FISTA; W_j = |b_j| - |b~_j|; Knockoff+ at alpha / C per class (one-vs-rest; SST-2 one task), union over classes.
+    10 draws; within a draw every sampler sees the same rows, classes and CV folds (paired). One knockoff draw per
+    sampler and draw serves every class. Streams s5_obs (task, 30-33, ...). Evaluation: at most 100 latents per
+    sampler x statistic (union over draws and alphas; random subsample if more); latents not yet measured get
+    Delta under the primary intervention on the 2,500 split-O inputs (delta3, stream s5_resample (task, 4, input));
+    every latent's oracle tau_j and SE come from split O (U: delta; baselines2: delta2; new: delta3).
+  decision_rules:
+    - id: B3-1
+      rule: "Primary: the paired difference hurdle minus block-MVR in the share of selections with tau_j > 2 SE (CV statistic, alpha 0.1), pooled over the (model-task, draw) pairs where both select; two-sided one-sample t-test against 0. Hurdle picks more causally real latents if the mean difference is positive with p < 0.05. If no pair exists, the contrast is reported as undefined."
+    - id: B3-2
+      rule: "Descriptive, per sampler, statistic, alpha and task: mean number selected, share of draws selecting, share of selections with tau_j > delta, > 2 SE and > 0, and recall of U's latents with tau_j > delta; hurdle minus equicorrelated alongside."
+    - id: B3-T
+      rule: "No change to samplers, statistics, draws, cap or tasks after any baselines3 result."
+  interpretation_constraints:
+    - "The samplers select on pooled raw-text activations of the 2,048 retained latents against the dataset label; the oracle measures effects inside the prompt. The comparison is between samplers under the same mismatch."
+    - "Exchangeability and causal relevance are different properties; a better sampler can at most remove statistical false positives."
+  smoke_test_before_commit: >
+    Compiled; the stage functions reuse stage4_repairs.SCIPSampler, stage3_followups.GaussKnockoffGPU / cv_lasso and
+    planted_fdr_controls.fit_lasso_checked unchanged.
