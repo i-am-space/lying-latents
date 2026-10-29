@@ -1,0 +1,4 @@
+{
+  "task": "europarl",
+  "note": "no pooled-latent cache for this model and task: baselines3 not run"
+}
