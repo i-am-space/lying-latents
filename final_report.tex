@@ -165,15 +165,14 @@
 }
 % TODO before submission: fill in the exact title of Khera's ICML 2026 workshop poster.
 @misc{khera2026,
-  title        = {[Title to be added]: ablation e-processes with e-{BH} for sparse autoencoder features},
-  author       = {Khera},
+  title        = {Anytime-Valid Hypothesis Testing for Sparse Autoencoder Feature Validation},
+  author       = {Khera, Rudransh},
   howpublished = {ICML Workshop poster},
   year         = {2026}
 }
-% TODO before submission: fill in the exact title and authors of arXiv:2607.12166.
 @article{bal2026,
-  title   = {[Title to be added]},
-  author  = {Bal},
+  title   = {From Geometric Recovery to Causal Validation: A Reproducible Audit of Sparse Autoencoder Features, from Superposition Geometry to Causal Inertness},
+  author  = {Bal, Mohamed Abdessalem},
   journal = {arXiv preprint arXiv:2607.12166},
   year    = {2026}
 }
@@ -404,7 +403,7 @@ the standard selection methods on three models (Gemma-2-2B, Gemma-3-1B, Pythia-7
 Reusing data for search and validation certifies pure noise in 69--100\% of null experiments, and
 held-out validation still in up to 27\% (nominal 5\%). Model-X knockoffs rest on exchangeability, which
 SAE latents violate on every dataset: a classifier detects one swapped latent out of 2,048 at AUC
-0.84--0.997. This becomes false discovery rate (FDR) breaches where labels depend on interactions, and
+0.84--0.997. This leads to false discovery rate (FDR) breaches when labels depend on interactions, and
 three samplers (Gaussian, hurdle, learned) each breach in some regime; the learned sampler looks best on
 per-latent diagnostics and worst on FDR. Even valid observational methods test association with a label,
 not use by the model. We propose \emph{interventional FDR control}: intervene on each candidate latent
@@ -555,7 +554,7 @@ Ranges are over three scoring methods.}
 \label{tab:reuse}
 \end{table}
 
-Table~\ref{tab:reuse}: validating on the selection data certifies noise almost always. Held-out
+As Table~\ref{tab:reuse} shows, validating on the selection data certifies noise almost always. Held-out
 validation stays above nominal on Gemma-2 because its null (``ablation changes nothing'') is false even
 under random labels: ablating 10 random latents is significant in 84\% of experiments.
 
@@ -582,21 +581,21 @@ Decoys & Data & Zero rule & AUC$_1$ & AUC$_{\text{all}}$ \\
 Gaussian & SST-2 & 0.95 & 0.997 & 1.00 \\
 Gaussian & SAEBench & 0.65--0.87 & 0.84--0.95 & 1.00 \\
 Hurdle & SST-2 & 0.50 & -- & 0.94 \\
-Hurdle & SAEBench & 0.50 & 0.50--0.60 & 0.95--1.00 \\
+Hurdle & SAEBench & 0.50 & 0.49--0.60 & 0.94--1.00 \\
 Control & all & -- & 0.49--0.51 & 0.49--0.51 \\
 \bottomrule
 \end{tabular}}
 \caption{Exchangeability. Gaussian: equicorrelated second-order knockoffs (the construction of \citet{enkhbayar2025}). Zero rule: accuracy of ``a value of exactly 0 is real''. AUC$_1$ / AUC$_\text{all}$:
 classifier two-sample test \citep{lopezpaz2017revisiting} after swapping one / all 2,048 latents with
-their knockoffs. 0.5 = indistinguishable. Hurdle on SAEBench: 9 of the 14 model--dataset settings
-(Gemma-2: 5; Gemma-3: 3; Pythia: 1).}
+their knockoffs. 0.5 = indistinguishable. Hurdle on SAEBench: all 14 model--dataset settings
+and the 3 thresholded Pythia settings.}
 \label{tab:exch}
 \end{table}
 
 A typical latent is exactly zero on 89\% of SST-2 sentences and on 30--73\% of SAEBench texts; Gaussian
-knockoffs never are (Figure~\ref{fig:overview}). Table~\ref{tab:exch}: the zero rule equals
-$(1 + \Pr(X=0))/2$, and one swapped latent is detected on every dataset, while the control stays at
-chance. On synthetic Gaussian data, where the knockoffs are valid, all tests pass (AUC 0.497, MMD
+knockoffs never are (Figure~\ref{fig:overview}). In Table~\ref{tab:exch} the zero rule equals
+$(1 + \Pr(X=0))/2$, and one swapped Gaussian knockoff is detected on every dataset, while the control stays at
+chance. Hurdle knockoffs are close to chance one latent at a time but are still detected when all are swapped. On synthetic Gaussian data, where the knockoffs are valid, all tests pass (AUC 0.497, MMD
 $p = 0.96$; \citealp{gretton2012kernel}). Any atom also makes the KL term in the robustness bound
 infinite \citep{barber2020}.
 
@@ -626,10 +625,10 @@ breaches are in interaction designs. The Gaussian control never breaches.}
 \label{tab:breach}
 \end{table}
 
-Table~\ref{tab:breach}: breaches occur where labels depend on interactions. The cause is visible in a
+Breaches occur where labels depend on interactions (Table~\ref{tab:breach}). The cause is visible in a
 fair-coin test: for valid knockoffs a null latent beats its knockoff with probability 0.5. Under
-block-MVR knockoffs it is 0.509--0.529 in interaction cells (each $p<10^{-3}$) and 0.73 on SST-2 at
-strong signals (control 0.47). The biased nulls co-fire with signal latents, a nonlinear dependence that
+block-MVR knockoffs the rate is 0.509--0.529 in interaction cells (each $p<10^{-3}$). On SST-2 at
+strong signals, nulls correlated with a signal latent win 73\% of the time (control 47\%). The biased nulls co-fire with signal latents, a nonlinear dependence that
 second-moment knockoffs cannot reproduce. The atom also costs power on weak interactions: at
 $k = 10$ and amplitude 0.5, real latents find 0.23 of the signals against 0.50 on the control (linear:
 0.90 vs.\ 0.97).
@@ -662,8 +661,8 @@ and one Gemma-2 cell. $^\dagger$All 2,048 latents swapped.}
 The hurdle sampler \citep{mullahy1986specification} models whether a latent fires and how strongly; it
 removes the zero-atom signal but its log-normal size model fails on Pythia's ReLU SAE, which has a tail
 of tiny activations. Binarising the latents gives exchangeable decoys but inflates FDR (mean 0.065, up to 0.17 in one cell, at
-$q = 0.1$), because coarsening changes which latents are null. The deep generator
-\citep{romano2020deep} should learn what the parametric samplers miss (Table~\ref{tab:samplers}; SST-2
+$q = 0.1$), because coarsening changes which latents are null. A deep generator
+\citep{romano2020deep} can in principle learn what the parametric samplers miss (Table~\ref{tab:samplers}; SST-2
 repairs in Table~\ref{tab:sst2repairs}).
 
 \paragraph{Per-latent diagnostics mislead.} The residual deep sampler is the best on single-latent swaps and
@@ -764,13 +763,13 @@ against $\tauj > \delta$.}
 \label{tab:main}
 \end{table*}
 
-\paragraph{Validity.} No breach anywhere (Table~\ref{tab:main}); the stress test, where every rejection
-is false, gives at most 0.010.
+\paragraph{Validity.} No setting breaches (Table~\ref{tab:main}). In the stress test, where every rejection
+is false, the rejection rate is at most 0.010.
 
-\paragraph{Power.} Figure~\ref{fig:power}. We tuned $K$ and the bet cap on Gemma-2 and applied them
-unchanged to Gemma-3, where they beat a wider setting ($K = 250$, cap 0.5) on all four tasks at
-$n \ge 1{,}000$. Power at small $n$ is limited (Table~\ref{tab:power-full}). 
-Zero and mean ablation give no breach, with similar or higher power (Table~\ref{tab:sensitivity}); each is scored against its own oracle, since the intervention changes which latents exceed $\delta$.
+\paragraph{Power.} We tuned $K$ and the bet cap on Gemma-2 and applied them
+unchanged to Gemma-3 (Figure~\ref{fig:power}). There they beat the wider setting ($K = 250$, cap 0.5) on all four tasks at
+$n = 1{,}000$ and on three of four at $n = 2{,}000$, tying on EuroParl. Power at small $n$ is limited (Table~\ref{tab:power-full}).
+Zero and mean ablation give no breach, and their power is higher on most tasks (Table~\ref{tab:sensitivity}); each is scored against its own oracle, since the intervention changes which latents exceed $\delta$.
 
 \begin{figure}[t]
 \centering
@@ -823,17 +822,19 @@ on the dataset label, vs.\ ours at $n = 2{,}000$. (Gemma-3 SST-2 is omitted due 
 \label{tab:baselines}
 \end{table}
 
-Table~\ref{tab:baselines}. Knockoffs select nothing on 6 of 7 tasks; on Gemma-2 SST-2 they select 34
-latents, none above $\delta$. Where observational e-values select, 70--100\% of picks are below $\delta$.
+Knockoffs select nothing on 6 of 7 tasks (Table~\ref{tab:baselines}); on Gemma-2 SST-2 they select 34
+latents, none above $\delta$. Where observational e-values select, 70--100\% of picks are below $\delta$,
+except on Gemma-3 AG News, where the one latent they pick in about half the draws is above $\delta$.
 These methods use pooled raw-text activations and target association, so this is an estimand mismatch,
 not a breach on their own target.
 
 \paragraph{Better knockoff samplers vs.\ the oracle.} Gaussian, block-MVR and hurdle knockoffs on the
-real labels (paired draws, fixed and cross-validated penalties) select nothing on Gemma-2 Bias in Bios
-and EuroParl, and 19--71 latents per draw on SST-2.
-
-\placeholder{Oracle scoring of the SST-2 and AG News selections; hurdle $-$ block MVR in the share of picks
-with $\tauj > 2$ SE; Gemma-3.}
+real labels (paired draws, fixed and cross-validated penalties) select nothing at $q = 0.1$ on 6 of 7 tasks,
+and 19--71 latents per draw on Gemma-2 SST-2. None of the SST-2 picks exceeds $\delta$, and 43--61\% have
+$\tauj > 2$ SE. In the pre-registered contrast (cross-validated penalty), hurdle picks are more often
+causally real than block-MVR picks ($+0.07$, $p = 0.015$, 10 paired draws), but less often than
+equicorrelated picks ($-0.11$). A better sampler changes the mix of false positives and still recovers
+none of the latents above $\delta$.
 
 %=======================================================
 \section{Discussion}

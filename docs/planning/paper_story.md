@@ -173,7 +173,7 @@ E-value sample splitting never breaches: 0 BY breaches on 14 datasets, with FDR 
 
 Power at α = 0.1, resampling intervention, at n = 2,000 (pre-registered → improved):
 - **Gemma-2:** 0.47–1.00 → 0.62–1.00.
-- **Gemma-3** (confirmatory): 0.26–0.66 → 0.34–0.66. The improved specification has higher power on all four tasks at n = 1,000 and 2,000.
+- **Gemma-3** (confirmatory): 0.26–0.66 → 0.34–0.66. The improved specification has higher power on all four tasks at n = 1,000 and on three of four at n = 2,000 (tied on EuroParl).
 - **Small n:** at n = 250 the improved specification gets 0–0.54 on Gemma-2. Power at small n is the main limitation.
 
 *(Figure: power vs n, both specifications, 2 × 4 panels.)*

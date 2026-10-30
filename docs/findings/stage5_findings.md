@@ -18,7 +18,7 @@ The headline numbers are in `evaluate2_summary.json`. The amendment-1 analysis i
    - No breach anywhere.
    - Realised FDR is at most 0.003 (any α), and 0.000 everywhere except a few Gemma-3 cells (3 tasks, all ≤ 0.003).
    - In the boundary stress test, every latent's Δ is shifted so its mean is exactly δ, which makes every rejection false. P(any rejection) is at most 0.010 in every setting (at α = 0.1: at most 0.005).
-2. **Power is usable, and the v2 specification (K = 50, bet cap 0.9) is confirmed on Gemma-3.** v2 was chosen after reading Gemma-2. On Gemma-3, where it is the pre-registered primary analysis, v2's power is higher than the original specification's on all 4 tasks at n = 1,000 and 2,000, with no loss of validity. At n = 2,000 (resampling, α = 0.1), power is 0.62–1.00 on Gemma-2 and 0.34–0.66 on Gemma-3.
+2. **Power is usable, and the v2 specification (K = 50, bet cap 0.9) is confirmed on Gemma-3.** v2 was chosen after reading Gemma-2. On Gemma-3, where it is the pre-registered primary analysis, v2's power is higher than the original specification's on all 4 tasks at n = 1,000 and on 3 of 4 at n = 2,000 (tied on EuroParl), with no loss of validity. At n = 2,000 (resampling, α = 0.1), power is 0.62–1.00 on Gemma-2 and 0.34–0.66 on Gemma-3.
 3. **Few latents matter alone, most matter a little.**
    - Of the 250 attribution-ranked candidates, only 1–12 per task have an effect above δ (0.05 SD of the metric, about 1 percentage point of correct-class probability).
    - Yet 59–91% have a real positive effect (τ > 2 SE).
