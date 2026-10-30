@@ -1,6 +1,6 @@
 {
-  "extra": 0,
+  "extra": 60,
   "rows": 2500,
   "primary": "resample",
-  "minutes": 0.0
+  "minutes": 11.0
 }

@@ -1203,25 +1203,817 @@
       "note": "no pooled-latent cache for this model and task: baselines3 not run"
     },
     "google/gemma-3-1b-pt/ag_news": {
-      "summary": null,
-      "contrasts": null,
-      "n_true_U": null,
-      "self_correlation": null,
-      "note": "no pooled-latent cache for this model and task: baselines3 not run"
+      "summary": {
+        "gauss_equi__fixed": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        },
+        "gauss_equi__cv": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 2.0,
+            "share_draws_selecting": 0.1,
+            "share_above_delta": 0.05,
+            "share_above_2se": 0.45,
+            "share_positive": 0.55,
+            "recall_above_delta": 0.0125,
+            "draws_with_selection": 1
+          }
+        },
+        "gauss_mvr__fixed": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        },
+        "gauss_mvr__cv": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        },
+        "hurdle__fixed": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        },
+        "hurdle__cv": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 2.0,
+            "share_draws_selecting": 0.1,
+            "share_above_delta": 0.05,
+            "share_above_2se": 0.55,
+            "share_positive": 0.55,
+            "recall_above_delta": 0.0125,
+            "draws_with_selection": 1
+          }
+        }
+      },
+      "contrasts": {
+        "hurdle_minus_gauss_mvr__fixed__q0.05": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__fixed__q0.1": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__fixed__q0.2": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__fixed__q0.05": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__fixed__q0.1": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__fixed__q0.2": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__cv__q0.05": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__cv__q0.1": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__cv__q0.2": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 2.0,
+          "recall_above_delta_diff": 0.0125
+        },
+        "hurdle_minus_gauss_equi__cv__q0.05": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__cv__q0.1": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__cv__q0.2": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        }
+      },
+      "n_true_U": 8,
+      "self_correlation": {
+        "gauss_equi": 0.8887433951203969,
+        "gauss_mvr": 0.8557216929904582,
+        "hurdle": 0.9242147578628858
+      },
+      "note": null
     },
     "google/gemma-3-1b-pt/bias_in_bios": {
-      "summary": null,
-      "contrasts": null,
-      "n_true_U": null,
-      "self_correlation": null,
-      "note": "no pooled-latent cache for this model and task: baselines3 not run"
+      "summary": {
+        "gauss_equi__fixed": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        },
+        "gauss_equi__cv": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        },
+        "gauss_mvr__fixed": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        },
+        "gauss_mvr__cv": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        },
+        "hurdle__fixed": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        },
+        "hurdle__cv": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        }
+      },
+      "contrasts": {
+        "hurdle_minus_gauss_mvr__fixed__q0.05": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__fixed__q0.1": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__fixed__q0.2": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__fixed__q0.05": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__fixed__q0.1": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__fixed__q0.2": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__cv__q0.05": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__cv__q0.1": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__cv__q0.2": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__cv__q0.05": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__cv__q0.1": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__cv__q0.2": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        }
+      },
+      "n_true_U": 3,
+      "self_correlation": {
+        "gauss_equi": 0.9478706349825732,
+        "gauss_mvr": 0.8829329283633554,
+        "hurdle": 0.8643846817259921
+      },
+      "note": null
     },
     "google/gemma-3-1b-pt/europarl": {
-      "summary": null,
-      "contrasts": null,
-      "n_true_U": null,
-      "self_correlation": null,
-      "note": "no pooled-latent cache for this model and task: baselines3 not run"
+      "summary": {
+        "gauss_equi__fixed": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 22.0,
+            "share_draws_selecting": 0.5,
+            "share_above_delta": 0.01895457721872816,
+            "share_above_2se": 0.39591883072969497,
+            "share_positive": 0.44057293005117104,
+            "recall_above_delta": 0.05555555555555556,
+            "draws_with_selection": 5
+          }
+        },
+        "gauss_equi__cv": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        },
+        "gauss_mvr__fixed": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 17.9,
+            "share_draws_selecting": 0.5,
+            "share_above_delta": 0.02634920634920635,
+            "share_above_2se": 0.3531135531135531,
+            "share_positive": 0.4257142857142858,
+            "recall_above_delta": 0.05555555555555556,
+            "draws_with_selection": 5
+          }
+        },
+        "gauss_mvr__cv": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        },
+        "hurdle__fixed": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        },
+        "hurdle__cv": {
+          "0.05": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.1": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          },
+          "0.2": {
+            "mean_selected": 0.0,
+            "share_draws_selecting": 0.0,
+            "share_above_delta": null,
+            "share_above_2se": null,
+            "share_positive": null,
+            "recall_above_delta": 0.0,
+            "draws_with_selection": 0
+          }
+        }
+      },
+      "contrasts": {
+        "hurdle_minus_gauss_mvr__fixed__q0.05": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__fixed__q0.1": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__fixed__q0.2": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": -17.9,
+          "recall_above_delta_diff": -0.05555555555555556
+        },
+        "hurdle_minus_gauss_equi__fixed__q0.05": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__fixed__q0.1": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__fixed__q0.2": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": -22.0,
+          "recall_above_delta_diff": -0.05555555555555556
+        },
+        "hurdle_minus_gauss_mvr__cv__q0.05": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__cv__q0.1": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_mvr__cv__q0.2": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__cv__q0.05": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__cv__q0.1": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        },
+        "hurdle_minus_gauss_equi__cv__q0.2": {
+          "share_above_2se_diff": null,
+          "share_above_2se_diffs": [],
+          "n_paired_draws": 0,
+          "n_selected_diff": 0.0,
+          "recall_above_delta_diff": 0.0
+        }
+      },
+      "n_true_U": 9,
+      "self_correlation": {
+        "gauss_equi": 0.9254736231221736,
+        "gauss_mvr": 0.8394785187435888,
+        "hurdle": 0.8763745972550081
+      },
+      "note": null
     }
   },
   "B3_1": {
@@ -1232,7 +2024,10 @@
       "google/gemma-2-2b/sst2": 0.0709866506457804,
       "google/gemma-2-2b/ag_news": null,
       "google/gemma-2-2b/bias_in_bios": null,
-      "google/gemma-2-2b/europarl": null
+      "google/gemma-2-2b/europarl": null,
+      "google/gemma-3-1b-pt/ag_news": null,
+      "google/gemma-3-1b-pt/bias_in_bios": null,
+      "google/gemma-3-1b-pt/europarl": null
     },
     "hurdle_better": true
   }
