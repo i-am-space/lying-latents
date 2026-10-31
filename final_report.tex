@@ -4,7 +4,6 @@
 %  into an Overleaf project made from the ACL template (it provides acl.sty and acl_natbib.bst).
 %  Figures: upload fig_overview.pdf, fig20_stage5_power.png, fig21_stage5_zero_null.png and
 %  fig22_stage5_effects.png and fig_pipeline.pdf to the project root; a missing figure prints a red box instead of failing.
-%  Red "TBD" boxes mark runs that are still in progress.
 %  Every number comes from lying-latents/docs/findings/*.md and lying-latents/results/.
 % ==============================================================================
 
@@ -396,9 +395,6 @@
 \usepackage{placeins}
 \usepackage{float}
 
-% A red box for results that are still running.
-\newcommand{\placeholder}[1]{%
-  \par\noindent\fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{\small\textcolor{red}{\textbf{TBD:} #1}}}\par}
 % A figure that degrades to a red box if the file has not been uploaded yet.
 \setcounter{dbltopnumber}{3}
 \renewcommand{\dbltopfraction}{0.9}
@@ -554,7 +550,7 @@ activations over non-special tokens (Appendix~\ref{app:data}); we keep the 2,048
 $k$ random latents (10--300; linear or pairwise-interaction logits), scaled by an \emph{amplitude} that sets
 the signal strength. One combination of $k$, amplitude, logit type and FDR target is a \emph{cell}. Each method also runs on a
 \emph{Gaussian control} with the real covariance, where Gaussian knockoffs are valid. Penalties are
-chosen by 5-fold cross-validation (Appendix~\ref{app:planted}).
+chosen by 5-fold cross-validation (Appendix~\ref{app:planted}). Analyses and decision rules were fixed in advance in a versioned file; later changes were logged as amendments.
 
 %=======================================================
 \section{Auditing SAE Feature Selection}
@@ -666,7 +662,7 @@ breaches are in interaction designs. The Gaussian control never breaches.}
 
 Our first SAEBench design did not reproduce the SST-2 breaches (0 of 8 Gemma-2 datasets, 1 of 3 Gemma-3, 0 of 3 Pythia);
 a later amplitude sweep with interaction cells, designed after that result, gave breaches on 2 of 4 Gemma-2 datasets and none on
-Pythia. Breaches occur where labels depend on interactions (Table~\ref{tab:breach}). The cause is visible in a
+thresholded Pythia. Breaches occur where labels depend on interactions (Table~\ref{tab:breach}). The cause is visible in a
 fair-coin test: for valid knockoffs a null latent beats its knockoff with probability 0.5. We call
 this rate the \emph{null coin}. Under block-MVR knockoffs it is 0.509 (EuroParl) and 0.529 (GitHub code) in interaction
 cells, 0.011 and 0.027 above the control (each $p<10^{-3}$). These are the two of four Gemma-2 datasets where
@@ -958,7 +954,7 @@ tested set (Table~\ref{tab:khera}), so this is a reimplementation, not a reprodu
 top 50 and 6--23 times below it among the 250, so on our tasks $\delta$ is the stricter bar. Neither exceeds $\alpha$ at $n \le 2{,}000$, though selections can differ (power 1.00 vs.\ 0.34 on Gemma-3 Bias in Bios, 0.28
 vs.\ 0.61 on Gemma-3 AG News). At $n = 4{,}000$ the relative null exceeds $\alpha$ on two of eight tasks with $K = 50$ and on five with $K = 250$,
 where its extra picks sit just below $\delta$ (0.79--0.86$\,\delta$ at $K = 50$), and it has more power near $\delta$; ours stays at or
-below 0.002. Under zero ablation at $n = 1{,}000$, neither makes a false pick; with the same $K$, ours has higher power on six tasks at cap 0.5 (one tie, one lower) and on three at cap 0.9 (two ties, three lower).
+below 0.002. Under zero ablation at $n = 1{,}000$ and $\alpha = 0.05$ with the same $K$, neither makes a false pick at cap 0.5, where ours has higher power on six tasks (one tie, one lower). At cap 0.9 the relative null's FDR reaches 0.033, and ours has higher power on three tasks (two ties, three lower).
 
 \FloatBarrier
 %=======================================================
