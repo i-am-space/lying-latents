@@ -1,0 +1,1146 @@
+% ==============================================================================
+%  Lying Latents -- final report (ACL format).
+%  Self-contained: the bibliography is embedded below (filecontents), so this file can be pasted
+%  into an Overleaf project made from the ACL template (it provides acl.sty and acl_natbib.bst).
+%  Figures: upload fig_overview.pdf, fig20_stage5_power.png, fig21_stage5_zero_null.png and
+%  fig22_stage5_effects.png and fig_pipeline.pdf to the project root; a missing figure prints a red box instead of failing.
+%  Every number comes from lying-latents/docs/findings/*.md and lying-latents/results/.
+% ==============================================================================
+
+\begin{filecontents*}[overwrite]{lyinglatents.bib}
+@article{elhage2022solu,
+  title   = {Toy Models of Superposition},
+  author  = {Elhage, Nelson and Hume, Tristan and Olsson, Catherine and Schiefer, Nicholas and Henighan, Tom and Kravec, Shauna and Hatfield-Dodds, Zac and Lasenby, Robert and Drain, Dawn and Chen, Carol and Grosse, Roger and McCandlish, Sam and Kaplan, Jared and Amodei, Dario and Wattenberg, Martin and Olah, Chris},
+  journal = {Transformer Circuits Thread},
+  year    = {2022}
+}
+@inproceedings{park2024linear,
+  title     = {The Linear Representation Hypothesis and the Geometry of Large Language Models},
+  author    = {Park, Kiho and Choe, Yo Joong and Veitch, Victor},
+  booktitle = {Proceedings of the 41st International Conference on Machine Learning},
+  series    = {PMLR},
+  volume    = {235},
+  year      = {2024}
+}
+@article{bricken2023monosemanticity,
+  title   = {Towards Monosemanticity: Decomposing Language Models With Dictionary Learning},
+  author  = {Bricken, Trenton and Templeton, Adly and Batson, Joshua and Chen, Brian and Jermyn, Adam and Conerly, Tom and Turner, Nick and Anil, Cem and Denison, Carson and Askell, Amanda and others},
+  journal = {Transformer Circuits Thread},
+  year    = {2023}
+}
+@inproceedings{cunningham2023sparse,
+  title     = {Sparse Autoencoders Find Highly Interpretable Features in Language Models},
+  author    = {Cunningham, Hoagy and Ewart, Aidan and Riggs, Logan and Huben, Robert and Sharkey, Lee},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2024}
+}
+@article{templeton2024scaling,
+  title   = {Scaling Monosemanticity: Extracting Interpretable Features from {Claude 3 Sonnet}},
+  author  = {Templeton, Adly and Conerly, Tom and Marcus, Jonathan and Lindsey, Jack and Bricken, Trenton and Chen, Brian and Pearce, Adam and Citro, Craig and Ameisen, Emmanuel and Jones, Andy and others},
+  journal = {Transformer Circuits Thread},
+  year    = {2024}
+}
+@inproceedings{gao2025scaling,
+  title     = {Scaling and Evaluating Sparse Autoencoders},
+  author    = {Gao, Leo and Dupr{\'e} la Tour, Tom and Tillman, Henk and Goh, Gabriel and Troll, Rajan and Radford, Alec and Sutskever, Ilya and Leike, Jan and Wu, Jeffrey},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2025}
+}
+@article{rajamanoharan2024jumping,
+  title   = {Jumping Ahead: Improving Reconstruction Fidelity with {JumpReLU} Sparse Autoencoders},
+  author  = {Rajamanoharan, Senthooran and Lieberum, Tom and Sonnerat, Nicolas and Conmy, Arthur and Varma, Vikrant and Kram{\'a}r, J{\'a}nos and Nanda, Neel},
+  journal = {arXiv preprint arXiv:2407.14435},
+  year    = {2024}
+}
+@article{lieberum2024gemma,
+  title   = {{Gemma Scope}: Open Sparse Autoencoders Everywhere All At Once on {Gemma} 2},
+  author  = {Lieberum, Tom and Rajamanoharan, Senthooran and Conmy, Arthur and Smith, Lewis and Sonnerat, Nicolas and Varma, Vikrant and Kram{\'a}r, J{\'a}nos and Dragan, Anca and Shah, Rohin and Nanda, Neel},
+  journal = {arXiv preprint arXiv:2408.05147},
+  year    = {2024}
+}
+@misc{mcdougall2025gemmascope2,
+  title        = {{Gemma Scope 2}: Technical Paper},
+  author       = {McDougall, Callum and Conmy, Arthur and Kram{\'a}r, J{\'a}nos and Lieberum, Tom and Rajamanoharan, Senthooran and Nanda, Neel},
+  howpublished = {Google DeepMind technical report},
+  year         = {2025},
+  url          = {https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/gemma-scope-2-helping-the-ai-safety-community-deepen-understanding-of-complex-language-model-behavior/Gemma_Scope_2_Technical_Paper.pdf}
+}
+@article{team2024gemma,
+  title   = {Gemma 2: Improving Open Language Models at a Practical Size},
+  author  = {{Gemma Team}},
+  journal = {arXiv preprint arXiv:2408.00118},
+  year    = {2024}
+}
+@article{team2025gemma3,
+  title   = {Gemma 3 Technical Report},
+  author  = {{Gemma Team}},
+  journal = {arXiv preprint arXiv:2503.19786},
+  year    = {2025}
+}
+@inproceedings{biderman2023pythia,
+  title     = {Pythia: A Suite for Analyzing Large Language Models Across Training and Scaling},
+  author    = {Biderman, Stella and Schoelkopf, Hailey and Anthony, Quentin and Bradley, Herbie and O'Brien, Kyle and Hallahan, Eric and Khan, Mohammad Aflah and Purohit, Shivanshu and Prashanth, USVSN Sai and Raff, Edward and Skowron, Aviya and Sutawika, Lintang and van der Wal, Oskar},
+  booktitle = {Proceedings of the 40th International Conference on Machine Learning},
+  series    = {PMLR},
+  volume    = {202},
+  pages     = {2397--2430},
+  year      = {2023}
+}
+@inproceedings{karvonen2025saebench,
+  title     = {{SAEBench}: A Comprehensive Benchmark for Sparse Autoencoders in Language Model Interpretability},
+  author    = {Karvonen, Adam and Rager, Can and Lin, Johnny and Tigges, Curt and Bloom, Joseph and others},
+  booktitle = {Proceedings of the 42nd International Conference on Machine Learning},
+  series    = {PMLR},
+  volume    = {267},
+  pages     = {29223--29264},
+  year      = {2025}
+}
+@inproceedings{kantamneni2025sparse,
+  title     = {Are Sparse Autoencoders Useful? {A} Case Study in Sparse Probing},
+  author    = {Kantamneni, Subhash and Engels, Joshua and Rajamanoharan, Senthooran and Tegmark, Max and Nanda, Neel},
+  booktitle = {Proceedings of the 42nd International Conference on Machine Learning},
+  series    = {PMLR},
+  volume    = {267},
+  pages     = {29018--29049},
+  year      = {2025}
+}
+@article{chanin2024absorption,
+  title   = {A is for Absorption: Studying Feature Splitting and Absorption in Sparse Autoencoders},
+  author  = {Chanin, David and Wilken-Smith, James and Dulka, Tom{\'a}{\v{s}} and Bhatnagar, Hardik and Golechha, Satvik and Bloom, Joseph},
+  journal = {arXiv preprint arXiv:2409.14507},
+  year    = {2024}
+}
+@article{heap2025random,
+  title   = {Automated Interpretability Metrics Do Not Distinguish Trained and Random Transformers},
+  author  = {Heap, Thomas and Lawson, Tim and Farnik, Lucy and Aitchison, Laurence},
+  journal = {arXiv preprint arXiv:2501.17727},
+  year    = {2025}
+}
+@inproceedings{wu2025axbench,
+  title     = {{AxBench}: Steering {LLMs}? {Even} Simple Baselines Outperform Sparse Autoencoders},
+  author    = {Wu, Zhengxuan and Arora, Aryaman and Geiger, Atticus and Wang, Zheng and Huang, Jing and Jurafsky, Dan and Manning, Christopher D. and Potts, Christopher},
+  booktitle = {Proceedings of the 42nd International Conference on Machine Learning},
+  series    = {PMLR},
+  volume    = {267},
+  pages     = {67035--67080},
+  year      = {2025}
+}
+@inproceedings{wang2023interpretability,
+  title     = {Interpretability in the Wild: a Circuit for Indirect Object Identification in {GPT-2} Small},
+  author    = {Wang, Kevin and Variengien, Alexandre and Conmy, Arthur and Shlegeris, Buck and Steinhardt, Jacob},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2023}
+}
+@inproceedings{zhang2024towards,
+  title     = {Towards Best Practices of Activation Patching in Language Models: Metrics and Methods},
+  author    = {Zhang, Fred and Nanda, Neel},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2024}
+}
+@article{heimersheim2024patching,
+  title   = {How to Use and Interpret Activation Patching},
+  author  = {Heimersheim, Stefan and Nanda, Neel},
+  journal = {arXiv preprint arXiv:2404.15255},
+  year    = {2024}
+}
+@inproceedings{makelov2024illusion,
+  title     = {Is This the Subspace You Are Looking for? {An} Interpretability Illusion for Subspace Activation Patching},
+  author    = {Makelov, Aleksandar and Lange, Georg and Geiger, Atticus and Nanda, Neel},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2024}
+}
+@article{syed2023attribution,
+  title   = {Attribution Patching Outperforms Automated Circuit Discovery},
+  author  = {Syed, Aaquib and Rager, Can and Conmy, Arthur},
+  journal = {arXiv preprint arXiv:2310.10348},
+  year    = {2023}
+}
+@article{kramar2024atp,
+  title   = {{AtP*}: An Efficient and Scalable Method for Localizing {LLM} Behaviour to Components},
+  author  = {Kram{\'a}r, J{\'a}nos and Lieberum, Tom and Shah, Rohin and Nanda, Neel},
+  journal = {arXiv preprint arXiv:2403.00745},
+  year    = {2024}
+}
+@inproceedings{marks2025sparse,
+  title     = {Sparse Feature Circuits: Discovering and Editing Interpretable Causal Graphs in Language Models},
+  author    = {Marks, Samuel and Rager, Can and Michaud, Eric J. and Belinkov, Yonatan and Bau, David and Mueller, Aaron},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2025}
+}
+@article{enkhbayar2025,
+  title   = {Which Sparse Autoencoder Features Are Real? {Model-X} Knockoffs for False Discovery Rate Control},
+  author  = {Enkhbayar, Tsogt-Ochir},
+  journal = {arXiv preprint arXiv:2511.11711},
+  year    = {2025}
+}
+@misc{khera2026,
+  title        = {Anytime-Valid Hypothesis Testing for Sparse Autoencoder Feature Validation},
+  author       = {Khera, Rudransh},
+  howpublished = {ICML 2026 Workshop on Hypothesis Testing},
+  year         = {2026}
+}
+@article{bal2026,
+  title   = {From Geometric Recovery to Causal Validation: A Reproducible Audit of Sparse Autoencoder Features, from Superposition Geometry to Causal Inertness},
+  author  = {Bal, Mohamed Abdessalem},
+  journal = {arXiv preprint arXiv:2607.12166},
+  year    = {2026}
+}
+@inproceedings{shi2024hypothesis,
+  title     = {Hypothesis Testing the Circuit Hypothesis in {LLMs}},
+  author    = {Shi, Claudia and Beltran-Velez, Nicolas and Nazaret, Achille and Zheng, Carolina and Garriga-Alonso, Adri{\`a} and Jesson, Andrew and Makar, Maggie and Blei, David M.},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {37},
+  year      = {2024}
+}
+@article{guo2026discovery,
+  title   = {What Do Sparse Autoencoder Feature Discovery Scores Identify? {From} Activations to Interventions},
+  author  = {Guo, Yifeng and Li, Yanran and Chen, Xiang},
+  journal = {arXiv preprint arXiv:2610.15850},
+  year    = {2026}
+}
+@article{barber2015controlling,
+  title   = {Controlling the False Discovery Rate via Knockoffs},
+  author  = {Barber, Rina Foygel and Cand{\`e}s, Emmanuel J.},
+  journal = {The Annals of Statistics},
+  volume  = {43},
+  number  = {5},
+  pages   = {2055--2085},
+  year    = {2015}
+}
+@article{candes2018panning,
+  title   = {Panning for Gold: `{Model-X}' Knockoffs for High Dimensional Controlled Variable Selection},
+  author  = {Cand{\`e}s, Emmanuel and Fan, Yingying and Janson, Lucas and Lv, Jinchi},
+  journal = {Journal of the Royal Statistical Society: Series B},
+  volume  = {80},
+  number  = {3},
+  pages   = {551--577},
+  year    = {2018}
+}
+@article{barber2020,
+  title   = {Robust Inference with Knockoffs},
+  author  = {Barber, Rina Foygel and Cand{\`e}s, Emmanuel J. and Samworth, Richard J.},
+  journal = {The Annals of Statistics},
+  volume  = {48},
+  number  = {3},
+  pages   = {1409--1431},
+  year    = {2020}
+}
+@article{spector2022powerful,
+  title   = {Powerful Knockoffs via Minimizing Reconstructability},
+  author  = {Spector, Asher and Janson, Lucas},
+  journal = {The Annals of Statistics},
+  volume  = {50},
+  number  = {1},
+  pages   = {252--276},
+  year    = {2022}
+}
+@article{romano2020deep,
+  title   = {Deep Knockoffs},
+  author  = {Romano, Yaniv and Sesia, Matteo and Cand{\`e}s, Emmanuel},
+  journal = {Journal of the American Statistical Association},
+  volume  = {115},
+  number  = {532},
+  pages   = {1861--1872},
+  year    = {2020}
+}
+@article{bates2021metropolized,
+  title   = {Metropolized Knockoff Sampling},
+  author  = {Bates, Stephen and Cand{\`e}s, Emmanuel and Janson, Lucas and Wang, Wenshuo},
+  journal = {Journal of the American Statistical Association},
+  volume  = {116},
+  number  = {535},
+  pages   = {1413--1427},
+  year    = {2021}
+}
+@article{ren2024derandomised,
+  title   = {Derandomised Knockoffs: Leveraging e-Values for False Discovery Rate Control},
+  author  = {Ren, Zhimei and Barber, Rina Foygel},
+  journal = {Journal of the Royal Statistical Society: Series B},
+  volume  = {86},
+  number  = {1},
+  pages   = {122--154},
+  year    = {2024}
+}
+@article{ledoit2004,
+  title   = {A Well-Conditioned Estimator for Large-Dimensional Covariance Matrices},
+  author  = {Ledoit, Olivier and Wolf, Michael},
+  journal = {Journal of Multivariate Analysis},
+  volume  = {88},
+  number  = {2},
+  pages   = {365--411},
+  year    = {2004}
+}
+@article{mullahy1986specification,
+  title   = {Specification and Testing of Some Modified Count Data Models},
+  author  = {Mullahy, John},
+  journal = {Journal of Econometrics},
+  volume  = {33},
+  number  = {3},
+  pages   = {341--365},
+  year    = {1986}
+}
+@article{benjamini1995controlling,
+  title   = {Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing},
+  author  = {Benjamini, Yoav and Hochberg, Yosef},
+  journal = {Journal of the Royal Statistical Society: Series B},
+  volume  = {57},
+  number  = {1},
+  pages   = {289--300},
+  year    = {1995}
+}
+@article{benjamini2001control,
+  title   = {The Control of the False Discovery Rate in Multiple Testing under Dependency},
+  author  = {Benjamini, Yoav and Yekutieli, Daniel},
+  journal = {The Annals of Statistics},
+  volume  = {29},
+  number  = {4},
+  pages   = {1165--1188},
+  year    = {2001}
+}
+@book{westfall1993resampling,
+  title     = {Resampling-Based Multiple Testing: Examples and Methods for p-Value Adjustment},
+  author    = {Westfall, Peter H. and Young, S. Stanley},
+  publisher = {John Wiley \& Sons},
+  year      = {1993}
+}
+@article{berk2013valid,
+  title   = {Valid Post-Selection Inference},
+  author  = {Berk, Richard and Brown, Lawrence and Buja, Andreas and Zhang, Kai and Zhao, Linda},
+  journal = {The Annals of Statistics},
+  volume  = {41},
+  number  = {2},
+  pages   = {802--837},
+  year    = {2013}
+}
+@article{taylor2015statistical,
+  title   = {Statistical Learning and Selective Inference},
+  author  = {Taylor, Jonathan and Tibshirani, Robert J.},
+  journal = {Proceedings of the National Academy of Sciences},
+  volume  = {112},
+  number  = {25},
+  pages   = {7629--7634},
+  year    = {2015}
+}
+@article{kriegeskorte2009circular,
+  title   = {Circular Analysis in Systems Neuroscience: The Dangers of Double Dipping},
+  author  = {Kriegeskorte, Nikolaus and Simmons, W. Kyle and Bellgowan, Patrick S. F. and Baker, Chris I.},
+  journal = {Nature Neuroscience},
+  volume  = {12},
+  number  = {5},
+  pages   = {535--540},
+  year    = {2009}
+}
+@article{wang2022evalues,
+  title   = {False Discovery Rate Control with e-Values},
+  author  = {Wang, Ruodu and Ramdas, Aaditya},
+  journal = {Journal of the Royal Statistical Society: Series B},
+  volume  = {84},
+  number  = {3},
+  pages   = {822--852},
+  year    = {2022}
+}
+@article{waudbysmith2024betting,
+  title   = {Estimating Means of Bounded Random Variables by Betting},
+  author  = {Waudby-Smith, Ian and Ramdas, Aaditya},
+  journal = {Journal of the Royal Statistical Society: Series B},
+  volume  = {86},
+  number  = {1},
+  pages   = {1--27},
+  year    = {2024}
+}
+@article{vovk2021evalues,
+  title   = {E-values: Calibration, Combination and Applications},
+  author  = {Vovk, Vladimir and Wang, Ruodu},
+  journal = {The Annals of Statistics},
+  volume  = {49},
+  number  = {3},
+  pages   = {1736--1754},
+  year    = {2021}
+}
+@article{gretton2012kernel,
+  title   = {A Kernel Two-Sample Test},
+  author  = {Gretton, Arthur and Borgwardt, Karsten M. and Rasch, Malte J. and Sch{\"o}lkopf, Bernhard and Smola, Alexander},
+  journal = {Journal of Machine Learning Research},
+  volume  = {13},
+  number  = {25},
+  pages   = {723--773},
+  year    = {2012}
+}
+@inproceedings{lopezpaz2017revisiting,
+  title     = {Revisiting Classifier Two-Sample Tests},
+  author    = {Lopez-Paz, David and Oquab, Maxime},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2017}
+}
+@inproceedings{socher2013recursive,
+  title     = {Recursive Deep Models for Semantic Compositionality Over a Sentiment Treebank},
+  author    = {Socher, Richard and Perelygin, Alex and Wu, Jean and Chuang, Jason and Manning, Christopher D. and Ng, Andrew and Potts, Christopher},
+  booktitle = {Proceedings of the 2013 Conference on Empirical Methods in Natural Language Processing},
+  pages     = {1631--1642},
+  year      = {2013}
+}
+\end{filecontents*}
+
+\documentclass[11pt]{article}
+\usepackage[final]{acl}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{placeins}
+\usepackage{float}
+
+% A figure that degrades to a red box if the file has not been uploaded yet.
+\setcounter{dbltopnumber}{3}
+\renewcommand{\dbltopfraction}{0.9}
+\newcommand{\figfile}[2]{\IfFileExists{#2}{\includegraphics[width=#1]{#2}}{%
+  \fbox{\parbox{#1}{\centering\small\textcolor{red}{Upload \texttt{\detokenize{#2}}}}}}}
+\newcommand{\Xk}{\widetilde{X}}
+\newcommand{\tauj}{\tau_j}
+
+\title{Lying Latents: Auditing Knockoff-Based Discovery of\\Sparse Autoencoder Features}
+
+\author{
+  Vishal Rao \quad Ayush Daga \quad Krithik Kambhampati \quad Mohammed Sami \\
+  International Institute of Information Technology, Hyderabad
+}
+
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\dblfloatsep}{6pt plus 2pt minus 2pt}
+
+\begin{document}
+\maketitle
+
+%=======================================================
+\begin{abstract}
+%=======================================================
+Interpretability research often claims that a sparse autoencoder (SAE) latent drives a language model's
+behaviour. With thousands of latents, some will look important by chance, and a latent that tracks
+a concept need not be one the model uses. We audit how latents are selected on three models and nine
+datasets. With a linear probe on pooled latents and shuffled labels, reusing the same data to search and validate
+still declares latents meaningful in 69--100\% of runs, against a 5\% target. Model-X knockoffs, which compare each
+latent with a matched fake copy, are detectably mismatched on every dataset and can exceed their false discovery rate
+(FDR) target when labels depend on interactions. A hurdle sampler repairs the zeros, but few latents knockoffs pick
+have a meaningful effect. We therefore change each candidate latent inside the model and test whether
+the answer moves by more than a minimum amount, with FDR control that assumes nothing about latent distributions.
+On two models and four tasks, realised FDR never exceeded 0.003 at up to 2,000 inputs, with power (the share of meaningful latents found) 0.34--0.66 on the
+held-out Gemma-3. Of 250 screened latents per task, most have a small effect and only 1--9 a meaningful one.
+\end{abstract}
+
+%=======================================================
+\section{Introduction}
+\label{sec:intro}
+%=======================================================
+
+Sparse autoencoders (SAEs) rewrite a language model's activations as sparse combinations of thousands of
+learned directions, its \emph{latents}, many of which appear to track one concept
+\citep{cunningham2023sparse, bricken2023monosemanticity, templeton2024scaling}. Claims built on them,
+such as ``latent $j$ encodes sentiment and the model uses it'', are statistical claims, but they rarely
+come with an error rate. A common recipe, \emph{search-then-validate}, ranks latents by association with a label,
+keeps the top few and checks that removing them changes a prediction; ablation itself is a standard
+validation tool \citep{wang2023interpretability, marks2025sparse}. It tests thousands
+of latents without multiplicity correction \citep{benjamini1995controlling} and often selects and
+validates on the same data \citep{kriegeskorte2009circular}.
+
+Model-X knockoffs \citep{candes2018panning}, applied to SAE latents with Gaussian decoys by
+\citet{enkhbayar2025}, control the false discovery rate (FDR) if latents and decoys are exchangeable.
+SAE latents are non-negative, exactly zero on most inputs and co-fire nonlinearly; Gaussian decoys are
+never zero. We show the violation is detectable on every dataset, can produce FDR breaches in interaction designs, and
+is reduced but not removed by better samplers. Moreover, even a valid knockoff answers an associational question, while interpretability
+claims are causal. Interventions on our own model are exact and repeatable and cost only compute, so we test the causal
+question directly.
+
+\paragraph{Contributions.}
+\begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=2pt]
+  \item An audit of SAE feature selection on 3 models and 9 datasets, covering Gaussian, hurdle and learned knockoffs
+        and e-value splitting (\S\ref{sec:audit}).
+  \item A downstream check that scores every latent knockoffs select against measured effects (\S\ref{sec:downstream}).
+  \item Interventional e-BH with an absolute minimum-effect null (\S\ref{sec:method}).
+  \item Validation against measured effects on two real models, a comparison with zero-effect and relative nulls,
+        and the finding that few screened latents matter on their own (\S\ref{sec:results}).
+\end{enumerate}
+
+%=======================================================
+\section{Background and Related Work}
+\label{sec:background}
+%=======================================================
+
+\paragraph{SAEs.} JumpReLU SAEs \citep{rajamanoharan2024jumping, lieberum2024gemma} give each latent a
+firing threshold, so its activations are a point mass at zero plus a positive part. SAE latents split
+and absorb concepts \citep{chanin2024absorption}, score well even on random transformers
+\citep{heap2025random}, and trail simple baselines on probing and steering
+\citep{kantamneni2025sparse, wu2025axbench}; SAEBench evaluates SAEs as a whole
+\citep{karvonen2025saebench}.
+
+\paragraph{Interventions.} Components are validated by ablation or patching
+\citep{wang2023interpretability, heimersheim2024patching}, which is sensitive to the metric
+\citep{zhang2024towards} and to off-distribution edits \citep{makelov2024illusion}. Attribution patching
+approximates many interventions with one gradient \citep{syed2023attribution, kramar2024atp} and is used
+to select SAE latents \citep{marks2025sparse}. None of these controls the error rate of the reported set.
+
+\paragraph{Multiple testing.} FDR is the expected share of false selections
+\citep{benjamini1995controlling}; the Benjamini--Yekutieli (BY) multiple-testing correction controls it under any
+dependence \citep{benjamini2001control}. Selecting hypotheses from the data that tests them is selective inference
+\citep{berk2013valid, taylor2015statistical}.
+
+\paragraph{Knockoffs.} A latent is null if it says nothing about the label $Y$ once all other latents are known.
+Model-X knockoffs \citep{candes2018panning} build, without looking at $Y$, a fake copy of each latent (its
+\emph{knockoff}). The copies must be \emph{exchangeable}: swapping any latents with their knockoffs leaves the joint
+distribution unchanged. A latent is selected if it predicts the label clearly better than its fake in a sparse
+logistic fit. A null latent and its fake are equally likely to win, so counting the fakes' wins estimates the false
+selections, and the Knockoff+ threshold \citep{barber2015controlling} uses this to keep FDR at most $q$
+(Appendix~\ref{app:planted}). Inexact knockoffs inflate FDR by at most a KL gap \citep{barber2020}. Samplers include
+second-order Gaussian knockoffs, which match only means and covariances (equicorrelated, MVR, and block MVR on blocks of at
+most 512 latents; \citealp{spector2022powerful}); SCIP, which draws each knockoff from its conditional distribution in turn
+\citep{candes2018panning}; its Metropolized version \citep{bates2021metropolized}; and deep samplers \citep{romano2020deep}.
+
+\paragraph{E-values.} An e-value is a nonnegative score that averages at most 1 under the null, so a large value is
+evidence against it. e-BH \citep{wang2022evalues} turns $K$ e-values into a list of discoveries with FDR at most $\alpha$
+under any dependence. Betting builds an e-value for a bounded mean \citep{waudbysmith2024betting}: a gambler starting
+with wealth 1 repeatedly bets that the mean exceeds the null value. Under the null the expected wealth does not grow, and
+the final wealth is the e-value.
+
+\paragraph{SAE-specific work.} \citet{enkhbayar2025} applies Gaussian knockoffs to 512 high-activity latents of a Pythia-70M
+SAE on SST-2 and selects 129 at $q = 0.1$, assuming the exchangeability that \S\ref{sec:audit} tests. \citet{khera2026}
+compares zero-ablating a latent with zero-ablating a random one, using a betting e-process per latent and e-BH, and finds 6 latents
+in GPT-2 Small on indirect-object identification, where knockoffs find none. We use the same e-value tools, concurrently,
+but with an absolute minimum effect, and we compare the two in \S\ref{sec:results}. \citet{shi2024hypothesis} test a whole
+circuit rather than single latents. \citet{guo2026discovery} show that observational discovery evidence does not determine an
+intervention's first-order effect. \citet{bal2026} finds that 9--14\% of SAE features matching a known direction are
+causally inert in trained SAEs, and up to 77\% in a degraded one.
+
+%=======================================================
+\section{Setup}
+\label{sec:setup}
+%=======================================================
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lll}
+\toprule
+Model & SAE & Layer \\
+\midrule
+Gemma-2-2B & Gemma Scope, JumpReLU, 16k & 20 \\
+Gemma-3-1B & Gemma Scope 2, JumpReLU, 16k & 22 \\
+Pythia-70M & ReLU \citep{marks2025sparse} & 4 \\
+\bottomrule
+\end{tabular}
+\caption{Models \citep{team2024gemma, team2025gemma3, biderman2023pythia} and SAEs
+\citep{lieberum2024gemma, mcdougall2025gemmascope2}. Activations: residual stream after the layer.}
+\label{tab:models}
+\end{table}
+
+\paragraph{Data.} SST-2 \citep{socher2013recursive} (67,349 sentences) and the eight SAEBench probing
+datasets (5,000--12,500 texts; \citealp{karvonen2025saebench}). Each text is the mean of its SAE
+activations over non-special tokens (Appendix~\ref{app:data}); we keep the 2,048 most frequently firing latents.
+
+\paragraph{Planted-signal benchmark.} To measure FDR we keep the real latents and plant a label from
+$k$ random latents (10--300; linear or pairwise-interaction logits), scaled by an \emph{amplitude} that sets
+the signal strength. One combination of $k$, amplitude, logit type and FDR target is a \emph{cell}. Each method also runs on a
+\emph{Gaussian control} with the real covariance, where Gaussian knockoffs are valid. Penalties are
+chosen by 5-fold cross-validation (Appendix~\ref{app:planted}). 
+
+%=======================================================
+\section{Auditing SAE Feature Selection}
+\label{sec:audit}
+%=======================================================
+
+\subsection{Data reuse certifies noise}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3.5pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+ & SST-2 & \multicolumn{3}{c}{SAEBench (median)} \\
+\cmidrule(lr){3-5}
+ & G-2 & G-2 & G-3 & Pythia \\
+\midrule
+Same-data validation & 0.98--1.00 & 0.92--1.00 & 0.69 & 0.94 \\
+Held-out validation & 0.10--0.27 & 0.15 & 0.07 & 0.08 \\
+Naive scan, false passes & 104 & 102 & -- & -- \\
+\bottomrule
+\end{tabular}}
+\caption{Search-then-validate with a linear probe on pooled latents, under 500 label permutations: share of null experiments certifying
+features (nominal 0.05), and latents passing an uncorrected scan (expected $0.05 \times 2{,}048 = 102$).
+Ranges are over three scoring methods.}
+\label{tab:reuse}
+\end{table}
+
+We test this recipe with a linear probe on pooled latents: rank the latents by one of three scores, keep the top 10, and
+test whether zeroing them jointly raises the probe's log-loss, on selection or held-out rows. This measures the recipe's
+statistical error, not model behaviour. An earlier version that zeroed single latents certified noise in only 0.2--1.6\% of
+experiments but fired on only 10--50\% of planted signals, so we replaced it before running this test.
+
+As Table~\ref{tab:reuse} shows, validating on the selection data certifies noise almost always. Held-out
+validation stays above nominal on Gemma-2 because its null (``ablation changes nothing'') is false even
+under random labels: ablating 10 random latents is significant in 84\% of same-data experiments.
+
+\subsection{Knockoffs are not exchangeable}
+\label{sec:exch}
+
+\begin{figure*}[t]
+\centering
+\figfile{0.92\textwidth}{fig_overview.pdf}
+\caption{From a sentence to its knockoffs. Gaussian knockoffs turn every exact zero into a small nonzero
+value; hurdle knockoffs keep the zeros.}
+\label{fig:overview}
+\end{figure*}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccc}
+\toprule
+Decoys & Data & Zero rule & AUC$_1$ & AUC$_{\text{all}}$ \\
+\midrule
+Gaussian & SST-2 & 0.95 & 0.997 & 1.00 \\
+Gaussian & SAEBench & 0.65--0.87 & 0.70--0.97 & 1.00 \\
+Hurdle & SST-2 & 0.50 & -- & 0.94 \\
+Hurdle & SAEBench & 0.50 & 0.49--0.60 & 0.94--1.00 \\
+Control & all & -- & 0.49--0.51 & 0.48--0.52 \\
+\bottomrule
+\end{tabular}}
+\caption{Exchangeability. Gaussian: equicorrelated second-order knockoffs (the construction of \citet{enkhbayar2025}). Zero rule: accuracy of ``a value of exactly 0 is real''. AUC$_1$ / AUC$_\text{all}$:
+classifier two-sample test \citep{lopezpaz2017revisiting} after swapping one / all 2,048 latents with
+their knockoffs. 0.5 = indistinguishable. Hurdle on SAEBench: all 14 model--dataset settings
+and the 3 thresholded Pythia settings.}
+\label{tab:exch}
+\end{table}
+
+A typical latent is exactly zero on 89\% of SST-2 sentences and on 30--73\% of SAEBench texts; Gaussian knockoffs never
+are (Figure~\ref{fig:overview}). This \emph{zero atom} gives a simple test, the \emph{zero rule}: shown a real value and
+its knockoff, guess that the one equal to 0 is real. Its accuracy is $(1 + \Pr(X=0))/2$, against 0.5 for valid knockoffs,
+and it reaches 0.95 on SST-2 (Table~\ref{tab:exch}). One swapped Gaussian knockoff is detected on every dataset, while the
+control stays near chance (AUC 0.48--0.52). A stricter check on the control, a band from 10 permutations, passes on
+6, 2 and 5 of 8 datasets for Gemma-2, Gemma-3 and Pythia. The misses are at most about 0.015, far smaller than the
+violations, but they mean we cannot formally claim the result generalises to Gemma-3. Hurdle knockoffs are near chance one latent at a time
+but are detected when all are swapped. On synthetic Gaussian data all tests pass (AUC 0.497, MMD $p = 0.96$;
+\citealp{gretton2012kernel}). Any atom also makes the KL term in the robustness bound infinite \citep{barber2020}.
+
+\subsection{Non-exchangeability becomes FDR breaches}
+\label{sec:breach}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llcc}
+\toprule
+Data & Design & Breaches & FDR $-$ control \\
+\midrule
+SST-2 & strong signals & 7 / 54 cells & -- \\
+SST-2 & weak, matched & 12 / 24 cells & -- \\
+Gemma-2, 8 datasets & realistic & 0 / 8 & +.007 to +.026 \\
+Gemma-2, 4 datasets & interaction sweep & 2 / 4 & +.012 to +.018 \\
+Gemma-3, 3 datasets & realistic & 1 / 3 & +.007 to +.015 \\
+Pythia, 3 datasets & realistic & 0 / 3 & +.002 to +.011 \\
+\bottomrule
+\end{tabular}}
+\caption{Gaussian (block-MVR) knockoffs on planted labels, cross-validated penalty: cells or datasets
+whose FDR exceeds the target after BY correction (SST-2 strong signals: $p = 512$, exact MVR). All
+breaches are in interaction designs. The Gaussian control never breaches.}
+\label{tab:breach}
+\end{table}
+
+Our first SAEBench design did not reproduce the SST-2 breaches (0 of 8 Gemma-2 datasets, 1 of 3 Gemma-3, 0 of 3 Pythia);
+a later amplitude sweep with interaction cells, designed after that result, gave breaches on 2 of 4 Gemma-2 datasets and none on
+thresholded Pythia. Breaches occur where labels depend on interactions (Table~\ref{tab:breach}). The cause is visible in a
+fair-coin test: for valid knockoffs a null latent beats its knockoff with probability 0.5. We call
+this rate the \emph{null coin}. Under block-MVR knockoffs it is 0.509 (EuroParl) and 0.529 (GitHub code) in interaction
+cells, 0.011 and 0.027 above the control (each $p<10^{-3}$). These are the two of four Gemma-2 datasets where
+the control's coin passes its planned validity check; the others fail by at most 0.005. In a separate SST-2 run with a fixed penalty, nulls correlated with a signal latent win 73\% of the time at strong
+signals (control 47\%). The biased nulls co-fire with signal latents, a nonlinear dependence that
+second-moment knockoffs cannot reproduce. The atom's power cost is small on average at $p = 512$ ($-0.015$; $-0.023$ for interactions, $-0.008$ for linear signals), largest for weak interaction signals (0.23 vs.\ 0.50 at $k = 10$, amplitude 0.5), and no single cell is significant after correction.
+
+\subsection{Better samplers move the failure}
+\label{sec:samplers}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+Sampler & AUC$_1$ & Breaching & FDR $-$ control \\
+\midrule
+Gaussian (block MVR) & 0.79--0.98 & 2 / 13 & +.01 to +.03 \\
+Hurdle (SCIP) & 0.49--0.60 & 4 / 11 & -- \\
+Deep (residual) & 0.60--0.86 & 9 / 13 & +.02 to +.07 \\
+Deep (2nd-order exact) & 0.78--0.96 & 4 / 13 & +.00 to +.02 \\
+Binarised (SST-2) & 0.50$^\dagger$ & 0 / 54 cells & +.06 \\
+\bottomrule
+\end{tabular}}
+\caption{Knockoff samplers on SAEBench (Gemma-2: 8 datasets + 2 sweep; Pythia: 3). Breaching: settings
+with any BY breach. Hurdle breaches: Pythia 4, 7, 16 cells (0, 0, 4 after JumpReLU-style thresholding)
+and one Gemma-2 cell. Binarised: 2 of 54 cells exceed $q$ before correction, none after.
+$^\dagger$All 2,048 latents swapped.}
+\label{tab:samplers}
+\end{table}
+
+The hurdle sampler \citep{mullahy1986specification} models whether a latent fires and how strongly; it
+removes the zero-atom signal, but it breaches on Pythia's ReLU SAE, consistent with a log-normal size model
+misfitting a tail of tiny activations. Binarising the latents gives exchangeable decoys but inflates FDR (mean 0.065, up to 0.17 in one cell, at
+$q = 0.1$), possibly because coarsening changes which latents are null. A deep generator
+\citep{romano2020deep} can in principle learn what the parametric samplers miss (Table~\ref{tab:samplers}; SST-2
+repairs in Table~\ref{tab:sst2repairs}).
+
+\paragraph{Per-latent diagnostics mislead.} The residual deep sampler beats both Gaussian samplers on single-latent swaps (AUC$_1$) and
+matches the zero atom, yet it has the worst FDR, with a null coin of 0.59--0.63 even in linear cells
+(Gaussian: 0.49). It gave up the exact covariance match. A \emph{second-order-exact} version, whose knockoffs match the covariance exactly, restores it, but its learned part is
+about 1\% of the noise and it behaves like block MVR. FDR is a joint property of 2,048 dependent latents,
+and no sampler we built can be certified jointly.
+
+\subsection{The valid fallback is costly}
+\label{sec:evalue-obs}
+
+E-value splitting (lasso selection on one half, a logistic refit on the other, e-BH) never breached
+(14 model--dataset settings, FDR 0.000--0.008) but on SAEBench has 0.27--0.46 less power than hurdle knockoffs (0.60 on the smallest dataset); on SST-2 the gap is only 0.02 (0.952 vs.\ 0.974).
+Its null $z$-scores are over-dispersed (variance 1.69), so its validity is empirical
+(Appendix~\ref{app:evalue}).
+
+\paragraph{Summary.} None of these observational methods has a guarantee we can certify on SAE latents, and all target
+association with a label rather than effect on the model.
+
+%=======================================================
+\section{Do Knockoff Picks Matter to the Model?}
+\label{sec:downstream}
+%=======================================================
+
+The audit asks whether knockoffs keep their promise. Our downstream check asks whether the latents they select
+are ones the model uses. We use direct interventions on prompted classification tasks rather than steering, because
+there every latent's effect on the answer can be measured, which gives a ground
+truth for each candidate.
+
+\paragraph{Target.} For a prompted classification task, $m(x)$ is the model's probability of the correct answer on input
+$x$, normalised over the label tokens. The effect of latent $j$ on $x$ is how much this drops when we intervene on $j$:
+\begin{equation}
+\Delta_j(x) = m(x) - m(x;\ \text{intervene on } j) \in [-1, 1].
+\end{equation}
+With $\tauj = \mathbb{E}_x[\Delta_j(x)]$, we test $H_j: \tauj \le \delta$, where $\delta$ is the smallest drop we count as
+meaningful: $0.05\,\mathrm{SD}(m)$ on a separate pilot split, 0.008--0.016, about one percentage point. A null of $\tauj
+\le 0$ would not do, because almost every latent moves the output slightly (\S\ref{sec:results}). The claim is causal
+within the model's computation, for these prompts; redundant latents can be missed.
+
+\paragraph{Intervention.} Let $h$ be the residual-stream activation after the SAE's layer (Table~\ref{tab:models}) at one
+token. The SAE writes $h$ as latent activations $a_j$ times decoder directions $d_j$, plus an error term. To intervene we
+replace $a_j$ with $\tilde a_j$ and set $h \leftarrow h + (\tilde a_j - a_j)\, d_j$, leaving everything else unchanged, on every
+query token, including the template around the input (``Review:'', ``Sentiment:'') but not the instruction or demonstrations.
+The primary $\tilde a_j$ is \emph{resampling}: a value drawn from a token-level hurdle model of $a_j$ given its 64
+most co-active latents (Appendix~\ref{app:stage5}). Zero ablation and mean ablation are sensitivity analyses. Validity does
+not depend on this sampler. We rerun only the layers after the edit; the resulting class probabilities differ from those of a full forward pass by at most $6\times10^{-6}$.
+
+\paragraph{Tasks.} We use four classification tasks: sentiment (SST-2), news topic (AG News), occupation from a biography (Bias in Bios, 5 occupations) and language (EuroParl, 5 languages). Each prompt gives one solved example per class before the input. A model--task pair runs only if the model reaches balanced accuracy of at least 0.70 on the pilot split, and all 8 pairs do (Appendix~\ref{app:stage5}).
+
+\paragraph{Oracle.} The oracle $\tauj$ of a latent is its mean effect on held-out inputs (2,500 inputs set aside for this and used for nothing else, called split O in \S\ref{sec:method}), and a latent \emph{matters} if $\tauj > \delta$. Knockoffs and observational e-values run on the
+task's real labels and pooled raw-text activations, over 10 draws at $\alpha/C$ per class, with $C$ the number of
+classes. Every latent they pick is intervened on and measured.
+
+\paragraph{Observational selections mostly miss the latents that matter.}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrrr}
+\toprule
+Model & Task & KO & Obs.\ e & $\tauj > \delta$ \\
+\midrule
+Gemma-2 & SST-2 & 0.00 & 0.00 & 3 \\
+Gemma-2 & AG News & 0.00 & 0.03 & 4 \\
+Gemma-2 & Bias in Bios & 0.00 & 1.00 & 1 \\
+Gemma-2 & EuroParl & 0.00 & 0.00 & 5 \\
+Gemma-3 & AG News & 0.00 & 0.06 & 8 \\
+Gemma-3 & Bias in Bios & 0.00 & 0.10 & 3 \\
+Gemma-3 & EuroParl & 0.00 & 0.00 & 9 \\
+\bottomrule
+\end{tabular}
+\caption{Power against $\tauj > \delta$ ($q = 0.1$): Gaussian knockoffs (KO) and observational e-values
+on the dataset label, each class at $q/C$, and the number of latents above $\delta$. (Gemma-3 SST-2 is omitted due to no cached latents.)}
+\label{tab:baselines}
+\end{table}
+
+At $q = 0.1$ knockoffs select nothing on 6 of 7 tasks (Table~\ref{tab:baselines}), but this is largely arithmetic. Knockoff+
+needs at least $1/q$ selections, and each class runs at $q/C$ so that the union keeps FDR at $q$: 50 per class on the 5-class
+tasks, 40 on AG News and only 10 on SST-2, the one task where they select (34 latents, none above $\delta$). An earlier
+single Gemma-2 draw at $q$ per class, without that protection, selected 11 and 23 latents on AG News at $q = 0.1$ and 0.2, with 1 of
+the 4 latents above $\delta$ among them (9\% and 4\% of picks); at $q = 0.2$, 11 on Bias in Bios including its one latent above $\delta$, and 23 on EuroParl with none. Where observational e-values select, 70--100\% of picks are below $\delta$,
+except on Gemma-3 AG News, where the one latent they pick in about half the draws is above $\delta$.
+On Gemma-2 Bias in Bios they select the only latent above $\delta$ in every draw, together with about three below it.
+These methods use pooled raw-text activations and target association, so they answer a different question (an \emph{estimand mismatch});
+this is not a breach on their own target.
+
+\paragraph{Better knockoff samplers vs.\ the oracle.} On Gemma-2 SST-2, Gaussian, block-MVR and hurdle knockoffs (paired draws,
+fixed and cross-validated penalties) select 19--71 latents per draw; none exceeds $\delta$, and 43--61\% have $\tauj > 2$ standard errors (SE). Our
+planned contrast favours hurdle: with the cross-validated penalty its picks more often have $\tauj > 2$ SE than block-MVR picks
+($+0.07$, $p = 0.015$, 10 paired draws). This rests on SST-2 alone, the only task where both select, on draws that share data, and
+hurdle trails equicorrelated picks ($-0.11$). At $q = 0.2$ a few picks on AG News and Gemma-3 EuroParl exceed $\delta$ (2--5\% of
+picks, at most 6\% of the latents above $\delta$; on Gemma-3 AG News, one latent in one draw), against 0.4--3.6\% of screened latents.
+
+\paragraph{The latent pool.} Knockoffs choose from the 2,048 most frequently firing latents. Of the 33 latents above $\delta$ on
+the seven tasks, 25 lie in that pool, and knockoffs at $q/C$ pick none at $q = 0.1$, so the pool does not explain that miss. The other 8
+fire too rarely to enter it; attribution screens all 16k. Recall here is among measured latents, while the share of picks above
+$\delta$ has no such limit, because every pick was measured.
+
+%=======================================================
+\section{Interventional FDR Control}
+\label{sec:method}
+%=======================================================
+
+We now turn the measurement of \S\ref{sec:downstream} into a selection procedure with a guarantee (Figure~\ref{fig:pipeline}).
+
+\begin{figure*}[t]
+\centering
+\figfile{0.9\textwidth}{fig_pipeline.pdf}
+\caption{Architecture of interventional FDR control. Top: one latent is edited between the SAE's encoder and decoder, and the
+drop in the correct-class probability is recorded. Bottom: how the data splits feed the procedure. Schematic.}
+\label{fig:pipeline}
+\end{figure*}
+
+\paragraph{Procedure.} Disjoint splits: pilot (300), screening A (1,000), test B (2,500), oracle O
+(2,500).
+\begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=2pt]
+  \item Attribution patching on A ranks all 16k latents by a first-order estimate of their effect; the top
+        $K = 50$ become the hypotheses.
+  \item On B, each hypothesis gets a betting e-value \citep{waudbysmith2024betting}. Starting with wealth 1,
+        we observe the effects $\Delta_j(x_1), \dots, \Delta_j(x_n)$ one input at a time and bet a fraction
+        $\lambda_t$ of the wealth that each exceeds $\delta$:
+        \begin{equation}
+        E_j = \prod_{t=1}^{n} \bigl(1 + \lambda_t(\Delta_j(x_t) - \delta)\bigr).
+        \end{equation}
+        Wealth grows when effects exceed $\delta$ and shrinks otherwise, so a large final wealth is evidence that the latent matters.
+        The bet is \emph{predictable}: $\lambda_t$ depends only on $x_1, \dots, x_{t-1}$. We use aGRAPA,
+        $\lambda_t = (\hat\mu - \delta)/(\hat\sigma^2 + (\hat\mu - \delta)^2)$ from the running mean and variance of past
+        effects, with $\hat\mu$ shrunk towards $\delta$ and $\hat\sigma^2$ given a prior pseudo-observation of 0.25, clipped
+        to $[0, 0.9/(1+\delta)]$ so each factor stays at least 0.1.
+  \item e-BH \citep{wang2022evalues} over the $K$ e-values: sort them as $E_{(1)} \ge \dots \ge E_{(K)}$
+        and reject the $k^*$ largest, $k^* = \max\{k : E_{(k)} \ge K/(\alpha
+        k)\}$.
+\end{enumerate}
+Under $H_j$ each bet has a nonpositive expected return, so the wealth does not grow in expectation (a nonnegative supermartingale), $E_j$ is an e-value, and e-BH controls FDR at $\alpha$ under any dependence. This guarantee requires only that the test inputs are drawn at random and that the screening split A is independent of B.
+
+\paragraph{Validation.} We pool B and O (5,000 inputs). In each of 200 replicates, we run the test on $n$ randomly chosen inputs (100--2,000) and use the rest as the oracle, then report mean FDR and power. In a \emph{stress test}, we shift every $\Delta_j$ so its mean is exactly $\delta$ and draw inputs with replacement; no latent then exceeds $\delta$, so every rejection is false. We score three baselines against the same oracle: zero-null e-values (our procedure with $\delta = 0$), attribution top-$k$ \citep{marks2025sparse} and the relative null of \citet{khera2026}.
+
+%=======================================================
+\section{Results of Interventional FDR Control}
+\label{sec:results}
+%=======================================================
+
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrrrrrr}
+\toprule
+ & & & & \multicolumn{2}{c}{Effects (of 250)} & \multicolumn{2}{c}{Validity} & Power & Zero-null FDR \\
+\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+Model & Task & Acc. & $\delta$ & $\tauj > 2$ SE & $\tauj > \delta$ & Max FDR & Stress & $n{=}2{,}000$ & $n{=}2{,}000$ \\
+\midrule
+Gemma-2 & SST-2 & 0.95 & .008 & 195 & 3 & 0.000 & 0.000 & 0.99 & 0.66 \\
+Gemma-2 & AG News & 0.84 & .011 & 227 & 4 & 0.000 & 0.005 & 0.75 & 0.80 \\
+Gemma-2 & Bias in Bios & 0.85 & .015 & 216 & 1 & 0.000 & 0.000 & 1.00 & 0.96 \\
+Gemma-2 & EuroParl & 0.95 & .010 & 196 & 5 & 0.000 & 0.010 & 0.62 & 0.78 \\
+Gemma-3 & SST-2 & 0.87 & .008 & 147 & 4 & 0.000 & 0.005 & 0.51 & 0.67 \\
+Gemma-3 & AG News & 0.77 & .009 & 210 & 8 & 0.000 & 0.000 & 0.61 & 0.79 \\
+Gemma-3 & Bias in Bios & 0.83 & .016 & 172 & 3 & 0.003 & 0.000 & 0.34 & 0.84 \\
+Gemma-3 & EuroParl & 0.82 & .009 & 196 & 9 & 0.001 & 0.005 & 0.66 & 0.60 \\
+\bottomrule
+\end{tabular}}
+\caption{Interventional e-BH. Effects, Power and Zero-null FDR use the resampling intervention at $\alpha = 0.1$. Max FDR and Stress are the worst case over $K \in \{50, 250\}$, all three interventions, the $\delta$ grid, $n = 100$--$2{,}000$ and all $\alpha$; no setting breaches. Acc.: prompted balanced accuracy. Stress: probability of any rejection when every latent is exactly at the null boundary. Zero-null FDR: the same e-values with $\delta = 0$, scored
+against $\tauj > \delta$. Power uses $K = 50$, cap 0.9, chosen after seeing Gemma-2's results and held fixed for Gemma-3.}
+\label{tab:main}
+\end{table*}
+
+\begin{figure*}[t]
+\centering
+\figfile{\textwidth}{fig20_stage5_power.png}
+\caption{Power against the oracle by number of test inputs ($\alpha = 0.1$).}
+\label{fig:power}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\begin{minipage}[t]{0.49\textwidth}
+\centering
+\figfile{\linewidth}{fig22_stage5_effects.png}
+\caption{Effects of the 250 candidates per task relative to $\delta$.}
+\label{fig:effects}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}
+\centering
+\figfile{\linewidth}{fig21_stage5_zero_null.png}
+\caption{FDR against $\tauj > \delta$: ours vs.\ a zero-effect null.}
+\label{fig:zeronull}
+\end{minipage}
+\end{figure*}
+
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llccccc}
+\toprule
+ & & \multicolumn{2}{c}{$n = 2{,}000$} & \multicolumn{3}{c}{$n = 4{,}000$} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-7}
+Model & Task & Relative, $K{=}50$ & Ours & Relative, $K{=}50$ & Relative, $K{=}250$ & Ours \\
+\midrule
+Gemma-2 & SST-2 & .000 / .66 & .000 / .93 & .000 / .96 & .000 / .96 & .000 / .96 \\
+Gemma-2 & AG News & .000 / .63 & .000 / .74 & .173 / 1.00 & .346 / 1.00 & .000 / .75 \\
+Gemma-2 & Bias in Bios & .000 / 1.00 & .000 / 1.00 & .000 / 1.00 & .000 / 1.00 & .000 / 1.00 \\
+Gemma-2 & EuroParl & .000 / .54 & .000 / .62 & .006 / .81 & .267 / .99 & .000 / .81 \\
+Gemma-3 & SST-2 & .000 / .33 & .000 / .43 & .001 / .99 & .001 / .99 & .001 / .98 \\
+Gemma-3 & AG News & .000 / .28 & .000 / .61 & .000 / .60 & .077 / .99 & .000 / .66 \\
+Gemma-3 & Bias in Bios & .008 / 1.00 & .000 / .34 & .347 / 1.00 & .353 / 1.00 & .000 / .44 \\
+Gemma-3 & EuroParl & .000 / .63 & .000 / .66 & .000 / .69 & .194 / 1.00 & .000 / .69 \\
+\bottomrule
+\end{tabular}
+\caption{FDR / power against $\tauj > \delta$ under resampling, at Khera's $\alpha = 0.05$: the relative null of
+\citet{khera2026}, reimplemented on our candidates and metric with the comparator drawn from the tested set and
+bet cap 0.5, vs.\ ours ($K = 50$, cap 0.9). At $n = 4{,}000$ the oracle has only 1,000 inputs, and re-splits share one pool.}
+\label{tab:khera}
+\end{table*}
+
+\paragraph{Validity.} No setting breaches (Table~\ref{tab:main}), where a breach means realised FDR above $\alpha$ by
+more than 2 SE. In the stress test, where every rejection
+is false, the rejection rate is at most 0.010.
+
+\paragraph{Power.} We chose $K = 50$ and the bet cap 0.9 after seeing Gemma-2's results, so Gemma-2's power is
+optimistic (the original $K = 250$, cap 0.5 gives 0.47--1.00 at $n = 2{,}000$; Table~\ref{tab:power-full}).
+We then applied this setting unchanged to Gemma-3, the held-out model (Figure~\ref{fig:power}). There it beats the wider setting ($K = 250$, cap 0.5) on all four tasks at
+$n = 1{,}000$ and on three of four at $n = 2{,}000$, tying on EuroParl. Power at small $n$ is limited (Table~\ref{tab:power-full}).
+Zero and mean ablation give no breach, and their power is higher on most tasks (Table~\ref{tab:sensitivity}); each is scored against its own oracle, since the intervention changes which latents exceed $\delta$.
+
+\paragraph{Few latents matter individually.} 59--91\% of candidates have a reliably positive effect, but
+only 1--9 (up to 12 under ablation) exceed $\delta$ (Figure~\ref{fig:effects}); all of those rank in the attribution top 50. None of the 302 Gemma-2 and 77 Gemma-3 latents we measured outside the 250, mostly baseline picks, exceeds $\delta$.
+
+\paragraph{A zero-effect null selects negligible effects.} The same test with $\delta = 0$ is valid for its own question: its FDR against $\tauj > 2$ SE is at most 0.002. But almost every latent has some small effect, so as $n$ grows it selects more latents below $\delta$. Scored against $\tauj > \delta$, its FDR rises from near 0 at small $n$ to 0.60--0.96 at $n = 2{,}000$ (Figure~\ref{fig:zeronull}).
+
+\paragraph{Attribution top-$k$.} Keeping the top $k$ attribution scores finds most latents above $\delta$ (power 0.75--1.00),
+but realised FDR is 0.10--0.90 at $k = 10$, 0.64--0.96 at $k = 25$ and 0.82--0.98 at $k = 50$, and nothing says which $k$ to use.
+
+\paragraph{A relative null.} \citet{khera2026} shares our e-values and e-BH, but asks a different question: does ablating a
+latent hurt more than ablating a random candidate, rather than does the effect exceed a fixed $\delta$? It also zeroes latents
+instead of resampling them, measures a logit difference, and takes candidates active on at least 20\% of prompts; its
+ground truth comes from a synthetic model. We reran its test on our candidates and metric, drawing the comparator from the
+tested set (Table~\ref{tab:khera}), so this is a reimplementation, not a reproduction. Against its own target, its FDR is at most 0.002. The target itself depends on the candidate set: a candidate's mean effect is 1.2--5.7 times below $\delta$ among the
+top 50 and 6--23 times below it among the 250, so on our tasks $\delta$ is the stricter bar. Neither exceeds $\alpha$ at $n \le 2{,}000$, though selections can differ (power 1.00 vs.\ 0.34 on Gemma-3 Bias in Bios, 0.28
+vs.\ 0.61 on Gemma-3 AG News). At $n = 4{,}000$ the relative null exceeds $\alpha$ on two of eight tasks with $K = 50$ and on five with $K = 250$,
+where its extra picks sit just below $\delta$ (0.79--0.86$\,\delta$ at $K = 50$), and it has more power near $\delta$; ours stays at or
+below 0.002. Under zero ablation at $n = 1{,}000$ and $\alpha = 0.05$ with the same $K$, neither makes a false pick at cap 0.5, where ours has higher power on six tasks (one tie, one lower). At cap 0.9 the relative null's FDR reaches 0.033, and ours has higher power on three tasks (two ties, three lower).
+
+\FloatBarrier
+%=======================================================
+\section{Discussion}
+\label{sec:discussion}
+%=======================================================
+
+Observational SAE feature selection has two separate problems: a guarantee resting on a joint assumption none of our samplers
+can be certified to meet, and a target of association rather than effect. The hurdle sampler shows these are distinct: it repairs
+the zeros, yet its picks also rarely exceed $\delta$. Interventional e-BH needs neither assumption. The
+minimum effect is the central choice: ``most screened latents have some effect'' and ``1--9 have a meaningful one'' are both true,
+and a zero-effect null erases the difference. A relative null asks whether a latent stands out from its candidate set, an answer
+that changes with the set; an absolute $\delta$ does not, at the cost of power near a cut-off we had to choose.
+
+%=======================================================
+\section{Conclusion}
+%=======================================================
+
+Search-then-validate can certify noise, knockoffs need an exchangeability SAE latents break, and better samplers improve the
+per-latent match but still rarely pick latents above $\delta$. Testing interventions directly with betting e-values, e-BH and a minimum-effect null
+controls the FDR of causal claims about latents without any assumption about their distribution, and shows that few of the
+screened latents have a meaningful effect on their own.
+
+%=======================================================
+\section*{Limitations and Future Work}
+%=======================================================
+
+Models have 1--2B parameters, with one SAE each, and the interventional experiments use four tasks and one prompt format. Power is
+relative to screened candidates, and single-latent tests miss jointly redundant latents. Steering was planned but not run, so we do
+not test sufficiency. The comparison with \citet{khera2026} is a reimplementation, and its large-$n$ part uses resampling. $K$ and
+the bet cap were tuned on Gemma-2, so only Gemma-3's power is held out. The audit uses planted labels on real latents. The downstream check on multi-class tasks is limited by the Knockoff+ selection floor, and its uncorrected picks come from one Gemma-2 draw with Gaussian knockoffs. Future work:
+larger models, group testing of correlated latents, and other interventions such as steering.
+
+\bibliography{lyinglatents}
+\bibliographystyle{acl_natbib}
+
+\appendix
+
+%=======================================================
+\section{Data and Preprocessing}
+\label{app:data}
+%=======================================================
+
+\paragraph{Excluding the BOS token.} At Gemma-2's layer 20 the beginning-of-sequence position is an attention sink (residual
+norm about 2,900 vs.\ 350, SAE $L_0$ about 7,000 vs.\ 69). Including it drives the SAE's explained variance to $-13$, so we
+average over non-special tokens only.
+
+\paragraph{Pooling cannot remove the zero atom.} Mean and max pooling give the same SST-2 zero fraction (median 0.891), since
+a latent is zero for a text exactly when it is silent on every token.
+
+\paragraph{Covariance.} At $p = 2{,}048$ the sample covariance has condition number $1.3\times10^4$ on SST-2; Ledoit--Wolf
+shrinkage \citep{ledoit2004} reduces it to about 4,800.
+
+%=======================================================
+\section{Planted-Signal Benchmark}
+\label{app:planted}
+%=======================================================
+
+\paragraph{Knockoff procedure.} Latent $j$ is null if $Y \perp X_j \mid X_{-j}$. Knockoffs $\Xk$ are built
+without $Y$ and satisfy $(X,\Xk)_{\mathrm{swap}(\mathcal{A})} \overset{d}{=} (X,\Xk)$ for every set $\mathcal{A}$ of latents. With
+$W_j = |\hat\beta_j| - |\hat\beta_{\tilde j}|$ from an L1 logistic fit on $[X,\Xk]$, Knockoff+ selects
+$\{j : W_j \ge \tau\}$ with
+\begin{equation}
+\tau = \min\Bigl\{t>0 : \tfrac{1 + |\{j : W_j \le -t\}|}{\max(1, |\{j: W_j \ge t\}|)} \le q\Bigr\}
+\end{equation}
+
+Signal latents $S$ are drawn at random; the logit is $a \cdot X_S w / \sqrt{k}$ with random signs $w$ (linear), or $0.7$ of
+that plus $0.3$ of standardised pairwise products (interaction). Designs run from few strong signals ($k = 10, 30$) to many weak
+ones ($k = 100, 300$), with amplitudes swept and matched to the probe AUC of real labels. A cell breaches when its mean FDR
+exceeds $q$ significantly after BY correction. The fair-coin test takes, per replicate, the share of null latents with $W_j > 0$
+among those with $W_j \ne 0$, and tests the mean against 0.5.
+
+%=======================================================
+\section{Hurdle and Deep Knockoff Samplers}
+\label{app:samplers}
+%=======================================================
+
+\paragraph{Hurdle (SCIP).} For $j = 1, \dots, p$ in order, ridge models give $\Pr(X_j > 0 \mid X_{-j}, \Xk_{<j})$ and
+$\log X_j \mid X_j > 0$, and $\Xk_j$ is drawn from them. SCIP is exact only if these are correct, so we check validity with the swap test.
+
+\paragraph{Deep knockoffs.} The residual version adds a learned residual (two hidden layers of 1,024) to the block-MVR knockoff,
+trained with swap MMD, moment matching and decorrelation losses \citep{romano2020deep}, cross-fitted over two folds. The
+second-order-exact version maps learned noise on every draw to the Gaussian noise's mean and covariance and zero covariance with
+$X$, so the network (width 256, early stopped) learns only third-order moments.
+
+%=======================================================
+\section{Observational e-Values}
+\label{app:evalue}
+%=======================================================
+
+The half-B refit tests up to 500 lasso-selected latents with Wald $p$-values, which the calibrator
+$e = \kappa p^{\kappa - 1}$ with $\kappa = 0.5$ turns into e-values. Lifting the cap lowered power ($-0.01$ to $-0.23$,
+significant on 13 of 15 settings); averaging five splits gained a median $+0.04$ on SAEBench but lost $0.16$ on SST-2, and breached in one cell (Gemma-2 AG News) at all three targets (FDR $0.30, 0.36$ and $0.45$ at $q = 0.05, 0.1$ and $0.2$). On known-null latents the Wald $z$-scores have variance
+1.69 with the cap and 5.17 without (nominal 1), and $|z| > 3.29$ occurs 11 times more often than nominal with the cap and about 150 times without; the
+conservative calibration step is what kept the capped version within target.
+
+%=======================================================
+\section{Repairs on SST-2}
+\label{app:sst2repairs}
+%=======================================================
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Method & Power & Mean FDR & Breaches & AUC$_{\text{all}}$ \\
+\midrule
+Gaussian (equicorr.) & .620 & .020 & 0 & 1.000 \\
+Hurdle (SCIP) & .668 & .013 & 0 & 0.935 \\
+Binarised & .447 & .065 & 2 & 0.504 \\
+e-Value splitting & .639 & .001 & 0 & -- \\
+Gaussian control & .682 & .009 & 0 & 0.495 \\
+\bottomrule
+\end{tabular}}
+\caption{Repairs on SST-2 ($p = 2{,}048$, 54 planted conditions, 30 replicates, fixed penalty
+$\lambda = 0.02$). Hurdle recovers 77\% of the power gap to the control. Equicorrelated Gaussian
+knockoffs do not breach at this conservative penalty; under the cross-validated penalty Gaussian
+knockoffs do (Table~\ref{tab:breach}). Breaches: cells above $q$ before correction (none after BY for any
+method). Power excludes the 6 cells with $k = 10$, $q = 0.05$, where Knockoff+ has power 0 by arithmetic; on
+all 54 cells, e-value splitting (.655) beats hurdle (.594).}
+\label{tab:sst2repairs}
+\end{table}
+
+%=======================================================
+\section{Interventional Procedure: Details}
+\label{app:stage5}
+%=======================================================
+
+\paragraph{Prompts.} Each prompt is an instruction, one demonstration per class (text truncated to
+40 tokens), and the query (truncated to 64 or 96 tokens), e.g. ``Review: \ldots\ Sentiment:'' with
+label words \emph{positive / negative}. AG News uses \emph{World, Sports, Business, Technology}; Bias
+in Bios set 1 \emph{accountant, architect, attorney, dentist, filmmaker}; EuroParl \emph{English,
+French, German, Spanish, Dutch}. The metric uses the first token of each label word.
+
+\paragraph{Resampling sampler.} Covariates are the log activations of a latent's 64 most co-active latents on split-A
+query tokens; a ridge logistic model gives the firing probability and a ridge log-normal model the size, clipped to the observed range.
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{2.5pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llrrrr}
+\toprule
+Model & Task & $n{=}250$ & 500 & 1,000 & 2,000 \\
+\midrule
+G-2 & SST-2 & .00$\to$.54 & .40$\to$.67 & .67$\to$.67 & .66$\to$.99 \\
+G-2 & AG News & .01$\to$.25 & .25$\to$.26 & .25$\to$.46 & .47$\to$.75 \\
+G-2 & Bios & .00$\to$.00 & .00$\to$.04 & .01$\to$.93 & 1.00$\to$1.00 \\
+G-2 & EuroParl & .00$\to$.39 & .39$\to$.39 & .40$\to$.56 & .56$\to$.62 \\
+G-3 & SST-2 & .00$\to$.01 & .00$\to$.25 & .25$\to$.27 & .26$\to$.51 \\
+G-3 & AG News & .06$\to$.21 & .20$\to$.26 & .25$\to$.48 & .42$\to$.61 \\
+G-3 & Bios & .00$\to$.00 & .00$\to$.00 & .00$\to$.21 & .28$\to$.34 \\
+G-3 & EuroParl & .02$\to$.28 & .31$\to$.58 & .54$\to$.65 & .66$\to$.66 \\
+\bottomrule
+\end{tabular}}
+\caption{Power by number of test inputs at $\alpha = 0.1$, resampling: $K = 250$, cap 0.5 $\rightarrow$ $K = 50$, cap 0.9.}
+\label{tab:power-full}
+\end{table}
+
+\paragraph{Zero-null baseline.} FDR against the minimum-effect truth at $n = 500 / 1{,}000 /
+2{,}000$: Gemma-2 SST-2 0.00 / 0.40 / 0.66, AG News 0.01 / 0.50 / 0.80, Bias in Bios 0.00 / 0.78 /
+0.96, EuroParl 0.03 / 0.59 / 0.78; Gemma-3 SST-2 0.00 / 0.34 / 0.67, AG News 0.02 / 0.60 / 0.79, Bias
+in Bios 0.16 / 0.56 / 0.84, EuroParl 0.05 / 0.44 / 0.60. Against $\tauj > 2$ SE it is at most 0.002
+everywhere.
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llccc}
+\toprule
+ & & Resample & Zero & Mean \\
+\midrule
+G-2 & SST-2 & .67 & .73 & .74 \\
+G-2 & AG News & .46 & .62 & .44 \\
+G-2 & Bias in Bios & .93 & .83 & .99 \\
+G-2 & EuroParl & .56 & .80 & .84 \\
+G-3 & SST-2 & .27 & .77 & .76 \\
+G-3 & AG News & .48 & .53 & .53 \\
+G-3 & Bias in Bios & .21 & .67 & .49 \\
+G-3 & EuroParl & .65 & .62 & .67 \\
+\bottomrule
+\end{tabular}
+\caption{Power at $n = 1{,}000$, $\alpha = 0.1$, by intervention ($K = 50$; zero and mean
+ablation on 2,000-input pools). Realised FDR $\le$ 0.003 for every intervention. On Gemma-2 SST-2,
+power at $n = 2{,}000$ is 0.80 / 0.99 / 1.00 for $\delta = 0.02 / 0.05 / 0.10 \times$ SD.}
+\label{tab:sensitivity}
+\end{table}
+
+%=======================================================
+
+\end{document}

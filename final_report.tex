@@ -400,7 +400,7 @@
 \usepackage{float}
 
 % A figure that degrades to a red box if the file has not been uploaded yet.
-\setcounter{dbltopnumber}{4}
+\setcounter{dbltopnumber}{3}
 \renewcommand{\dbltopfraction}{0.95}
 \newcommand{\figfile}[2]{\IfFileExists{#2}{\includegraphics[width=#1]{#2}}{%
   \fbox{\parbox{#1}{\centering\small\textcolor{red}{Upload \texttt{\detokenize{#2}}}}}}}
@@ -792,7 +792,7 @@ this is not a breach on their own target.
 
 \begin{figure*}[t]
 \centering
-\figfile{0.9\textwidth}{fig_pipeline.pdf}
+\figfile{0.82\textwidth}{fig_pipeline.pdf}
 \caption{Architecture of interventional FDR control. Top: one latent is edited between the SAE's encoder and decoder, and the
 drop in the correct-class probability is recorded. Bottom: how the data splits feed the procedure. Schematic.}
 \label{fig:pipeline}
@@ -816,35 +816,6 @@ $\delta$ has no such limit, because every pick was measured.
 %=======================================================
 
 We now turn the measurement of \S\ref{sec:downstream} into a selection procedure with a guarantee (Figure~\ref{fig:pipeline}).
-\paragraph{Procedure.} Disjoint splits: pilot (300), screening A (1,000), test B (2,500), oracle O
-(2,500).
-\begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=2pt]
-  \item Attribution patching on A ranks all 16k latents by a first-order estimate of their effect; the top
-        $K = 50$ become the hypotheses.
-  \item On B, each hypothesis gets a betting e-value \citep{waudbysmith2024betting}. Starting with wealth 1,
-        we observe the effects $\Delta_j(x_1), \dots, \Delta_j(x_n)$ one input at a time and bet a fraction
-        $\lambda_t$ of the wealth that each exceeds $\delta$:
-        \begin{equation}
-        E_j = \prod_{t=1}^{n} \bigl(1 + \lambda_t(\Delta_j(x_t) - \delta)\bigr).
-        \end{equation}
-        Wealth grows when effects exceed $\delta$ and shrinks otherwise, so a large final wealth is evidence that the latent matters.
-        The bet is \emph{predictable}: $\lambda_t$ depends only on $x_1, \dots, x_{t-1}$. We use aGRAPA,
-        $\lambda_t = (\hat\mu - \delta)/(\hat\sigma^2 + (\hat\mu - \delta)^2)$ from the running mean and variance of past
-        effects, with $\hat\mu$ shrunk towards $\delta$ and $\hat\sigma^2$ given a prior pseudo-observation of 0.25, clipped
-        to $[0, 0.9/(1+\delta)]$ so each factor stays at least 0.1.
-  \item e-BH \citep{wang2022evalues} over the $K$ e-values: sort them as $E_{(1)} \ge \dots \ge E_{(K)}$
-        and reject the $k^*$ largest, $k^* = \max\{k : E_{(k)} \ge K/(\alpha
-        k)\}$.
-\end{enumerate}
-Under $H_j$ each bet has a nonpositive expected return, so the wealth does not grow in expectation (a nonnegative supermartingale), $E_j$ is an e-value, and e-BH controls FDR at $\alpha$ under any dependence. This guarantee requires only that the test inputs are drawn at random and that the screening split A is independent of B.
-
-\paragraph{Validation.} We pool B and O (5,000 inputs). In each of 200 replicates, we run the test on $n$ randomly chosen inputs (100--2,000) and use the rest as the oracle, then report mean FDR and power. In a \emph{stress test}, we shift every $\Delta_j$ so its mean is exactly $\delta$ and draw inputs with replacement; no latent then exceeds $\delta$, so every rejection is false. We score three baselines against the same oracle: zero-null e-values (our procedure with $\delta = 0$), attribution top-$k$ \citep{marks2025sparse} and the relative null of \citet{khera2026}.
-
-%=======================================================
-\section{Results of Interventional FDR Control}
-\label{sec:results}
-%=======================================================
-
 \begin{table*}[t]
 \centering
 \small
@@ -877,6 +848,45 @@ against $\tauj > \delta$. Power uses $K = 50$, cap 0.9, chosen after seeing Gemm
 \caption{Power against the oracle by number of test inputs ($\alpha = 0.1$).}
 \label{fig:power}
 \end{figure*}
+
+\paragraph{Procedure.} Disjoint splits: pilot (300), screening A (1,000), test B (2,500), oracle O
+(2,500).
+\begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=2pt]
+  \item Attribution patching on A ranks all 16k latents by a first-order estimate of their effect; the top
+        $K = 50$ become the hypotheses.
+  \item On B, each hypothesis gets a betting e-value \citep{waudbysmith2024betting}. Starting with wealth 1,
+        we observe the effects $\Delta_j(x_1), \dots, \Delta_j(x_n)$ one input at a time and bet a fraction
+        $\lambda_t$ of the wealth that each exceeds $\delta$:
+        \begin{equation}
+        E_j = \prod_{t=1}^{n} \bigl(1 + \lambda_t(\Delta_j(x_t) - \delta)\bigr).
+        \end{equation}
+        Wealth grows when effects exceed $\delta$ and shrinks otherwise, so a large final wealth is evidence that the latent matters.
+        The bet is \emph{predictable}: $\lambda_t$ depends only on $x_1, \dots, x_{t-1}$. We use aGRAPA,
+        $\lambda_t = (\hat\mu - \delta)/(\hat\sigma^2 + (\hat\mu - \delta)^2)$ from the running mean and variance of past
+        effects, with $\hat\mu$ shrunk towards $\delta$ and $\hat\sigma^2$ given a prior pseudo-observation of 0.25, clipped
+        to $[0, 0.9/(1+\delta)]$ so each factor stays at least 0.1.
+  \item e-BH \citep{wang2022evalues} over the $K$ e-values: sort them as $E_{(1)} \ge \dots \ge E_{(K)}$
+        and reject the $k^*$ largest, $k^* = \max\{k : E_{(k)} \ge K/(\alpha
+        k)\}$.
+\end{enumerate}
+Under $H_j$ each bet has a nonpositive expected return, so the wealth does not grow in expectation (a nonnegative supermartingale), $E_j$ is an e-value, and e-BH controls FDR at $\alpha$ under any dependence. This guarantee requires only that the test inputs are drawn at random and that the screening split A is independent of B.
+
+\paragraph{Validation.} We pool B and O (5,000 inputs). In each of 200 replicates, we run the test on $n$ randomly chosen inputs (100--2,000) and use the rest as the oracle, then report mean FDR and power. In a \emph{stress test}, we shift every $\Delta_j$ so its mean is exactly $\delta$ and draw inputs with replacement; no latent then exceeds $\delta$, so every rejection is false. We score three baselines against the same oracle: zero-null e-values (our procedure with $\delta = 0$), attribution top-$k$ \citep{marks2025sparse} and the relative null of \citet{khera2026}.
+
+%=======================================================
+\section{Results of Interventional FDR Control}
+\label{sec:results}
+%=======================================================
+
+\paragraph{Validity.} No setting breaches (Table~\ref{tab:main}), where a breach means realised FDR above $\alpha$ by
+more than 2 SE. In the stress test, where every rejection
+is false, the rejection rate is at most 0.010.
+
+\paragraph{Power.} We chose $K = 50$ and the bet cap 0.9 after seeing Gemma-2's results, so Gemma-2's power is
+optimistic (the original $K = 250$, cap 0.5 gives 0.47--1.00 at $n = 2{,}000$; Table~\ref{tab:power-full}).
+We then applied this setting unchanged to Gemma-3, the held-out model (Figure~\ref{fig:power}). There it beats the wider setting ($K = 250$, cap 0.5) on all four tasks at
+$n = 1{,}000$ and on three of four at $n = 2{,}000$, tying on EuroParl. Power at small $n$ is limited (Table~\ref{tab:power-full}).
+Zero and mean ablation give no breach, and their power is higher on most tasks (Table~\ref{tab:sensitivity}); each is scored against its own oracle, since the intervention changes which latents exceed $\delta$.
 
 \begin{figure*}[t]
 \centering
@@ -919,16 +929,6 @@ Gemma-3 & EuroParl & .000 / .63 & .000 / .66 & .000 / .69 & .194 / 1.00 & .000 /
 bet cap 0.5, vs.\ ours ($K = 50$, cap 0.9). At $n = 4{,}000$ the oracle has only 1,000 inputs, and re-splits share one pool.}
 \label{tab:khera}
 \end{table*}
-
-\paragraph{Validity.} No setting breaches (Table~\ref{tab:main}), where a breach means realised FDR above $\alpha$ by
-more than 2 SE. In the stress test, where every rejection
-is false, the rejection rate is at most 0.010.
-
-\paragraph{Power.} We chose $K = 50$ and the bet cap 0.9 after seeing Gemma-2's results, so Gemma-2's power is
-optimistic (the original $K = 250$, cap 0.5 gives 0.47--1.00 at $n = 2{,}000$; Table~\ref{tab:power-full}).
-We then applied this setting unchanged to Gemma-3, the held-out model (Figure~\ref{fig:power}). There it beats the wider setting ($K = 250$, cap 0.5) on all four tasks at
-$n = 1{,}000$ and on three of four at $n = 2{,}000$, tying on EuroParl. Power at small $n$ is limited (Table~\ref{tab:power-full}).
-Zero and mean ablation give no breach, and their power is higher on most tasks (Table~\ref{tab:sensitivity}); each is scored against its own oracle, since the intervention changes which latents exceed $\delta$.
 
 \paragraph{Few latents matter individually.} 59--91\% of candidates have a reliably positive effect, but
 only 1--9 (up to 12 under ablation) exceed $\delta$ (Figure~\ref{fig:effects}); all of those rank in the attribution top 50. None of the 302 Gemma-2 and 77 Gemma-3 latents we measured outside the 250, mostly baseline picks, exceeds $\delta$.
