@@ -5,9 +5,7 @@
 Final project for Advanced NLP, IIIT Hyderabad, Monsoon 2026.
 Team SujayFans: Vishal Rao, Ayush Daga, Krithik Kambhampati, Mohammed Sami.
 
-The report is [`final_report.tex`](final_report.tex).
-
-## The idea in one minute
+## The idea in short
 
 Sparse autoencoders (SAEs) break a language model's activations into thousands of *latents*. Papers often say
 something like "latent 1234 encodes sentiment and the model uses it". That is a statistical claim, and it rarely
