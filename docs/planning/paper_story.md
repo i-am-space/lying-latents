@@ -50,7 +50,7 @@ On two models and four prompted classification tasks:
 - **E-values and e-BH (Wang & Ramdas 2022).** e-BH controls FDR under arbitrary dependence. Betting e-values for bounded means (Waudby-Smith & Ramdas 2024).
 - **Prior SAE-specific work.**
   - Enkhbayar (2025): Gaussian knockoffs on SAE latents.
-  - Khera (ICML 2026 workshop): ablation e-processes with a zero-effect null.
+  - Khera (ICML 2026 workshop): zero-ablation e-processes (aGRAPA) and e-BH on GPT-2 Small IOI. The null is relative: ablating j hurts no more than ablating a random candidate latent. No minimum effect, no oracle check on a real model.
   - Marks et al. (2025): attribution patching / sparse feature circuits.
   - Bal (2026): many SAE features are causally inert.
 
@@ -152,7 +152,7 @@ E-value sample splitting never breaches: 0 BY breaches on 14 datasets, with FDR 
 - **Replicates:** each replicate re-splits the 5,000 test and oracle inputs at random into n test inputs and an oracle built from the rest; n = 100 to 2,000, 200 replicates.
 - **Boundary stress test:** every latent's Δ is shifted so its mean is exactly δ, and inputs are bootstrapped. Every hypothesis is then null, so any rejection is false: the hardest case for an FDR procedure.
 - **Baselines, scored against the same oracle:**
-  - zero-effect null e-values (Khera-style);
+  - zero-effect null e-values (ours with δ = 0; not Khera's relative null);
   - attribution top-k (Marks et al.);
   - Gaussian knockoffs (Enkhbayar);
   - observational e-value splitting.
@@ -191,7 +191,8 @@ Power at α = 0.1, resampling intervention, at n = 2,000 (pre-registered → imp
 - Same e-values with δ = 0.
 - Its FDR against the minimum-effect truth is 0 at small n, then rises steeply. At n = 2,000 it is **0.66–0.96 on Gemma-2 and 0.60–0.84 on Gemma-3**.
 - Against its own target (τ > 2 SE) it stays at about 0.
-- So it is valid, but it answers a question that labels nearly every latent causal once there is enough data. This is the main difference from Khera.
+- So it is valid, but it answers a question that labels nearly every latent causal once there is enough data.
+- This is not a test of Khera's procedure: Khera's null is relative to a random latent, not zero. Our difference from Khera is an absolute minimum effect, realistic resampling instead of zero ablation, and oracle-checked FDR on real models. A Khera-style random-comparison baseline is a candidate for the ARR version.
 
 *(Figure: FDR vs n, ours vs zero null.)*
 
@@ -265,7 +266,7 @@ Expected message, either way: a better sampler can at most remove statistical fa
 - Draft sections 1–8. Krithik starts from this document; the per-stage findings docs in `docs/findings/` have every number with its source.
 - Draw the pipeline schematic (Figure 1).
 - Make the Part I figures (exchangeability AUC plot; breach / coin plot). Older figures exist in `results/figures/` (fig10–fig19) and may be reusable.
-- Related work: read Khera (ICML 2026 workshop) carefully before fixing the novelty framing.
+- Related work: Khera (ICML 2026 workshop) has been read (30 Oct); its null is relative to a random latent, not zero. Frame the novelty as above (§7.4).
 - One pass to make sure every number in the draft matches the findings docs; update §7.6 when the sampler comparison finishes.
 
 **Where things are (for the drafters only)**

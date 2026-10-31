@@ -23,7 +23,7 @@ The headline numbers are in `evaluate2_summary.json`. The amendment-1 analysis i
    - Of the 250 attribution-ranked candidates, only 1–12 per task have an effect above δ (0.05 SD of the metric, about 1 percentage point of correct-class probability).
    - Yet 59–91% have a real positive effect (τ > 2 SE).
    - All above-δ latents are in the top 50 by attribution.
-4. **A zero-effect null certifies trivial effects.** The zero-null baseline is the same e-values with δ = 0, the closest prior work (Khera 2026).
+4. **A zero-effect null certifies trivial effects.** The zero-null baseline is the same e-values with δ = 0. It is not Khera (2026)'s test: Khera's null is relative (ablating j hurts no more than ablating a random candidate latent), with zero ablation and no minimum effect.
    - At n = 2,000 its FDR against the minimum-effect truth is 0.66–0.96 on Gemma-2 and 0.60–0.84 on Gemma-3.
    - At small n it is 0, and it rises with n and with power.
    - Against its own target (τ > 2 SE) it stays at about 0. So it is valid, but it answers a question that labels nearly every latent causal once there is enough data.

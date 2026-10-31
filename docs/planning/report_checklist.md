@@ -7,7 +7,7 @@ Review of `ANLP_FinalSubmission.pdf` (9 pages, 30 Oct 2026). Numbers checked aga
 - [x] **Red TBD under Table 3 (hurdle rows):** fill these from the exchange tests and delete the box.
   - Gemma-3 hurdle and Gaussian exchange tests are done (`results/models/gemma3_1b/saebench/stage34/*_exchange.json`).
   - Gemma-2 and Pythia files are in `results/saebench/stage34/` and `results/models/pythia70m/saebench/`.
-- [ ] **Red TBD in §6 (better knockoff samplers vs. the oracle):** needs Gemma-3 baselines3.
+- [x] **Red TBD in §6 (better knockoff samplers vs. the oracle):** needs Gemma-3 baselines3.
   - Gemma-3 knockoffs do select latents: Gaussian, fixed penalty, picked 30–63 on EuroParl at q = 0.2, and hurdle, CV penalty, picked 20 in one AG News draw.
   - So "select nothing" doesn't carry over, and these picks need oracle scoring before they go in the text.
 - [x] **"1–12 of 250 latents have a meaningful effect"** (abstract, §6, Discussion): Table 6's τ > δ column is 1–**9**. Fix the number or give its source.
@@ -16,7 +16,7 @@ Review of `ANLP_FinalSubmission.pdf` (9 pages, 30 Oct 2026). Numbers checked aga
   - SST-2: resampling 0.27 vs. zero 0.77 / mean 0.76.
   - Bias in Bios: 0.21 vs. 0.67 / 0.49.
 - [x] **§3, "12,500 texts each":** Amazon sentiment has 5,000 and AG News 10,000; now "5,000–12,500 texts".
-- [ ] **References:** the Bal (2026) and Khera (2026) entries still say "[title to be added]" and need full author names.
+- [x] **References:** the Bal (2026) and Khera (2026) entries still say "[title to be added]" and need full author names.
 
 ## B. Clarity and consistency
 
@@ -32,7 +32,7 @@ Review of `ANLP_FinalSubmission.pdf` (9 pages, 30 Oct 2026). Numbers checked aga
 - [x] **Table 7:** add a caption note that there is no Gemma-3 SST-2 row because that pooled cache doesn't exist.
 - [x] **§3:** "most frequent" → "most frequently firing" latents (the code keeps the 2,048 with the highest firing rate).
 - [ ] **Figure 1 label (deferred, part of the image):** "(2,048 most active latents; 89% zeros)" → "most frequently firing" when the figure is regenerated.
-- [ ] **Table 1:** Gemma Scope 2 needs its own citation, not Lieberum et al. (2024), which is Gemma Scope 1.
+- [x] **Table 1:** Gemma Scope 2 needs its own citation, not Lieberum et al. (2024), which is Gemma Scope 1.
 - [x] **Contribution 1 says "3 knockoff samplers"** but Table 5 has 5 rows. Align the wording, e.g. "three sampler families".
 
 ## C. Layout
@@ -43,40 +43,40 @@ Review of `ANLP_FinalSubmission.pdf` (9 pages, 30 Oct 2026). Numbers checked aga
 
 ## D. Team decisions
 
-- [ ] **"Observational methods find none of the latents that move the model":** this is true for knockoffs only. Observational e-values reach 1.00 power on Gemma-2 Bias in Bios. Re-check the wording after the Gemma-3 knockoff picks are scored.
-- [ ] **Gemma-2 settings were tuned on Gemma-2:** say explicitly that Gemma-2's Stage 5 numbers use settings tuned on Gemma-2 itself, so they're exploratory, and that Gemma-3 is the confirmation.
+- [x] **"Observational methods find none of the latents that move the model":** this is true for knockoffs only. Observational e-values reach 1.00 power on Gemma-2 Bias in Bios. Re-check the wording after the Gemma-3 knockoff picks are scored.
+- [x] **Gemma-2 settings were tuned on Gemma-2:** say explicitly that Gemma-2's Stage 5 numbers use settings tuned on Gemma-2 itself, so they're exploratory, and that Gemma-3 is the confirmation.
 
 ## E. Readability
 
-- [ ] **Abstract has too many numbers; make it more intuitive, and don't use terms it doesn't explain.**
+- [x] **Abstract has too many numbers; make it more intuitive, and don't use terms it doesn't explain.**
   - Undefined terms there: "exchangeability", "swapped latent", "AUC", "minimum effect δ", "betting e-values", "e-BH", "zero-effect null".
   - It has about 12 numbers. Keep two or three headline ones, e.g. "pure noise is certified in up to 100% of null experiments", "realised FDR never above 0.003", "only a handful of 250 latents matter".
-- [ ] **Related work, Knockoffs: explain in words rather than mathematical symbols.**
+- [x] **Related work, Knockoffs: explain in words rather than mathematical symbols.**
   - Replace "Y ⊥ X_j | X_−j", the swap-equality formula and Eq. (1) with plain sentences.
   - For example: a knockoff is a fake copy of each latent that looks statistically identical but is built without the label. A real latent matters if it predicts the label better than its fake. The threshold is chosen so the expected share of false picks stays under q.
   - Move Eq. (1) to an appendix if it's needed at all.
-- [ ] **Related work: explain what e-values are.** One sentence on what an e-value is, one on what e-BH does with them, one on betting.
+- [x] **Related work: explain what e-values are.** One sentence on what an e-value is, one on what e-BH does with them, one on betting.
   - An e-value is a score that, when there's no effect, averages at most 1, so a large value is evidence against the null.
   - e-BH turns a set of e-values into a list of discoveries with controlled FDR.
   - Betting builds an e-value as the winnings of a gambler who bets against the null.
-- [ ] **Elaborate the SAE-specific work section; it makes no sense right now.**
+- [x] **Elaborate the SAE-specific work section; it makes no sense right now.**
   - Currently it's two sentences split around Table 2, citing Enkhbayar, Khera and Bal with no titles.
   - Write a short paragraph for each: what each paper did, and how ours differs.
     - Enkhbayar: Gaussian knockoffs on SAE latents; we show that assumption fails.
     - Khera: ablation e-values with a zero-effect null; we add a minimum effect and oracle checks.
     - Bal: many SAE features have no causal effect; we quantify this with error control.
-- [ ] **Explain the zero rule in §4.2.**
+- [x] **Explain the zero rule in §4.2.**
   - The rule: guess "real" whenever a value is exactly 0, because Gaussian knockoffs are never exactly 0.
   - Say why its accuracy is (1 + Pr(X = 0))/2, and that 0.5 means it can't tell real from fake.
-- [ ] **§5 Target should be explained more clearly.**
+- [x] **§5 Target should be explained more clearly.**
   - Define m(x) with an example, e.g. "the model's probability of 'positive' for a positive review".
   - Define Δⱼ(x) as how much that probability drops when we change latent j.
   - τⱼ is the average drop. δ is the smallest drop we count as meaningful, about 1 percentage point.
   - Explain why we test τⱼ > δ rather than τⱼ > 0.
-- [ ] **§5 Intervention uses terms like h that aren't defined; every term in an equation should be defined.**
+- [x] **§5 Intervention uses terms like h that aren't defined; every term in an equation should be defined.**
   - Undefined: h (the residual-stream activation), aⱼ (latent j's activation), ãⱼ (its replacement value), dⱼ (decoder direction), L (the SAE layer, which appears suddenly in "layers after L"), "SAE error".
   - Also explain "query token" and "replayed".
-- [ ] **The same applies elsewhere, e.g. aGRAPA.** Places with undefined or unexplained terms:
+- [x] **The same applies elsewhere, e.g. aGRAPA.** (Terms well known to NLP readers, such as AUC, lasso and z-scores, were left unexplained on purpose.) Places with undefined or unexplained terms:
   - **§5, Eq. 3:** aGRAPA, "predictable" bets, λₜ, the cap 0.9/(1+δ), "wealth", "nonnegative supermartingale".
   - **§5 procedure:** K, E₍ₖ₎ (the k-th largest e-value), k*.
   - **§5 baselines:** C in "α/C per class" (the number of classes).
