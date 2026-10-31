@@ -705,8 +705,8 @@ $q = 0.1$), possibly because coarsening changes which latents are null. A deep g
 \citep{romano2020deep} can in principle learn what the parametric samplers miss (Table~\ref{tab:samplers}; SST-2
 repairs in Table~\ref{tab:sst2repairs}).
 
-\paragraph{Per-latent diagnostics mislead.} The residual deep sampler is the best on single-latent swaps (AUC$_1$) and
-matches the zero atom, yet it is the worst on FDR, with a null coin of 0.59--0.63 even in linear cells
+\paragraph{Per-latent diagnostics mislead.} The residual deep sampler beats both Gaussian samplers on single-latent swaps (AUC$_1$) and
+matches the zero atom, yet it has the worst FDR, with a null coin of 0.59--0.63 even in linear cells
 (Gaussian: 0.49). It gave up the exact covariance match. A \emph{second-order-exact} version, whose knockoffs match the covariance exactly, restores it, but its learned part is
 about 1\% of the noise and it behaves like block MVR. FDR is a joint property of 2,048 dependent latents,
 and no sampler we built can be certified jointly.

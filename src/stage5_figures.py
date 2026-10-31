@@ -24,7 +24,7 @@ OUT = ROOT / "results" / "figures"
 MODELS = {"Gemma-2-2B": ROOT / "results" / "stage5", "Gemma-3-1B": ROOT / "results" / "models" / "gemma3_1b" / "stage5"}
 TASKS = {"sst2": "SST-2", "ag_news": "AG News", "bias_in_bios": "Bias in Bios", "europarl": "EuroParl"}
 A = "0.1"
-SPEC = {"prereg": ("K = 250, cap 0.5 (prereg)", "#8c8c8c", "--"), "v2": ("K = 50, cap 0.9 (v2)", "#1f5fa8", "-")}
+SPEC = {"prereg": ("K = 250, cap 0.5", "#8c8c8c", "--"), "v2": ("K = 50, cap 0.9", "#1f5fa8", "-")}
 
 
 def load(base: Path, task: str, name: str):
@@ -53,7 +53,7 @@ def fig_power():
                 n, pw = curve(rs[sp]["primary"], "power")
                 ax.plot(n, pw, ls, color=col, marker="o", ms=4, label=lab)
             ntrue = ev["interventions"]["resample"]["counts"]["tau_above_delta"]
-            ax.set_title(f"{m}: {tl}  ({ntrue} with $\\tau>\\delta$)", fontsize=9)
+            ax.set_title(f"{m}: {tl}  ({ntrue} with $\\tau>\\delta$)", fontsize=11)
             ax.set_xscale("log")
             ax.set_ylim(-0.03, 1.03)
             ax.grid(alpha=0.3)
@@ -61,9 +61,7 @@ def fig_power():
                 ax.set_ylabel("power")
             if r == 1:
                 ax.set_xlabel("inputs n")
-    axes[0, 0].legend(fontsize=8, loc="upper left")
-    fig.suptitle("Interventional e-BH: power by sample size (resampling intervention, $\\alpha$ = 0.1); "
-                 "realised FDR ≤ 0.001 in every panel", fontsize=10)
+    axes[0, 0].legend(fontsize=10, loc="upper left")
     fig.tight_layout()
     fig.savefig(OUT / "fig20_stage5_power.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -91,8 +89,6 @@ def fig_zero_null():
     axes[0].set_ylabel("FDR against $\\tau_j > \\delta$")
     axes[0].plot([], [], ":", color="k", marker="s", ms=3, label="ours ($H_j: \\tau_j \\leq \\delta$), all tasks")
     axes[0].legend(fontsize=7, loc="upper left")
-    fig.suptitle("A zero-effect null certifies negligible effects as data grow (v2 specification, $\\alpha$ = 0.1)",
-                 fontsize=10)
     fig.tight_layout()
     fig.savefig(OUT / "fig21_stage5_zero_null.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -173,6 +169,9 @@ def tables():
     (OUT / "table_stage5_validity.tex").write_text(
         "\\begin{tabular}{llrrr}\n\\toprule\nModel & Task & Breaches & Max FDR & Max stress $P(\\text{any rejection})$ "
         "\\\\\n\\midrule\n" + "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n")
+
+
+plt.rcParams.update({"font.size": 12, "axes.titlesize": 12, "legend.fontsize": 10})
 
 
 def main() -> None:

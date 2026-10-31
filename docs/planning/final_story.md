@@ -218,7 +218,7 @@ all 16k. Precision ("0% of picks matter") has no such caveat.
 pool knockoffs choose from (SST-2 1/3, AG News 2/4, Bias in Bios 1/1, EuroParl 4/5). Knockoffs pick none of those 8 at
 q = 0.1, so the miss is not caused by the pool. The other 5 on Gemma-2 fire too rarely to enter the pool, a second,
 independent limit of observational selection on the most frequently firing latents; attribution screening sees all
-16k. **Gemma-3 (team's run): 17 of 20 in the pool; both models: 25 of 33.**
+16k. **Gemma-3 (`pool_coverage.json`): 17 of 20 in the pool; both models: 25 of 33.**
 
 ---
 
