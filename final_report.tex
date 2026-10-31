@@ -426,16 +426,15 @@
 %=======================================================
 \begin{abstract}
 %=======================================================
-Interpretability research often claims that a particular sparse autoencoder (SAE) latent drives a language
+Interpretability research often claims that a sparse autoencoder (SAE) latent drives a language
 model's behaviour. With thousands of latents to choose from, some will look important by chance, and a latent
 that tracks a concept need not be one the model uses. We audit how latents are selected on three models and
 nine datasets. With a linear probe on pooled latents, reusing the same data to search and validate certifies
 noise in up to 100\% of experiments. Model-X knockoffs, which compare each latent with a matched fake copy, are
 detectably mismatched on every dataset and can exceed their false discovery rate (FDR) target when labels depend on
 interactions. A hurdle sampler repairs the zeros, but when we intervene on the latents knockoffs pick, few have a
-meaningful effect on the model. We therefore test the causal question directly: we change each candidate latent
-inside the model and ask whether the answer moves by more than a minimum amount, with FDR control that assumes
-nothing about how latents are distributed. On two models and four tasks, realised FDR never exceeded 0.003 at up
+meaningful effect on the model. We therefore change each candidate latent inside the model and test whether the
+answer moves by more than a minimum amount, with FDR control that assumes nothing about latent distributions. On two models and four tasks, realised FDR never exceeded 0.003 at up
 to 2,000 inputs, and power on the held-out model was 0.34--0.66. Only 1--9 of 250 screened latents per task have a
 meaningful effect.
 \end{abstract}
