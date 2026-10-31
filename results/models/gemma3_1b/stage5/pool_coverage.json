@@ -1,0 +1,22 @@
+{
+  "ag_news": {
+    "above_delta": 8,
+    "in_pool": 6,
+    "not_in_pool": [
+      16036,
+      3985
+    ]
+  },
+  "bias_in_bios": {
+    "above_delta": 3,
+    "in_pool": 3,
+    "not_in_pool": []
+  },
+  "europarl": {
+    "above_delta": 9,
+    "in_pool": 8,
+    "not_in_pool": [
+      11089
+    ]
+  }
+}
