@@ -460,7 +460,7 @@ SAE latents are non-negative, exactly zero on most inputs and co-fire nonlinearl
 never zero. We show the violation is detectable on every dataset, can produce FDR breaches in interaction designs, and
 is reduced but not removed by better samplers. Moreover, even a valid knockoff answers an associational question, while interpretability
 claims are causal. Interventions on our own model are exact and repeatable and cost only compute, so we test the causal
-question directly.
+question directly.\footnote{Code and results: \url{https://github.com/i-am-space/lying-latents}}
 
 \paragraph{Contributions.}
 \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=2pt]
@@ -968,7 +968,6 @@ Search-then-validate can certify noise, knockoffs need an exchangeability SAE la
 per-latent match but still rarely pick latents above $\delta$. Testing interventions directly with betting e-values, e-BH and a minimum-effect null
 controls the FDR of causal claims about latents without any assumption about their distribution, and shows that few of the
 screened latents have a meaningful effect on their own.
-Code and results: \url{https://github.com/i-am-space/lying-latents}.
 
 %=======================================================
 \section*{Limitations and Future Work}
