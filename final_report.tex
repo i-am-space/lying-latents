@@ -111,7 +111,7 @@
   year    = {2024}
 }
 @article{heap2025random,
-  title   = {Sparse Autoencoders Can Interpret Randomly Initialized Transformers},
+  title   = {Automated Interpretability Metrics Do Not Distinguish Trained and Random Transformers},
   author  = {Heap, Thomas and Lawson, Tim and Farnik, Lucy and Aitchison, Laurence},
   journal = {arXiv preprint arXiv:2501.17727},
   year    = {2025}
@@ -142,7 +142,7 @@
 }
 @inproceedings{makelov2024illusion,
   title     = {Is This the Subspace You Are Looking for? An Interpretability Illusion for Subspace Activation Patching},
-  author    = {Makelov, Aleksandar and Lange, Georg and Nanda, Neel},
+  author    = {Makelov, Aleksandar and Lange, Georg and Geiger, Atticus and Nanda, Neel},
   booktitle = {International Conference on Learning Representations},
   year      = {2024}
 }
@@ -403,7 +403,7 @@
 \setcounter{dbltopnumber}{3}
 \renewcommand{\dbltopfraction}{0.9}
 \newcommand{\figfile}[2]{\IfFileExists{#2}{\includegraphics[width=#1]{#2}}{%
-  \fbox{\parbox{#1}{\centering\small\textcolor{red}{Upload \texttt{#2}}}}}}
+  \fbox{\parbox{#1}{\centering\small\textcolor{red}{Upload \texttt{\detokenize{#2}}}}}}}
 \newcommand{\Xk}{\widetilde{X}}
 \newcommand{\tauj}{\tau_j}
 
@@ -433,11 +433,10 @@ on three models and nine datasets. With a linear probe on pooled latents, reusin
 and validate certifies pure noise in up to 100\% of experiments. Model-X knockoffs, which compare each
 latent with a statistically matched fake copy, are detectably mismatched on every dataset and can exceed
 their promised false discovery rate (FDR) when labels depend on interactions between latents. A hurdle sampler
-repairs the zeros but not the selections: when we intervene on the latents knockoffs pick, at most 5\% have a
-meaningful effect on the model, whichever sampler is used. We therefore test the causal question directly:
+repairs the zeros, but when we intervene on the latents knockoffs pick, few have a meaningful effect on the model. We therefore test the causal question directly:
 we change each candidate latent inside the model and ask whether the answer moves by more than a minimum
 meaningful amount, with an FDR guarantee that makes no assumption about how latents are distributed. On two
-models and four tasks, realised FDR never exceeded 0.003. On the held-out model (Gemma-3), power (the share of
+models and four tasks, realised FDR never exceeded 0.003 at up to 2,000 inputs. On the held-out model (Gemma-3), power (the share of
 latents with a meaningful effect that the test finds) was 0.34--0.66 at 2,000 inputs. Most of the 250 screened
 latents per task have a small effect, but only 1--9 have a meaningful one.
 \end{abstract}
@@ -450,8 +449,8 @@ latents per task have a small effect, but only 1--9 have a meaningful one.
 Sparse autoencoders (SAEs) rewrite a language model's activations as sparse combinations of thousands of
 learned directions, its \emph{latents}, many of which appear to track one concept
 \citep{cunningham2023sparse, bricken2023monosemanticity, templeton2024scaling}. Claims built on them,
-such as ``latent $j$ encodes sentiment and the model uses it'', are statistical claims made without
-statistics. A common recipe, \emph{search-then-validate}, ranks latents by association with a label,
+such as ``latent $j$ encodes sentiment and the model uses it'', are statistical claims, but they rarely
+come with an error rate. A common recipe, \emph{search-then-validate}, ranks latents by association with a label,
 keeps the top few and checks that removing them changes a prediction; ablation itself is a standard
 validation tool \citep{wang2023interpretability, marks2025sparse}. It tests thousands
 of latents without multiplicity correction \citep{benjamini1995controlling} and often selects and
@@ -460,8 +459,8 @@ validates on the same data \citep{kriegeskorte2009circular}.
 Model-X knockoffs \citep{candes2018panning}, applied to SAE latents with Gaussian decoys by
 \citet{enkhbayar2025}, control the false discovery rate (FDR) if latents and decoys are exchangeable.
 SAE latents are non-negative, exactly zero on most inputs and co-fire nonlinearly; Gaussian decoys are
-never zero. We show the violation is detectable everywhere, turns into FDR breaches, and survives better
-samplers. Moreover, even a valid knockoff answers an associational question, while interpretability
+never zero. We show the violation is detectable on every dataset, can produce FDR breaches in interaction designs, and
+is reduced but not removed by better samplers. Moreover, even a valid knockoff answers an associational question, while interpretability
 claims are causal. Interventions on our own model are exact and repeatable and cost only compute (26--527 minutes per task here), so we test the causal
 question directly.
 
@@ -616,10 +615,10 @@ value; hurdle knockoffs keep the zeros.}
 Decoys & Data & Zero rule & AUC$_1$ & AUC$_{\text{all}}$ \\
 \midrule
 Gaussian & SST-2 & 0.95 & 0.997 & 1.00 \\
-Gaussian & SAEBench & 0.65--0.87 & 0.84--0.95 & 1.00 \\
+Gaussian & SAEBench & 0.65--0.87 & 0.70--0.97 & 1.00 \\
 Hurdle & SST-2 & 0.50 & -- & 0.94 \\
 Hurdle & SAEBench & 0.50 & 0.49--0.60 & 0.94--1.00 \\
-Control & all & -- & 0.49--0.51 & 0.49--0.51 \\
+Control & all & -- & 0.49--0.51 & 0.48--0.52 \\
 \bottomrule
 \end{tabular}}
 \caption{Exchangeability. Gaussian: equicorrelated second-order knockoffs (the construction of \citet{enkhbayar2025}). Zero rule: accuracy of ``a value of exactly 0 is real''. AUC$_1$ / AUC$_\text{all}$:
@@ -633,9 +632,9 @@ A typical latent is exactly zero on 89\% of SST-2 sentences and on 30--73\% of S
 are (Figure~\ref{fig:overview}). This \emph{zero atom} gives a simple test, the \emph{zero rule}: shown a real value and
 its knockoff, guess that the one equal to 0 is real. Its accuracy is $(1 + \Pr(X=0))/2$, against 0.5 for valid knockoffs,
 and it reaches 0.95 on SST-2 (Table~\ref{tab:exch}). One swapped Gaussian knockoff is detected on every dataset, while the
-control stays near chance (AUC 0.49--0.51). The planned control check, a band from 10 permutations, passes on only 6, 2
-and 5 of 8 datasets for Gemma-2, Gemma-3 and Pythia. The misses are at most about 0.015, far smaller than the violations,
-but Gemma-3's formal generalisation verdict is therefore not made. Hurdle knockoffs are near chance one latent at a time
+control stays near chance (AUC 0.48--0.52). A stricter check on the control, a band from 10 permutations, passes on
+6, 2 and 5 of 8 datasets for Gemma-2, Gemma-3 and Pythia. The misses are at most about 0.015, far smaller than the
+violations, but they mean we cannot formally claim the result generalises to Gemma-3. Hurdle knockoffs are near chance one latent at a time
 but are detected when all are swapped. On synthetic Gaussian data all tests pass (AUC 0.497, MMD $p = 0.96$;
 \citealp{gretton2012kernel}). Any atom also makes the KL term in the robustness bound infinite \citep{barber2020}.
 
@@ -665,7 +664,9 @@ breaches are in interaction designs. The Gaussian control never breaches.}
 \label{tab:breach}
 \end{table}
 
-Breaches occur where labels depend on interactions (Table~\ref{tab:breach}). The cause is visible in a
+Our first SAEBench design did not reproduce the SST-2 breaches (0 of 8 Gemma-2 datasets, 1 of 3 Gemma-3, 0 of 3 Pythia);
+a later amplitude sweep with interaction cells, designed after that result, gave breaches on 2 of 4 Gemma-2 datasets and none on
+Pythia. Breaches occur where labels depend on interactions (Table~\ref{tab:breach}). The cause is visible in a
 fair-coin test: for valid knockoffs a null latent beats its knockoff with probability 0.5. We call
 this rate the \emph{null coin}. Under block-MVR knockoffs it is 0.509 (EuroParl) and 0.529 (GitHub code) in interaction
 cells, 0.011 and 0.027 above the control (each $p<10^{-3}$). These are the two of four Gemma-2 datasets where
@@ -702,9 +703,9 @@ $^\dagger$All 2,048 latents swapped.}
 \end{table}
 
 The hurdle sampler \citep{mullahy1986specification} models whether a latent fires and how strongly; it
-removes the zero-atom signal but its log-normal size model fails on Pythia's ReLU SAE, which has a tail
-of tiny activations. Binarising the latents gives exchangeable decoys but inflates FDR (mean 0.065, up to 0.17 in one cell, at
-$q = 0.1$), because coarsening changes which latents are null. A deep generator
+removes the zero-atom signal, but it breaches on Pythia's ReLU SAE, consistent with a log-normal size model
+misfitting a tail of tiny activations. Binarising the latents gives exchangeable decoys but inflates FDR (mean 0.065, up to 0.17 in one cell, at
+$q = 0.1$), possibly because coarsening changes which latents are null. A deep generator
 \citep{romano2020deep} can in principle learn what the parametric samplers miss (Table~\ref{tab:samplers}; SST-2
 repairs in Table~\ref{tab:sst2repairs}).
 
@@ -731,8 +732,8 @@ association with a label rather than effect on the model.
 %=======================================================
 
 The audit asks whether knockoffs keep their promise. Our downstream check asks whether the latents they select
-are ones the model uses. We replace the steering check we first planned with direct interventions on prompted
-classification tasks, because there every latent's effect on the answer can be measured, which gives a ground
+are ones the model uses. We use direct interventions on prompted classification tasks rather than steering, because
+there every latent's effect on the answer can be measured, which gives a ground
 truth for each candidate.
 
 \paragraph{Target.} For a prompted classification task, $m(x)$ is the model's probability of the correct answer on input
@@ -770,38 +771,41 @@ classes. Every latent they pick is intervened on and measured.
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{llrrr}
 \toprule
-Model & Task & KO & Obs.\ e & Ours \\
+Model & Task & KO & Obs.\ e & $\tauj > \delta$ \\
 \midrule
-Gemma-2 & SST-2 & 0.00 & 0.00 & 0.99 \\
-Gemma-2 & AG News & 0.00 & 0.03 & 0.75 \\
-Gemma-2 & Bias in Bios & 0.00 & 1.00 & 1.00 \\
-Gemma-2 & EuroParl & 0.00 & 0.00 & 0.62 \\
-Gemma-3 & AG News & 0.00 & 0.06 & 0.61 \\
-Gemma-3 & Bias in Bios & 0.00 & 0.10 & 0.34 \\
-Gemma-3 & EuroParl & 0.00 & 0.00 & 0.66 \\
+Gemma-2 & SST-2 & 0.00 & 0.00 & 3 \\
+Gemma-2 & AG News & 0.00 & 0.03 & 4 \\
+Gemma-2 & Bias in Bios & 0.00 & 1.00 & 1 \\
+Gemma-2 & EuroParl & 0.00 & 0.00 & 5 \\
+Gemma-3 & AG News & 0.00 & 0.06 & 8 \\
+Gemma-3 & Bias in Bios & 0.00 & 0.10 & 3 \\
+Gemma-3 & EuroParl & 0.00 & 0.00 & 9 \\
 \bottomrule
 \end{tabular}
 \caption{Power against $\tauj > \delta$ ($q = 0.1$): Gaussian knockoffs (KO) and observational e-values
-on the dataset label, vs.\ our procedure (\S\ref{sec:method}) at $n = 2{,}000$. (Gemma-3 SST-2 is omitted due to no cached latents.)}
+on the dataset label, each class at $q/C$, and the number of latents above $\delta$. (Gemma-3 SST-2 is omitted due to no cached latents.)}
 \label{tab:baselines}
 \end{table}
 
-Knockoffs select nothing on 6 of 7 tasks (Table~\ref{tab:baselines}); on Gemma-2 SST-2 they select 34
-latents, none above $\delta$. Where observational e-values select, 70--100\% of picks are below $\delta$,
+At $q = 0.1$ knockoffs select nothing on 6 of 7 tasks (Table~\ref{tab:baselines}), but this is largely arithmetic. Knockoff+
+needs at least $1/q$ selections, and each class runs at $q/C$ so that the union keeps FDR at $q$: 50 per class on the 5-class
+tasks, 40 on AG News and only 10 on SST-2, the one task where they select (34 latents, none above $\delta$). An earlier
+single Gemma-2 draw at $q$ per class, without that protection, selected 11 and 23 latents on AG News at $q = 0.1$ and 0.2, with 1 of
+the 4 latents above $\delta$ among them (9\% and 4\% of picks); at $q = 0.2$, 11 on Bias in Bios including its one latent above $\delta$, and 23 on EuroParl with none. Where observational e-values select, 70--100\% of picks are below $\delta$,
 except on Gemma-3 AG News, where the one latent they pick in about half the draws is above $\delta$.
 On Gemma-2 Bias in Bios they select the only latent above $\delta$ in every draw, together with about three below it.
 These methods use pooled raw-text activations and target association, so they answer a different question (an \emph{estimand mismatch});
 this is not a breach on their own target.
 
 \paragraph{Better knockoff samplers vs.\ the oracle.} On Gemma-2 SST-2, Gaussian, block-MVR and hurdle knockoffs (paired draws,
-fixed and cross-validated penalties) select 19--71 latents per draw; none exceeds $\delta$, and 43--61\% have $\tauj > 2$ SE. In
-the planned paired contrast (cross-validated penalty), hurdle picks more often have $\tauj > 2$ SE than block-MVR picks ($+0.07$,
-$p = 0.015$, 10 paired draws that share data, so descriptive), but less often than equicorrelated picks ($-0.11$). At $q = 0.2$ a
-few picks on AG News and Gemma-3 EuroParl exceed $\delta$ (2--5\% of picks, at most 6\% of the latents above $\delta$), similar
-to the 0.4--3.6\% of measured latents above $\delta$, a descriptive comparison on few hits. Better exchangeability does not give better picks.
+fixed and cross-validated penalties) select 19--71 latents per draw; none exceeds $\delta$, and 43--61\% have $\tauj > 2$ SE. Our
+planned contrast favours hurdle: with the cross-validated penalty its picks more often have $\tauj > 2$ SE than block-MVR picks
+($+0.07$, $p = 0.015$, 10 paired draws). This rests on SST-2 alone, the only task where both select, on draws that share data, and
+hurdle trails equicorrelated picks ($-0.11$). At $q = 0.2$ a few picks on AG News and Gemma-3 EuroParl exceed $\delta$ (2--5\% of
+picks, at most 6\% of the latents above $\delta$; on Gemma-3 AG News, one latent in one draw), against 0.4--3.6\% of measured latents.
 
 \paragraph{The latent pool.} Knockoffs choose from the 2,048 most frequently firing latents. Of the 33 latents above $\delta$ on
-the seven tasks, 25 lie in that pool, and knockoffs pick none at $q = 0.1$, so the pool does not explain the miss. The other 8
+the seven tasks, 25 lie in that pool, and knockoffs at $q/C$ pick none at $q = 0.1$, so the pool does not explain that miss. The other 8
 fire too rarely to enter it; attribution screens all 16k. Recall here is among measured latents, while the share of picks above
 $\delta$ has no such limit, because every pick was measured.
 
@@ -918,10 +922,10 @@ Gemma-2 & EuroParl & .000 / .54 & .000 / .62 & .006 / .81 & .267 / .99 & .000 / 
 Gemma-3 & SST-2 & .000 / .33 & .000 / .43 & .001 / .99 & .001 / .99 & .001 / .98 \\
 Gemma-3 & AG News & .000 / .28 & .000 / .61 & .000 / .60 & .077 / .99 & .000 / .66 \\
 Gemma-3 & Bias in Bios & .008 / 1.00 & .000 / .34 & .347 / 1.00 & .353 / 1.00 & .000 / .44 \\
-Gemma-3 & EuroParl & .000 / .63 & .000 / .66 & .000 / .69 & .195 / 1.00 & .000 / .69 \\
+Gemma-3 & EuroParl & .000 / .63 & .000 / .66 & .000 / .69 & .194 / 1.00 & .000 / .69 \\
 \bottomrule
 \end{tabular}
-\caption{FDR / power against $\tauj > \delta$ under resampling, $\alpha = 0.05$: the relative null of
+\caption{FDR / power against $\tauj > \delta$ under resampling, at Khera's $\alpha = 0.05$: the relative null of
 \citet{khera2026}, reimplemented on our candidates and metric with the comparator drawn from the tested set and
 bet cap 0.5, vs.\ ours ($K = 50$, cap 0.9). At $n = 4{,}000$ the oracle has only 1,000 inputs, and re-splits share one pool.}
 \label{tab:khera}
@@ -950,12 +954,11 @@ but realised FDR is 0.10--0.90 at $k = 10$, 0.64--0.96 at $k = 25$ and 0.82--0.9
 latent hurt more than ablating a random candidate, rather than does the effect exceed a fixed $\delta$? It also zeroes latents
 instead of resampling them, measures a logit difference, and takes candidates active on at least 20\% of prompts; its
 ground truth comes from a synthetic model. We reran its test on our candidates and metric, drawing the comparator from the
-tested set (Table~\ref{tab:khera}), so this is a reimplementation, not a reproduction. Against its own target, its FDR is 0.000 in every
-cell. The target itself depends on the candidate set: a candidate's mean effect is 1.2--5.7 times below $\delta$ among the
-top 50 and 6--23 times below it among the 250, so on our tasks $\delta$ is the stricter bar. The two agree at $n \le
-2{,}000$. At $n = 4{,}000$ the relative null exceeds $\alpha$ on two of eight tasks with $K = 50$ and on five with $K = 250$,
+tested set (Table~\ref{tab:khera}), so this is a reimplementation, not a reproduction. Against its own target, its FDR is at most 0.002. The target itself depends on the candidate set: a candidate's mean effect is 1.2--5.7 times below $\delta$ among the
+top 50 and 6--23 times below it among the 250, so on our tasks $\delta$ is the stricter bar. Neither exceeds $\alpha$ at $n \le 2{,}000$, though selections can differ (power 1.00 vs.\ 0.34 on Gemma-3 Bias in Bios, 0.28
+vs.\ 0.61 on Gemma-3 AG News). At $n = 4{,}000$ the relative null exceeds $\alpha$ on two of eight tasks with $K = 50$ and on five with $K = 250$,
 where its extra picks sit just below $\delta$ (0.79--0.86$\,\delta$ at $K = 50$), and it has more power near $\delta$; ours stays at or
-below 0.002. Under zero ablation, with the same $K$ and cap at $n = 1{,}000$, neither makes a false pick, and ours has higher power on six tasks, ties on one and is lower on one.
+below 0.002. Under zero ablation at $n = 1{,}000$, neither makes a false pick; with the same $K$, ours has higher power on six tasks at cap 0.5 (one tie, one lower) and on three at cap 0.9 (two ties, three lower).
 
 \FloatBarrier
 %=======================================================
@@ -965,7 +968,7 @@ below 0.002. Under zero ablation, with the same $K$ and cap at $n = 1{,}000$, ne
 
 Observational SAE feature selection has two separate problems: a guarantee resting on a joint assumption none of our samplers
 can be certified to meet, and a target of association rather than effect. The hurdle sampler shows these are distinct: it repairs
-the zeros, yet its picks have no more meaningful effects than Gaussian ones. Interventional e-BH needs neither assumption. The
+the zeros, yet its picks also rarely exceed $\delta$. Interventional e-BH needs neither assumption. The
 minimum effect is the central choice: ``most screened latents have some effect'' and ``1--9 have a meaningful one'' are both true,
 and a zero-effect null erases the difference. A relative null asks whether a latent stands out from its candidate set, an answer
 that changes with the set; an absolute $\delta$ does not, at the cost of power near a cut-off we had to choose.
@@ -974,8 +977,8 @@ that changes with the set; an absolute $\delta$ does not, at the cost of power n
 \section{Conclusion}
 %=======================================================
 
-Search-then-validate can certify noise, knockoffs need an exchangeability SAE latents break, and better samplers repair the
-statistics without changing what is selected. Testing interventions directly with betting e-values, e-BH and a minimum-effect null
+Search-then-validate can certify noise, knockoffs need an exchangeability SAE latents break, and better samplers improve the
+per-latent match but still rarely pick latents above $\delta$. Testing interventions directly with betting e-values, e-BH and a minimum-effect null
 controls the FDR of causal claims about latents without any assumption about their distribution, and shows that few of the
 screened latents have a meaningful effect on their own.
 

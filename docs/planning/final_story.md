@@ -1,5 +1,8 @@
 # Lying Latents — the final story (start to finish)
 
+**Second review (31 Oct): `final_report.tex` wins over this file.** "Knockoffs select nothing" is largely the Knockoff+ floor of
+1/(q/C) picks per class; "at most 5%, whichever sampler" and "repair the statistics, not the selections" are withdrawn.
+
 **Status (31 Oct, after the team's review of 1c45a69):** corrected for the Khera comparator error and other factual points.
 This text predates the team's same-day edits of `final_report.tex`; where the two differ on wording (e.g. observational
 methods, binarised counts, describing resampling), **the team's edited report wins**. Line numbers in §10 are stale.
