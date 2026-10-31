@@ -95,9 +95,9 @@ text(34.3, 47.3, "edit latent $j$ only", color=ACCENT, size=5.2, fontweight="bol
 text(34.3, 45.6, "$a_j \\rightarrow \\tilde a_j$, resampled from a fitted model", color=ACCENT, size=4.8)
 
 arrow(33.5, ym, 34.8, ym)
-ax.add_patch(Polygon([[35.1, ym - 6.6], [35.1, ym + 3.6], [40.1, ym + 2.6], [40.1, ym - 2.6]], closed=True, facecolor=SAE_FILL,
+ax.add_patch(Polygon([[35.1, ym - 6.6], [35.1, ym + 6.6], [40.1, ym + 2.6], [40.1, ym - 2.6]], closed=True, facecolor=SAE_FILL,
                      edgecolor=SAE_EDGE, lw=0.6))
-text(37.6, ym - 1, "SAE\ndecoder", color="#4338CA", size=4.9, fontweight="bold")
+text(37.6, ym, "SAE\ndecoder", color="#4338CA", size=4.9, fontweight="bold")
 arrow(40.3, ym, 41.6, ym)
 
 v2 = v.copy()
