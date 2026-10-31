@@ -1,4 +1,4 @@
-"""Architecture of interventional FDR control, with tags where Khera (2026) differs.
+"""Architecture of interventional FDR control.
 
 Top: one input through the model, with one latent edited between the SAE encoder and decoder.
 Bottom: how the data splits feed the procedure. Schematic: no values are results.
@@ -17,15 +17,14 @@ plt.rcParams.update({"font.family": "sans-serif", "font.sans-serif": "DejaVu San
 INK, MUTED, LINE, FRAME = "#1F2937", "#6B7280", "#94A3B8", "#CBD5E1"
 ACCENT, GREEN, GREEN_BG = "#7C3AED", "#047857", "#ECFDF5"
 SAE_FILL, SAE_EDGE = "#EEF2FF", "#818CF8"
-AMBER, AMBER_BG = "#B45309", "#FFFBEB"
 SLATE = LinearSegmentedColormap.from_list("slate", ["#E2E8F0", "#64748B"])
 BLUE = LinearSegmentedColormap.from_list("blue", ["#BFDBFE", "#1E3A8A"])
 
 rng = np.random.default_rng(4)
-fig = plt.figure(figsize=(7.0, 3.5), dpi=300)
+fig = plt.figure(figsize=(7.0, 3.4), dpi=300)
 ax = fig.add_axes([0, 0, 1, 1])
 ax.set_xlim(0, 100)
-ax.set_ylim(0, 50.3)
+ax.set_ylim(1.6, 50.3)
 ax.axis("off")
 
 
@@ -36,11 +35,6 @@ def arrow(x0, y0, x1, y1, color=INK, lw=0.7, ls="-"):
 
 def text(x, y, s, color=MUTED, size=5.5, ha="center", va="center", **kw):
     ax.text(x, y, s, color=color, fontsize=size, ha=ha, va=va, linespacing=1.2, **kw)
-
-
-def tag(x, y, s, ha="center"):
-    ax.text(x, y, s, color=AMBER, fontsize=4.9, ha=ha, va="center", linespacing=1.15,
-            bbox=dict(boxstyle="round,pad=0.22,rounding_size=0.25", fc=AMBER_BG, ec=AMBER, lw=0.4))
 
 
 def column(x, y0, h, w, v, cmap, vmax=2.2, zero_white=False):
@@ -99,7 +93,6 @@ ax.add_patch(FancyBboxPatch((24.6, 44.4), 19.4, 4.2, boxstyle="round,pad=0,round
 ax.plot([col_x + col_w / 2, col_x + col_w / 2], [yj + ch / 2 + 0.1, 44.4], color=ACCENT, lw=0.5, ls=(0, (2, 1.5)))
 text(34.3, 47.3, "edit latent $j$ only", color=ACCENT, size=5.2, fontweight="bold")
 text(34.3, 45.6, "$a_j \\rightarrow \\tilde a_j$, resampled from a fitted model", color=ACCENT, size=4.8)
-tag(50.2, 46.5, "Khera: $\\tilde a_j = 0$")
 
 arrow(33.5, ym, 34.8, ym)
 ax.add_patch(Polygon([[35.1, ym - 6.6], [35.1, ym + 3.6], [40.1, ym + 2.6], [40.1, ym - 2.6]], closed=True, facecolor=SAE_FILL,
@@ -129,7 +122,6 @@ for y, name, w_, col in [(ym + 2.5, "correct", 7.4, GREEN), (ym - 2.5, "wrong", 
     ax.add_patch(Rectangle((54.1, y - 1.2), w_, 2.4, facecolor=col, lw=0, alpha=0.8))
     text(58.4, y + 2.0, name, size=4.9)
 text(58.4, y0 - 1.6, "class probabilities")
-tag(58.4, y0 + 13.6, "Khera: logit gap")
 
 # unedited run and difference
 arrow(62.9, ym, 67.0, ym)
@@ -171,7 +163,6 @@ for i, v_ in enumerate(h_):
 ax.plot([24.6, 24.6], [y_b, 17.9], color=ACCENT, lw=0.6, ls=(0, (2, 1.5)))
 text(25.1, 16.6, "top $K$", color=ACCENT, size=5.0, ha="left")
 text(28.0, 3.3, "attribution ranks all 16k,\nkeep the top 50")
-tag(28.0, 0.9, "Khera: active on $\\geq$20% of prompts")
 
 # B: effect matrix -> bet -> e-BH
 mx, my, mw, mh, cols, rows_ = 41.4, y_b, 9.5, 11.0, 12, 9
@@ -192,7 +183,6 @@ ax.plot(px + t * pw, y_b + 2.4 + 8.2 * t ** 1.6, color=GREEN, lw=1.0)
 ax.plot(px + t * pw, y_b + 2.4 - 1.6 * t, color=LINE, lw=1.0)
 text(px + 0.6, y_b + 11.0, "wealth", size=4.8, ha="left", va="top")
 text(px + pw / 2 + 0.3, 3.3, "bet each effect beats $\\delta$:\nfinal wealth = e-value")
-tag(60.6, 0.9, "Khera: bet it beats a random candidate")
 
 arrow(67.1, 11.7, 69.5, 11.7)
 vals = 10.5 * np.exp(-np.arange(9) / 2.6)
@@ -211,7 +201,6 @@ for i, name in enumerate(["$j_1$", "$j_2$", "$j_3$"]):
     arrow(91.3, y + 1.2, 92.6, y + 1.2, color=LINE, lw=0.5)
     text(93.0, y + 1.2, "$\\tau_j > \\delta$ ?", color=INK, size=5.3, ha="left")
 text(92.6, 3.3, "check realised FDR\non held-out inputs")
-tag(92.6, 0.9, "Khera: synthetic only")
 
 # connector from the effect into the matrix
 ax.plot([85.7, 85.7], [ym - 3.8, 26.2], color=INK, lw=0.7)
