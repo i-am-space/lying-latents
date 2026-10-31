@@ -1,130 +1,188 @@
-# Lying Latents: Auditing Distribution-Free Inference for SAE Feature Discovery
+# Lying Latents
 
-Auditing whether the Model-X knockoff framework, as applied to Sparse Autoencoder (SAE) latents by
-Enkhbayar (2025), satisfies the exchangeability property its FDR guarantee requires, and evaluating
-its realised error control and statistical power against known ground truth.
+**Auditing knockoff-based discovery of sparse autoencoder features.**
 
-**Scope of this repository is Stages 1–3** — activation cache, distributional
-summary, Gaussian knockoff generation, exchangeability diagnostics with a
-validated null harness, FWER calibration of the standard pipeline, and
-semi-synthetic planted-signal FDR benchmark. Stages 4 and 5 are not built.
+Final project for Advanced NLP, IIIT Hyderabad, Monsoon 2026.
+Team SujayFans: Vishal Rao, Ayush Daga, Krithik Kambhampati, Mohammed Sami.
 
-## What this does and does not establish
+The report is [`final_report.tex`](final_report.tex).
 
-These are **necessary-condition** tests. Exchangeability is required only on null
-latents, and the null set is unknown on real data, so the diagnostics are sufficient
-to *falsify* exchangeability, never to confirm it. A violation **voids the FDR
-guarantee**; it does not demonstrate that realised FDR exceeds the nominal target.
-That is Stage 3 (`docs/findings/stage3_findings.md`): no inflation beyond q was found in the tested
-range, but the margin a valid construction has erodes as signal strength grows.
+## The idea in one minute
 
-## Layout
+Sparse autoencoders (SAEs) break a language model's activations into thousands of *latents*. Papers often say
+something like "latent 1234 encodes sentiment and the model uses it". That is a statistical claim, and it rarely
+comes with an error rate.
+
+We asked two questions:
+
+1. **Do the current selection methods keep their promises?** We audited the common search-then-validate recipe and
+   Model-X knockoffs, which promise a controlled false discovery rate (FDR).
+2. **Do the latents they pick matter to the model?** We intervened on each latent inside the model and measured how
+   much the answer changed.
+
+Then we turned that measurement into a test: **interventional FDR control**. We change one latent, measure the drop
+in the probability of the correct answer, and test whether the average drop exceeds a minimum effect δ, using betting
+e-values and e-BH. The FDR guarantee needs no assumption about how latents are distributed. It does need randomly
+drawn inputs and a screening split independent of the test split.
+
+## Main results
+
+| Question | Result |
+|---|---|
+| Does reusing data certify noise? | Yes: up to 100% of pure-noise experiments with a linear probe on pooled latents |
+| Are knockoffs exchangeable with SAE latents? | No, on all 9 datasets. A typical SST-2 latent is exactly zero 89% of the time; Gaussian knockoffs never are |
+| Does that cause FDR breaches? | In some regimes, mainly when labels depend on interactions between latents. The excess is real but modest (about 0.01–0.03) |
+| Do better samplers fix it? | Partly. Hurdle knockoffs are close to chance one latent at a time, but are still detected jointly and breach on Pythia's ReLU SAE |
+| Do knockoff picks matter to the model? | On Gemma-2 SST-2, none of the 34 picks at q = 0.1 is above δ. Other tasks select nothing at q/C per class, largely because of the Knockoff+ selection floor |
+| Does interventional e-BH work? | Realised FDR ≤ 0.003 up to 2,000 inputs, on 2 models and 4 tasks. Power on the held-out model is 0.34–0.66 at 2,000 inputs |
+| How many latents matter? | 59–91% of the 250 screened latents have a reliable effect, but only 1–9 per task exceed δ (about one percentage point) |
+
+These results come with limits; see "Limitations and Future Work" in the report. In short: models of 1–2B parameters,
+one SAE per model, four tasks, single-latent tests, and planted labels in the audit. `K` and the bet cap were tuned on
+Gemma-2, so only Gemma-3's power is held out.
+
+## How the project maps to the code
+
+Work went in stages. The name "stage" appears throughout the code and results.
+
+| Stage | Question | Main code | Findings |
+|---|---|---|---|
+| 1 | Does the standard pipeline certify noise? | `src/calibrate_pipeline.py`, `src/calibrate_validation.py`, `src/saebench/stage1.py` | `stage1_findings.md`, `stage1_sae_findings.md` |
+| 2 | Are knockoffs exchangeable with the latents? | `src/knockoff_audit.py`, `src/saebench/stage2.py` | `stage2_findings.md`, `stage2_sae_findings.md` |
+| 3 | Is the FDR exceeded on planted labels? | `src/planted_fdr_controls.py`, `src/stage3_followups.py` | `stage3_findings.md` |
+| 4 | Can better samplers repair it? | `src/stage4_repairs.py`, `src/deep_knockoffs.py` | `stage4_findings.md`, `stage34_sae_findings.md`, `stage34_matched_sae_findings.md`, `models_sae_findings.md`, `evalue_sae_findings.md`, `evalue_variants_findings.md`, `deep_knockoffs_sae_findings.md` |
+| 5 | Do picks matter, and can we test that directly? | `src/stage5_interventional.py`, `scripts/stage5_khera_baseline.py` | `stage5_findings.md` |
+
+All findings are in [`docs/findings/`](docs/findings/). Each one starts with a summary and states what the stage does
+and does not establish.
+
+**Where the report's Stage 5 sections come from:**
+
+| Report section | Run |
+|---|---|
+| §5 Do knockoff picks matter? | `baselines2`, `baselines3`, `delta2`, `delta3`, `evaluate3` (stage5 amendments 2 and 3) |
+| §6–7 Interventional FDR control | `pilot`, `screen`, `delta`, `evaluate2` (stage5 amendments 1 and 2) |
+| §7 Comparison with Khera (2026) | `scripts/stage5_khera_baseline.py` |
+
+## Repository layout
 
 ```
-config/preregistration.yaml   frozen thresholds, seeds and decision rules
-config/default.yaml           operational config (bound by the above)
-src/cache_activations.py      SST-2 -> Gemma Scope SAE latents -> data/cache/<hash>.npz
-src/describe_latents.py       distributional summary + premise check
-src/knockoff_audit.py         harness validation, then the exchangeability diagnostics
-src/calibrate_pipeline.py     Stage 1: FWER calibration under the global null
-src/calibrate_validation.py   Stage 1: validate-step FWER (same-data vs held-out) + power gate
-src/planted_fdr.py            Stage 3 v1: planted-signal FDR benchmark (superseded, kept as history)
-src/planted_fdr_controls.py   Stage 3 v2: same benchmark with a Gaussian control, MVR S, WY baseline
-src/stage3_followups.py       Stage 3 follow-ups: mechanism of the FDR rise, failure boundary, p = 2048 factorial
-src/stage4_repairs.py         Stage 4: hurdle (SCIP), binarised and e-value repairs vs Gaussian knockoffs
-src/saebench/                 SAEBench sparse-probing tasks: build_tasks, cache, stage1, stage2 (saebench_amendment_1)
-src/common.py                 config loading (with `inherit` overlays), seed derivation, cache hashing
-config/models/                overlays for other models / SAEs: pythia70m, gemma3_1b (saebench_amendment_3)
-scripts/                      runners and one-off diagnostics (path-coupled; kept in place)
-docs/NOTES_reference.md       what the audited pipeline actually does
-docs/CHANGES.md               change log: what each change did, why, and what came out
-docs/findings/                per-stage findings write-ups (stage1..stage4, and the SAEBench *_sae_ ones)
-docs/planning/                original task instructions
-reference/                    proposal, interim report, and the audited reference code (read-only)
-results/                      JSON/npz outputs read by the analysis scripts (paths fixed in code)
-results/figures/              all figures (moved from results/; reruns will regenerate them in results/)
+final_report.tex        the report (ACL format; needs acl.sty and acl_natbib.bst from the ACL template)
+config/
+  default.yaml          settings for all experiments (Gemma-2-2B)
+  models/               overlays for Gemma-3-1B and Pythia-70M; each replaces only what differs
+  preregistration.yaml  decision rules and seeds, written before each run, with logged amendments
+src/
+  common.py             config loading, seeds, cache hashing
+  cache_activations.py  text -> SAE latents -> cached matrix
+  stage*, knockoff_audit.py, calibrate_*.py, planted_fdr*.py, deep_knockoffs.py   the experiments above
+  stage5_figures.py     Stage 5 figures and tables
+  saebench/             the same stages on the SAEBench datasets
+scripts/                run scripts for long jobs, plus one-off diagnostics (diag_*)
+docs/
+  findings/             one write-up per stage (start here to understand a result)
+  planning/             plans and the paper story; final_story.md lists superseded claims
+  CHANGES.md            what changed, why, and what came out
+  NOTES_reference.md    what the audited reference pipeline does
+reference/              proposal, interim report and audited reference code (read-only)
+results/                every output the report uses; FINAL_RESULTS.json collects the final numbers
 ```
 
-## Reproducing
+Not in git: activation caches (`data/`), `screen.npz` files (rebuilt by `--stage screen`), logs and trained generators.
+
+## Which results are current?
+
+The project went through many versions, so not everything in `results/` is the final word.
+
+- **Start with [`results/FINAL_RESULTS.json`](results/FINAL_RESULTS.json).** It collects the numbers of the final
+  design, and each section names its source files.
+- Other final files: `results/stage5_baselines3_summary.json`, `results/stage5_khera_baseline.json`, and each model's
+  `stage5/<task>/evaluate2_summary.json`.
+- **Superseded, kept for history:** fixed-penalty Stage 3–4 runs (replaced by the cross-validated penalty), and the
+  first Stage 5 evaluation (`evaluate.json`, replaced by `evaluate2.json`). `scripts/collect_final_results.py` lists these.
+- If the report and an older document disagree, the report wins.
+
+## Setup
+
+We used Python 3.13 and one or two GPUs with 32 GB or more.
 
 ```bash
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python src/cache_activations.py --config config/default.yaml   # ~5 min, 1 GPU
-python src/describe_latents.py  --config config/default.yaml   # ~2 min, CPU
-python src/knockoff_audit.py    --config config/default.yaml   # ~85 min, CPU
-python src/calibrate_pipeline.py --config config/default.yaml --device cuda  # ~6 min, GPU (fits in 8 GB)
-python src/calibrate_validation.py --config config/default.yaml --device cuda  # ~5 min, GPU (Stage 1 validate step)
-python src/planted_fdr.py       --config config/default.yaml --device cuda  # ~15 min, GPU (v1)
-python src/planted_fdr_controls.py --config config/default.yaml --device cuda --stage full  # ~76 min, GPU; needs knockpy
-python src/planted_fdr_controls.py --config config/default.yaml --device cuda --experiment p2048 --stage full  # p = 2048 follow-up
-python src/stage3_followups.py --config config/default.yaml --device cuda --experiment stress --stage full  # mechanism + boundary
-python src/stage3_followups.py --config config/default.yaml --device cuda --experiment dims --stage full    # power-collapse factorial
-python src/stage4_repairs.py --config config/default.yaml --device cuda --stage full  # ~18 h on a server GPU; resumable
 ```
 
-Every run is determined by `master_seed` in the config. Per-component RNG streams are
-derived from it via `numpy.random.SeedSequence(...).spawn()` in a fixed order
-(`src/common.py:STREAMS`). The cache filename is a hash of the cache-determining
-config subset, so a cache built under a different aggregator or layer can never be
-read by accident.
+Versions are pinned because `sae-lens` and `transformer-lens` have shipped breaking changes.
 
-The activation cache (1.7 GB) is gitignored. Results are committed.
+Gemma-2 and Gemma-3 are gated on Hugging Face. Accept their licences, then set `HF_TOKEN`. All models and SAEs are
+public releases; this project trained and uploaded no models to Hugging Face or WandB.
 
-## Configuration
+| Model | SAE | Layer |
+|---|---|---|
+| `google/gemma-2-2b` | Gemma Scope, JumpReLU, 16k | 20 |
+| `google/gemma-3-1b-pt` | Gemma Scope 2, JumpReLU, 16k | 22 |
+| `EleutherAI/pythia-70m-deduped` | ReLU (`pythia-70m-deduped-res-sm`) | 4 |
 
-Gemma-2-2b, residual stream layer 20 (`blocks.20.hook_resid_post`), Gemma Scope
-`gemma-scope-2b-pt-res-canonical` / `layer_20/width_16k/canonical` (JumpReLU, 16384
-latents). SST-2 train, all 67,349 sentences, one row per sentence. Latents are
-aggregated over non-special tokens only; **BOS must be excluded** — it is an
-attention sink with residual norm ~2900 against ~350 for content tokens, and the SAE
-does not model it (L0 ~7000 there against ~69 on real tokens). Retained latents are
-those firing on ≥1% of sentences, capped at the top 2048 by firing rate.
+## Reproducing the results
 
-## Result
+Long scripts resume if restarted. Run them from the repo root. Times are rough and depend on the GPU.
 
-Exchangeability is violated. Median accuracy of the trivial classifier `1{x = 0}` at
-separating a real column from its knockoff is **0.945** (0.50 under exchangeability),
-and swapping a **single** latent out of 2048 is detected by a held-out classifier at
-**AUC 0.9966**, 65 standard deviations above a label-permutation null — against a
-harness that returns AUC 0.4973 (CI containing 0.50) on Gaussian data where the same
-knockoffs are provably valid.
-
-This **voids the FDR guarantee**. It does not show that realised FDR exceeds the
-nominal target; that is Stage 3 and was not run. Full writeup with the interpretation
-constraints in [docs/findings/stage2_findings.md](docs/findings/stage2_findings.md).
-
-## SAEBench (Stages 1-2 on the 35 sparse-probing tasks)
-
-Design: `config/preregistration.yaml` `saebench_amendment_1`; settings: `config/default.yaml` `saebench`.
-Same model, layer, SAE and pooling as the SST-2 work; only the texts change.
+**1. SST-2 audit (Stages 1–4)**
 
 ```bash
-# 1. texts, with SAEBench's own code, in a small separate env (its GitHub-code loader needs datasets<4)
-conda create -n saebench-data python=3.12 -y && conda activate saebench-data
+python src/cache_activations.py   --config config/default.yaml                 # about 5 min, GPU
+python src/knockoff_audit.py      --config config/default.yaml                 # about 85 min, CPU
+python src/calibrate_pipeline.py  --config config/default.yaml --device cuda
+python src/calibrate_validation.py --config config/default.yaml --device cuda
+python src/planted_fdr_controls.py --config config/default.yaml --device cuda --stage full
+python src/stage3_followups.py    --config config/default.yaml --device cuda --experiment stress --stage full
+python src/stage4_repairs.py      --config config/default.yaml --device cuda --stage full   # about 18 h
+```
+
+**2. SAEBench audit**
+
+The task texts need SAEBench's own code in a separate environment, because it requires `datasets<4`:
+
+```bash
 pip install "datasets>=3,<4" pandas tqdm transformers einops pyyaml && pip install sae-bench==0.6.0 --no-deps
-python src/saebench/build_tasks.py --config config/default.yaml          # writes data/saebench/tasks/, results/saebench/tasks_manifest.json
-
-# 2-4. main env
-conda activate lying-latents
-python src/saebench/cache.py  --config config/default.yaml               # GPU, one cache per dataset
-python src/saebench/stage1.py --config config/default.yaml --device cuda  # GPU, per task, resumable
-python src/saebench/stage2.py --config config/default.yaml               # CPU, per dataset, resumable
-python src/saebench/stage1.py --config config/default.yaml --aggregate
-python src/saebench/stage2.py --config config/default.yaml --aggregate
+python src/saebench/build_tasks.py --config config/default.yaml
 ```
 
-## Other models (SAEBench Stages 1-4, saebench_amendment_3)
-
-Pythia-70M (`pythia-70m-deduped-res-sm`, layer 4) and Gemma-3-1B (Gemma Scope 2, layer 22, 16k). Each is an
-overlay on `config/default.yaml` (`config/models/*.yaml`: model, SAE, results directory, Stage 3-4 dataset
-order), so every script takes it as `--config`. Results go to `results/models/<name>/saebench/`. Caches share
-`data/saebench/cache` (file names carry the config hash) and need the task texts in `data/saebench/tasks/`
-(model-independent; copy them, or build them as above). Gemma 3 is gated on Hugging Face: accept the licence of
-`google/gemma-3-1b-pt` for the token on the machine.
+Then, in the main environment:
 
 ```bash
-scripts/models_pipeline.sh config/models/gemma3_1b.yaml all       # caches, then Stages 1-2 and 3-4 side by side
-scripts/models_pipeline.sh config/models/gemma3_1b.yaml status    # progress; rerunning any phase resumes
-# phases: cache | stage12 | stage34 | all | status
-# env: GPUS="0 1" (cache and Stage 1 use the first), N34=3 (Stage 3-4 datasets), S2_THREADS=4, S34_THREADS=3, BATCH
+scripts/models_pipeline.sh config/models/gemma3_1b.yaml all    # caches, then Stages 1-4 (also pythia70m.yaml)
+scripts/saebench_stage34.sh gauss                              # Gemma-2 Stages 3-4 (also: hurdle)
+scripts/run_matched_all.sh                                     # amplitude sweep with the fair-coin test
+GROUP=deep2 SET=all nohup scripts/deep_knockoffs.sh > logs/deep2_all.log 2>&1 &      # deep knockoffs
 ```
+
+**3. Interventional FDR control (Stage 5)**
+
+```bash
+mkdir -p logs
+GPU_A=0 GPU_B=1 nohup scripts/stage5.sh > logs/stage5.log 2>&1 &   # main run, 2-9 h per Gemma-2 task
+nohup scripts/stage5.sh v2 > logs/stage5_v2.log 2>&1 &             # final evaluation and fairer baselines
+nohup scripts/stage5.sh v3 > logs/stage5_v3.log 2>&1 &             # sampler comparison and exchangeability tests
+scripts/stage5.sh status                                           # progress
+python scripts/stage5_khera_baseline.py                            # relative null, CPU
+```
+
+`delta2` and `delta3` need `screen.npz`, so run them on the machine that ran `screen`. The observational baselines
+need the activation caches.
+
+**4. Figures and the results file**
+
+```bash
+python src/stage5_figures.py               # power, zero-null and effect figures, plus LaTeX tables
+python scripts/generate_pipeline.py        # pipeline figure
+python scripts/collect_final_results.py    # results/FINAL_RESULTS.json
+```
+
+## Reproducibility
+
+- **Seeds:** every random stream comes from `master_seed` in the config (`STREAMS` in `src/common.py`).
+- **Caches:** file names hash the settings that determine their contents, so a cache built with other settings cannot
+  be read by accident.
+- **Decisions:** rules were fixed in `config/preregistration.yaml` before runs. Changes made after seeing results are
+  logged as amendments and labelled in the findings. For example, the Stage 5 `K` and bet cap were chosen after seeing
+  Gemma-2 and then held fixed for Gemma-3.
