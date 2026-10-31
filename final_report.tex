@@ -435,7 +435,7 @@ latent with a matched fake copy, are detectably mismatched on every dataset and 
 (FDR) target when labels depend on interactions. A hurdle sampler repairs the zeros, but few latents knockoffs pick
 have a meaningful effect. We therefore change each candidate latent inside the model and test whether
 the answer moves by more than a minimum amount, with FDR control that assumes nothing about latent distributions.
-On two models and four tasks, realised FDR never exceeded 0.003 at up to 2,000 inputs, with power 0.34--0.66 on the
+On two models and four tasks, realised FDR never exceeded 0.003 at up to 2,000 inputs, with power (the share of meaningful latents found) 0.34--0.66 on the
 held-out Gemma-3. Of 250 screened latents per task, most have a small effect and only 1--9 a meaningful one.
 \end{abstract}
 
@@ -670,9 +670,7 @@ this rate the \emph{null coin}. Under block-MVR knockoffs it is 0.509 (EuroParl)
 cells, 0.011 and 0.027 above the control (each $p<10^{-3}$). These are the two of four Gemma-2 datasets where
 the control's coin passes its planned validity check; the others fail by at most 0.005. In a separate SST-2 run with a fixed penalty, nulls correlated with a signal latent win 73\% of the time at strong
 signals (control 47\%). The biased nulls co-fire with signal latents, a nonlinear dependence that
-second-moment knockoffs cannot reproduce. The atom also costs power on weak interactions: at
-$k = 10$ and amplitude 0.5, real latents find 0.23 of the signals against 0.50 on the control (linear:
-0.90 vs.\ 0.97).
+second-moment knockoffs cannot reproduce. The atom's power cost is small on average at $p = 512$ ($-0.015$; $-0.023$ for interactions, $-0.008$ for linear signals), largest for weak interaction signals (0.23 vs.\ 0.50 at $k = 10$, amplitude 0.5), and no single cell is significant after correction.
 
 \subsection{Better samplers move the failure}
 \label{sec:samplers}
@@ -748,18 +746,23 @@ within the model's computation, for these prompts; redundant latents can be miss
 token. The SAE writes $h$ as latent activations $a_j$ times decoder directions $d_j$, plus an error term. To intervene we
 replace $a_j$ with $\tilde a_j$ and set $h \leftarrow h + (\tilde a_j - a_j)\, d_j$, leaving everything else unchanged, on every
 query token, including the template around the input (``Review:'', ``Sentiment:'') but not the instruction or demonstrations.
-The primary $\tilde a_j$ is \emph{resampling}: a realistic value drawn from a token-level hurdle model of $a_j$ given its 64
+The primary $\tilde a_j$ is \emph{resampling}: a value drawn from a token-level hurdle model of $a_j$ given its 64
 most co-active latents (Appendix~\ref{app:stage5}). Zero ablation and mean ablation are sensitivity analyses. Validity does
-not depend on this sampler. We rerun only the layers after the edit, which matches the full forward pass to within $4\times10^{-6}$.
+not depend on this sampler. We rerun only the layers after the edit; the resulting class probabilities differ from those of a full forward pass by at most $6\times10^{-6}$.
 
-\paragraph{Tasks.} SST-2, AG News, Bias in Bios (5 occupations) and EuroParl (5 languages), one
-demonstration per class, on Gemma-2 and Gemma-3; a pair runs if pilot balanced accuracy is $\ge$0.70
-(Appendix~\ref{app:stage5}).
+\paragraph{Tasks.} We use four classification tasks: sentiment (SST-2), news topic (AG News), occupation from a biography (Bias in Bios, 5 occupations) and language (EuroParl, 5 languages). Each prompt gives one solved example per class before the input. A model--task pair runs only if the model reaches balanced accuracy of at least 0.70 on the pilot split, and all 8 pairs do (Appendix~\ref{app:stage5}).
 
-\paragraph{Oracle.} The oracle $\tauj$ of a latent is its mean effect on held-out inputs (split O, 2,500 inputs,
-\S\ref{sec:method}), and a latent \emph{matters} if $\tauj > \delta$. Knockoffs and observational e-values run on the
+\paragraph{Oracle.} The oracle $\tauj$ of a latent is its mean effect on held-out inputs (2,500 inputs set aside for this and used for nothing else, called split O in \S\ref{sec:method}), and a latent \emph{matters} if $\tauj > \delta$. Knockoffs and observational e-values run on the
 task's real labels and pooled raw-text activations, over 10 draws at $\alpha/C$ per class, with $C$ the number of
 classes. Every latent they pick is intervened on and measured.
+
+\begin{figure*}[t]
+\centering
+\figfile{0.9\textwidth}{fig_pipeline.pdf}
+\caption{Architecture of interventional FDR control. Top: one latent is edited between the SAE's encoder and decoder, and the
+drop in the correct-class probability is recorded. Bottom: how the data splits feed the procedure. Schematic.}
+\label{fig:pipeline}
+\end{figure*}
 
 \paragraph{Observational selections mostly miss the latents that matter.}
 
@@ -796,11 +799,11 @@ These methods use pooled raw-text activations and target association, so they an
 this is not a breach on their own target.
 
 \paragraph{Better knockoff samplers vs.\ the oracle.} On Gemma-2 SST-2, Gaussian, block-MVR and hurdle knockoffs (paired draws,
-fixed and cross-validated penalties) select 19--71 latents per draw; none exceeds $\delta$, and 43--61\% have $\tauj > 2$ SE. Our
+fixed and cross-validated penalties) select 19--71 latents per draw; none exceeds $\delta$, and 43--61\% have $\tauj > 2$ standard errors (SE). Our
 planned contrast favours hurdle: with the cross-validated penalty its picks more often have $\tauj > 2$ SE than block-MVR picks
 ($+0.07$, $p = 0.015$, 10 paired draws). This rests on SST-2 alone, the only task where both select, on draws that share data, and
 hurdle trails equicorrelated picks ($-0.11$). At $q = 0.2$ a few picks on AG News and Gemma-3 EuroParl exceed $\delta$ (2--5\% of
-picks, at most 6\% of the latents above $\delta$; on Gemma-3 AG News, one latent in one draw), against 0.4--3.6\% of measured latents.
+picks, at most 6\% of the latents above $\delta$; on Gemma-3 AG News, one latent in one draw), against 0.4--3.6\% of screened latents.
 
 \paragraph{The latent pool.} Knockoffs choose from the 2,048 most frequently firing latents. Of the 33 latents above $\delta$ on
 the seven tasks, 25 lie in that pool, and knockoffs at $q/C$ pick none at $q = 0.1$, so the pool does not explain that miss. The other 8
@@ -813,15 +816,6 @@ $\delta$ has no such limit, because every pick was measured.
 %=======================================================
 
 We now turn the measurement of \S\ref{sec:downstream} into a selection procedure with a guarantee (Figure~\ref{fig:pipeline}).
-
-\begin{figure*}[t]
-\centering
-\figfile{0.9\textwidth}{fig_pipeline.pdf}
-\caption{Architecture of interventional FDR control. Top: one latent is edited between the SAE's encoder and decoder, and the
-drop in the correct-class probability is recorded. Bottom: how the data splits feed the procedure. Schematic.}
-\label{fig:pipeline}
-\end{figure*}
-
 \paragraph{Procedure.} Disjoint splits: pilot (300), screening A (1,000), test B (2,500), oracle O
 (2,500).
 \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=2pt]
@@ -833,6 +827,7 @@ drop in the correct-class probability is recorded. Bottom: how the data splits f
         \begin{equation}
         E_j = \prod_{t=1}^{n} \bigl(1 + \lambda_t(\Delta_j(x_t) - \delta)\bigr).
         \end{equation}
+        Wealth grows when effects exceed $\delta$ and shrinks otherwise, so a large final wealth is evidence that the latent matters.
         The bet is \emph{predictable}: $\lambda_t$ depends only on $x_1, \dots, x_{t-1}$. We use aGRAPA,
         $\lambda_t = (\hat\mu - \delta)/(\hat\sigma^2 + (\hat\mu - \delta)^2)$ from the running mean and variance of past
         effects, with $\hat\mu$ shrunk towards $\delta$ and $\hat\sigma^2$ given a prior pseudo-observation of 0.25, clipped
@@ -841,13 +836,9 @@ drop in the correct-class probability is recorded. Bottom: how the data splits f
         and reject the $k^*$ largest, $k^* = \max\{k : E_{(k)} \ge K/(\alpha
         k)\}$.
 \end{enumerate}
-Under $H_j$ each bet has a nonpositive expected return, so the wealth is a nonnegative supermartingale, $E_j$ is an e-value,
-and e-BH controls FDR at $\alpha$ under any dependence. Assumptions: inputs are drawn at random, and split A is independent of B.
+Under $H_j$ each bet has a nonpositive expected return, so the wealth does not grow in expectation (a nonnegative supermartingale), $E_j$ is an e-value, and e-BH controls FDR at $\alpha$ under any dependence. This guarantee requires only that the test inputs are drawn at random and that the screening split A is independent of B.
 
-\paragraph{Validation.} The oracle $\tauj$ comes from held-out inputs. 200 replicates re-split B $\cup$ O
-into $n$ test inputs (100--2,000) and an oracle. A \emph{stress test} shifts every $\Delta_j$ to mean
-exactly $\delta$, so every rejection is false. Baselines on the same oracle: zero-null e-values (our procedure with $\delta = 0$),
-attribution top-$k$ \citep{marks2025sparse} and the relative null of \citet{khera2026}.
+\paragraph{Validation.} We pool B and O (5,000 inputs). In each of 200 replicates, we run the test on $n$ randomly chosen inputs (100--2,000) and use the rest as the oracle, then report mean FDR and power. In a \emph{stress test}, we shift every $\Delta_j$ so its mean is exactly $\delta$ and draw inputs with replacement; no latent then exceeds $\delta$, so every rejection is false. We score three baselines against the same oracle: zero-null e-values (our procedure with $\delta = 0$), attribution top-$k$ \citep{marks2025sparse} and the relative null of \citet{khera2026}.
 
 %=======================================================
 \section{Results of Interventional FDR Control}
@@ -942,8 +933,7 @@ Zero and mean ablation give no breach, and their power is higher on most tasks (
 \paragraph{Few latents matter individually.} 59--91\% of candidates have a reliably positive effect, but
 only 1--9 (up to 12 under ablation) exceed $\delta$ (Figure~\ref{fig:effects}); all of those rank in the attribution top 50. None of the 302 Gemma-2 and 77 Gemma-3 latents we measured outside the 250, mostly baseline picks, exceeds $\delta$.
 
-\paragraph{A zero-effect null certifies negligible effects.} Its FDR against the minimum-effect truth
-grows with $n$ (Figure~\ref{fig:zeronull}) while staying near 0 against its own target ($\tauj > 2$ SE).
+\paragraph{A zero-effect null selects negligible effects.} The same test with $\delta = 0$ is valid for its own question: its FDR against $\tauj > 2$ SE is at most 0.002. But almost every latent has some small effect, so as $n$ grows it selects more latents below $\delta$. Scored against $\tauj > \delta$, its FDR rises from near 0 at small $n$ to 0.60--0.96 at $n = 2{,}000$ (Figure~\ref{fig:zeronull}).
 
 \paragraph{Attribution top-$k$.} Keeping the top $k$ attribution scores finds most latents above $\delta$ (power 0.75--1.00),
 but realised FDR is 0.10--0.90 at $k = 10$, 0.64--0.96 at $k = 25$ and 0.82--0.98 at $k = 50$, and nothing says which $k$ to use.
