@@ -427,16 +427,16 @@
 \begin{abstract}
 %=======================================================
 Interpretability research often claims that a sparse autoencoder (SAE) latent drives a language model's
-behaviour. With thousands of latents to choose from, some will look important by chance, and a latent that tracks
-a concept need not be one the model uses. We audit the standard ways of selecting latents on three models and nine
+behaviour. With thousands of latents, some will look important by chance, and a latent that tracks
+a concept need not be one the model uses. We audit how latents are selected on three models and nine
 datasets. With a linear probe on pooled latents and shuffled labels, reusing the same data to search and validate
 still declares latents meaningful in 69--100\% of runs, against a 5\% target. Model-X knockoffs, which compare each
 latent with a matched fake copy, are detectably mismatched on every dataset and can exceed their false discovery rate
 (FDR) target when labels depend on interactions. A hurdle sampler repairs the zeros, but few latents knockoffs pick
-have a meaningful effect on the model. We therefore change each candidate latent inside the model and test whether
+have a meaningful effect. We therefore change each candidate latent inside the model and test whether
 the answer moves by more than a minimum amount, with FDR control that assumes nothing about latent distributions.
 On two models and four tasks, realised FDR never exceeded 0.003 at up to 2,000 inputs, with power 0.34--0.66 on the
-held-out Gemma-3. Most of the 250 screened latents per task have a small effect, but only 1--9 a meaningful one.
+held-out Gemma-3. Of 250 screened latents per task, most have a small effect and only 1--9 a meaningful one.
 \end{abstract}
 
 %=======================================================
