@@ -989,7 +989,7 @@ screened latents have a meaningful effect on their own.
 Models have 1--2B parameters, with one SAE each, and the interventional experiments use four tasks and one prompt format. Power is
 relative to screened candidates, and single-latent tests miss jointly redundant latents. Steering was planned but not run, so we do
 not test sufficiency. The comparison with \citet{khera2026} is a reimplementation, and its large-$n$ part uses resampling. $K$ and
-the bet cap were tuned on Gemma-2, so only Gemma-3's power is held out. The audit uses planted labels on real latents. Future work:
+the bet cap were tuned on Gemma-2, so only Gemma-3's power is held out. The audit uses planted labels on real latents. The downstream check on multi-class tasks is limited by the Knockoff+ selection floor, and its uncorrected picks come from one Gemma-2 draw with Gaussian knockoffs. Future work:
 larger models, group testing of correlated latents, and other interventions such as steering.
 
 \bibliography{lyinglatents}
