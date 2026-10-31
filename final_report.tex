@@ -426,17 +426,17 @@
 %=======================================================
 \begin{abstract}
 %=======================================================
-Interpretability research often claims that a sparse autoencoder (SAE) latent drives a language
-model's behaviour. With thousands of latents to choose from, some will look important by chance, and a latent
-that tracks a concept need not be one the model uses. We audit how latents are selected on three models and
-nine datasets. With a linear probe on pooled latents, reusing the same data to search and validate certifies
-noise in up to 100\% of experiments. Model-X knockoffs, which compare each latent with a matched fake copy, are
-detectably mismatched on every dataset and can exceed their false discovery rate (FDR) target when labels depend on
-interactions. A hurdle sampler repairs the zeros, but when we intervene on the latents knockoffs pick, few have a
-meaningful effect on the model. We therefore change each candidate latent inside the model and test whether the
-answer moves by more than a minimum amount, with FDR control that assumes nothing about latent distributions. On two models and four tasks, realised FDR never exceeded 0.003 at up
-to 2,000 inputs, and power on the held-out model was 0.34--0.66. Only 1--9 of 250 screened latents per task have a
-meaningful effect.
+Interpretability research often claims that a sparse autoencoder (SAE) latent drives a language model's
+behaviour. With thousands of latents to choose from, some will look important by chance, and a latent that tracks
+a concept need not be one the model uses. We audit the standard ways of selecting latents on three models and nine
+datasets. With a linear probe on pooled latents and shuffled labels, reusing the same data to search and validate
+still declares latents meaningful in 69--100\% of runs, against a 5\% target. Model-X knockoffs, which compare each
+latent with a matched fake copy, are detectably mismatched on every dataset and can exceed their false discovery rate
+(FDR) target when labels depend on interactions. A hurdle sampler repairs the zeros, but few latents knockoffs pick
+have a meaningful effect on the model. We therefore change each candidate latent inside the model and test whether
+the answer moves by more than a minimum amount, with FDR control that assumes nothing about latent distributions.
+On two models and four tasks, realised FDR never exceeded 0.003 at up to 2,000 inputs, with power 0.34--0.66 on the
+held-out Gemma-3. Most of the 250 screened latents per task have a small effect, but only 1--9 a meaningful one.
 \end{abstract}
 
 %=======================================================
@@ -459,7 +459,7 @@ Model-X knockoffs \citep{candes2018panning}, applied to SAE latents with Gaussia
 SAE latents are non-negative, exactly zero on most inputs and co-fire nonlinearly; Gaussian decoys are
 never zero. We show the violation is detectable on every dataset, can produce FDR breaches in interaction designs, and
 is reduced but not removed by better samplers. Moreover, even a valid knockoff answers an associational question, while interpretability
-claims are causal. Interventions on our own model are exact and repeatable and cost only compute (26--527 minutes per task here), so we test the causal
+claims are causal. Interventions on our own model are exact and repeatable and cost only compute, so we test the causal
 question directly.
 
 \paragraph{Contributions.}
@@ -552,7 +552,7 @@ activations over non-special tokens (Appendix~\ref{app:data}); we keep the 2,048
 $k$ random latents (10--300; linear or pairwise-interaction logits), scaled by an \emph{amplitude} that sets
 the signal strength. One combination of $k$, amplitude, logit type and FDR target is a \emph{cell}. Each method also runs on a
 \emph{Gaussian control} with the real covariance, where Gaussian knockoffs are valid. Penalties are
-chosen by 5-fold cross-validation (Appendix~\ref{app:planted}). Analyses and decision rules were fixed in advance in a versioned file; later changes were logged as amendments.
+chosen by 5-fold cross-validation (Appendix~\ref{app:planted}). 
 
 %=======================================================
 \section{Auditing SAE Feature Selection}
