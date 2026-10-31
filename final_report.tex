@@ -393,6 +393,7 @@
 \usepackage{xcolor}
 \usepackage{url}
 \usepackage{enumitem}
+\usepackage{placeins}
 
 % A red box for results that are still running.
 \newcommand{\placeholder}[1]{%
@@ -831,7 +832,8 @@ $\delta$ on the seven tasks, 25 lie in that pool, and knockoffs pick none of the
 not explain the miss. The other 8 fire too rarely to enter it, and no method on that pool can select them;
 attribution screens all 16k. Recall here is among latents we measured, not all 16k; the share of picks above
 $\delta$ has no such limit, because every pick was measured. Consistent with this gap,
-\citet{khera2026} report that Gaussian knockoffs select nothing on GPT-2 small and exceed the target on a synthetic SAE.
+\citet{khera2026} report that Gaussian knockoffs select nothing on GPT-2 small and exceed the target on a synthetic SAE, and
+\citet{guo2026discovery} show that observational evidence does not determine an intervention's first-order effect.
 
 %=======================================================
 \section{Interventional FDR Control}
@@ -903,16 +905,6 @@ against $\tauj > \delta$. Power uses $K = 50$, cap 0.9, chosen after seeing Gemm
 \label{tab:main}
 \end{table*}
 
-\paragraph{Validity.} No setting breaches (Table~\ref{tab:main}), where a breach means realised FDR above $\alpha$ by
-more than 2 SE. In the stress test, where every rejection
-is false, the rejection rate is at most 0.010.
-
-\paragraph{Power.} We chose $K = 50$ and the bet cap 0.9 after seeing Gemma-2's results, so Gemma-2's power is
-optimistic (the original $K = 250$, cap 0.5 gives 0.47--1.00 at $n = 2{,}000$; Table~\ref{tab:power-full}).
-We then applied this setting unchanged to Gemma-3, the held-out model (Figure~\ref{fig:power}). There it beats the wider setting ($K = 250$, cap 0.5) on all four tasks at
-$n = 1{,}000$ and on three of four at $n = 2{,}000$, tying on EuroParl. Power at small $n$ is limited (Table~\ref{tab:power-full}).
-Zero and mean ablation give no breach, and their power is higher on most tasks (Table~\ref{tab:sensitivity}); each is scored against its own oracle, since the intervention changes which latents exceed $\delta$.
-
 \begin{figure*}[t]
 \centering
 \figfile{\textwidth}{fig20_stage5_power.png}
@@ -920,28 +912,21 @@ Zero and mean ablation give no breach, and their power is higher on most tasks (
 \label{fig:power}
 \end{figure*}
 
-\paragraph{Few latents matter individually.} 59--91\% of candidates have a reliably positive effect, but
-only 1--9 (up to 12 under ablation) exceed $\delta$ (Figure~\ref{fig:effects}); all of those rank in the attribution top 50. None of the 302 Gemma-2 and 77 Gemma-3 latents we measured outside the 250, mostly baseline picks, exceeds $\delta$.
-
 \begin{figure*}[t]
 \centering
-\figfile{0.85\textwidth}{fig22_stage5_effects.png}
+\begin{minipage}[t]{0.49\textwidth}
+\centering
+\figfile{\linewidth}{fig22_stage5_effects.png}
 \caption{Effects of the 250 candidates per task relative to $\delta$.}
 \label{fig:effects}
-\end{figure*}
-
-\paragraph{A zero-effect null certifies negligible effects.} Its FDR against the minimum-effect truth
-grows with $n$ (Figure~\ref{fig:zeronull}) while staying near 0 against its own target ($\tauj > 2$ SE).
-
-\begin{figure*}[t]
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}
 \centering
-\figfile{0.85\textwidth}{fig21_stage5_zero_null.png}
+\figfile{\linewidth}{fig21_stage5_zero_null.png}
 \caption{FDR against $\tauj > \delta$: ours vs.\ a zero-effect null.}
 \label{fig:zeronull}
+\end{minipage}
 \end{figure*}
-
-\paragraph{Attribution top-$k$.} Keeping the top $k$ attribution scores finds most latents above $\delta$ (power 0.75--1.00),
-but realised FDR is 0.10--0.90 at $k = 10$, 0.64--0.96 at $k = 25$ and 0.82--0.98 at $k = 50$, and nothing says which $k$ to use.
 
 \begin{table*}[t]
 \centering
@@ -969,15 +954,57 @@ bet cap 0.5, vs.\ ours ($K = 50$, cap 0.9). At $n = 4{,}000$ the oracle has only
 \label{tab:khera}
 \end{table*}
 
+\paragraph{Validity.} No setting breaches (Table~\ref{tab:main}), where a breach means realised FDR above $\alpha$ by
+more than 2 SE. In the stress test, where every rejection
+is false, the rejection rate is at most 0.010.
+
+\paragraph{Power.} We chose $K = 50$ and the bet cap 0.9 after seeing Gemma-2's results, so Gemma-2's power is
+optimistic (the original $K = 250$, cap 0.5 gives 0.47--1.00 at $n = 2{,}000$; Table~\ref{tab:power-full}).
+We then applied this setting unchanged to Gemma-3, the held-out model (Figure~\ref{fig:power}). There it beats the wider setting ($K = 250$, cap 0.5) on all four tasks at
+$n = 1{,}000$ and on three of four at $n = 2{,}000$, tying on EuroParl. Power at small $n$ is limited (Table~\ref{tab:power-full}).
+Zero and mean ablation give no breach, and their power is higher on most tasks (Table~\ref{tab:sensitivity}); each is scored against its own oracle, since the intervention changes which latents exceed $\delta$.
+
+\paragraph{Few latents matter individually.} 59--91\% of candidates have a reliably positive effect, but
+only 1--9 (up to 12 under ablation) exceed $\delta$ (Figure~\ref{fig:effects}); all of those rank in the attribution top 50. None of the 302 Gemma-2 and 77 Gemma-3 latents we measured outside the 250, mostly baseline picks, exceeds $\delta$.
+
+\paragraph{A zero-effect null certifies negligible effects.} Its FDR against the minimum-effect truth
+grows with $n$ (Figure~\ref{fig:zeronull}) while staying near 0 against its own target ($\tauj > 2$ SE).
+
+\paragraph{Attribution top-$k$.} Keeping the top $k$ attribution scores finds most latents above $\delta$ (power 0.75--1.00),
+but realised FDR is 0.10--0.90 at $k = 10$, 0.64--0.96 at $k = 25$ and 0.82--0.98 at $k = 50$, and nothing says which $k$ to use.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lll}
+\toprule
+ & \citet{khera2026} & Ours \\
+\midrule
+Null & no worse than a random candidate & $\tauj \le \delta$ \\
+Target & relative to the candidate set & absolute \\
+Intervention & zero ablation & resampling \\
+Metric & logit difference & correct-class probability \\
+Candidates & active on $\ge$20\% of prompts & attribution top 50 \\
+Bet cap & $0.5/B$ & $0.9/(1+\delta)$ \\
+Ground truth & synthetic model & measured on two real models \\
+\bottomrule
+\end{tabular}}
+\caption{The two procedures. Both use aGRAPA e-values and e-BH.}
+\label{tab:methods}
+\end{table}
+
 \paragraph{A relative null.} \citet{khera2026} test whether ablating a latent hurts more than ablating a random
-candidate. We reran this on our candidates and metric, drawing the comparator from the tested set (Table~\ref{tab:khera}).
-Khera's test uses zero ablation and a logit metric, so this is a reimplementation, not a reproduction. Against its own target, its FDR is 0.000 in every
+candidate. Table~\ref{tab:methods} sets out how the procedures differ. We reran this test on our candidates and metric, drawing the comparator from the tested set (Table~\ref{tab:khera}),
+so this is a reimplementation, not a reproduction. Against its own target, its FDR is 0.000 in every
 cell. The target itself depends on the candidate set: a candidate's mean effect is 1.2--5.7 times below $\delta$ among the
 top 50 and 6--23 times below it among the 250, so on our tasks $\delta$ is the stricter bar. The two agree at $n \le
 2{,}000$. At $n = 4{,}000$ the relative null exceeds $\alpha$ on two of eight tasks with $K = 50$ and on five with $K = 250$,
 where its extra picks sit just below $\delta$ (0.79--0.86$\,\delta$ at $K = 50$), and it has more power near $\delta$; ours stays at or
 below 0.002. Under zero ablation, with the same $K$ and cap at $n = 1{,}000$, neither makes a false pick, and ours has higher power on six tasks, ties on one and is lower on one.
 
+\FloatBarrier
 %=======================================================
 \section{Discussion}
 \label{sec:discussion}
