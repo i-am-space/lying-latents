@@ -400,8 +400,8 @@
 \usepackage{float}
 
 % A figure that degrades to a red box if the file has not been uploaded yet.
-\setcounter{dbltopnumber}{3}
-\renewcommand{\dbltopfraction}{0.9}
+\setcounter{dbltopnumber}{4}
+\renewcommand{\dbltopfraction}{0.95}
 \newcommand{\figfile}[2]{\IfFileExists{#2}{\includegraphics[width=#1]{#2}}{%
   \fbox{\parbox{#1}{\centering\small\textcolor{red}{Upload \texttt{\detokenize{#2}}}}}}}
 \newcommand{\Xk}{\widetilde{X}}
@@ -756,14 +756,6 @@ not depend on this sampler. We rerun only the layers after the edit; the resulti
 task's real labels and pooled raw-text activations, over 10 draws at $\alpha/C$ per class, with $C$ the number of
 classes. Every latent they pick is intervened on and measured.
 
-\begin{figure*}[t]
-\centering
-\figfile{0.9\textwidth}{fig_pipeline.pdf}
-\caption{Architecture of interventional FDR control. Top: one latent is edited between the SAE's encoder and decoder, and the
-drop in the correct-class probability is recorded. Bottom: how the data splits feed the procedure. Schematic.}
-\label{fig:pipeline}
-\end{figure*}
-
 \paragraph{Observational selections mostly miss the latents that matter.}
 
 \begin{table}[t]
@@ -797,6 +789,14 @@ except on Gemma-3 AG News, where the one latent they pick in about half the draw
 On Gemma-2 Bias in Bios they select the only latent above $\delta$ in every draw, together with about three below it.
 These methods use pooled raw-text activations and target association, so they answer a different question (an \emph{estimand mismatch});
 this is not a breach on their own target.
+
+\begin{figure*}[t]
+\centering
+\figfile{0.9\textwidth}{fig_pipeline.pdf}
+\caption{Architecture of interventional FDR control. Top: one latent is edited between the SAE's encoder and decoder, and the
+drop in the correct-class probability is recorded. Bottom: how the data splits feed the procedure. Schematic.}
+\label{fig:pipeline}
+\end{figure*}
 
 \paragraph{Better knockoff samplers vs.\ the oracle.} On Gemma-2 SST-2, Gaussian, block-MVR and hurdle knockoffs (paired draws,
 fixed and cross-validated penalties) select 19--71 latents per draw; none exceeds $\delta$, and 43--61\% have $\tauj > 2$ standard errors (SE). Our
@@ -873,20 +873,20 @@ against $\tauj > \delta$. Power uses $K = 50$, cap 0.9, chosen after seeing Gemm
 
 \begin{figure*}[t]
 \centering
-\figfile{\textwidth}{fig20_stage5_power.png}
+\figfile{0.72\textwidth}{fig20_stage5_power.png}
 \caption{Power against the oracle by number of test inputs ($\alpha = 0.1$).}
 \label{fig:power}
 \end{figure*}
 
 \begin{figure*}[t]
 \centering
-\begin{minipage}[t]{0.49\textwidth}
+\begin{minipage}[t]{0.4\textwidth}
 \centering
 \figfile{\linewidth}{fig22_stage5_effects.png}
 \caption{Effects of the 250 candidates per task relative to $\delta$.}
 \label{fig:effects}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.49\textwidth}
+\end{minipage}\hspace{0.03\textwidth}
+\begin{minipage}[t]{0.4\textwidth}
 \centering
 \figfile{\linewidth}{fig21_stage5_zero_null.png}
 \caption{FDR against $\tauj > \delta$: ours vs.\ a zero-effect null.}
@@ -948,7 +948,6 @@ vs.\ 0.61 on Gemma-3 AG News). At $n = 4{,}000$ the relative null exceeds $\alph
 where its extra picks sit just below $\delta$ (0.79--0.86$\,\delta$ at $K = 50$), and it has more power near $\delta$; ours stays at or
 below 0.002. Under zero ablation at $n = 1{,}000$ and $\alpha = 0.05$ with the same $K$, neither makes a false pick at cap 0.5, where ours has higher power on six tasks (one tie, one lower). At cap 0.9 the relative null's FDR reaches 0.033, and ours has higher power on three tasks (two ties, three lower).
 
-\FloatBarrier
 %=======================================================
 \section{Discussion}
 \label{sec:discussion}
