@@ -821,10 +821,9 @@ We now turn the measurement of \S\ref{sec:downstream} into a selection procedure
 \begin{figure*}[t]
 \centering
 \figfile{\textwidth}{fig_pipeline.pdf}
-\caption{How the bet separates latents. (a) Schematic: resampling moves a latent to another plausible value, zero ablation removes it.
-(b, c) Wealth of four latents on Gemma-3 Bias in Bios (one ordering of 4,000 inputs, $K = 50$), under our minimum-effect null and the
-relative null of \citet{khera2026}. A latent must pass the e-BH bar, whose top value is $K/\alpha$ at $\alpha = 0.05$.
-(d) Selections on this ordering: ours keeps one latent; the relative null also keeps one just below $\delta$.}
+\caption{Architecture of interventional FDR control. Top: one latent is edited between the SAE's encoder and decoder, and the
+drop in the correct-class probability is recorded. Bottom: how the data splits feed the procedure. Tags mark where
+\citet{khera2026} differs. Schematic.}
 \label{fig:pipeline}
 \end{figure*}
 

@@ -1,157 +1,225 @@
-"""Figure: how interventional e-BH works, and where a relative null differs.
+"""Architecture of interventional FDR control, with tags where Khera (2026) differs.
 
-(a) schematic: what each intervention does to one latent on one input.
-(b, c, d) real data, Gemma-3 Bias in Bios, resampling effects: wealth of four latents under each null on one
-random ordering of 4,000 inputs, and the latents each procedure selects (alpha = 0.05, K = 50).
+Top: one input through the model, with one latent edited between the SAE encoder and decoder.
+Bottom: how the data splits feed the procedure. Schematic: no values are results.
 
     python scripts/generate_pipeline.py   # writes results/figures/fig_pipeline.pdf and .png
 """
-import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import FancyArrowPatch
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Polygon, Rectangle
 
-plt.rcParams.update({"font.family": "sans-serif", "font.sans-serif": "DejaVu Sans", "font.size": 6.2,
-                     "pdf.fonttype": 42, "axes.linewidth": 0.5, "axes.edgecolor": "#94A3B8",
-                     "xtick.major.width": 0.4, "ytick.major.width": 0.4, "xtick.major.size": 2,
-                     "ytick.major.size": 2, "xtick.color": "#6B7280", "ytick.color": "#6B7280"})
-INK, MUTED, FRAME = "#1F2937", "#6B7280", "#CBD5E1"
-OURS, THEM, KEY = "#047857", "#B45309", "#7C3AED"
-ROOT = Path(__file__).resolve().parents[1]
-D = ROOT / "results/models/gemma3_1b/stage5/bias_in_bios"
-K, ALPHA, N = 50, 0.05, 4000
-PRIOR = 0.25
+plt.rcParams.update({"font.family": "sans-serif", "font.sans-serif": "DejaVu Sans", "font.size": 6,
+                     "pdf.fonttype": 42})
+INK, MUTED, LINE, FRAME = "#1F2937", "#6B7280", "#94A3B8", "#CBD5E1"
+ACCENT, GREEN, GREEN_BG = "#7C3AED", "#047857", "#ECFDF5"
+SAE_FILL, SAE_EDGE = "#EEF2FF", "#818CF8"
+AMBER, AMBER_BG = "#B45309", "#FFFBEB"
+SLATE = LinearSegmentedColormap.from_list("slate", ["#E2E8F0", "#64748B"])
+BLUE = LinearSegmentedColormap.from_list("blue", ["#BFDBFE", "#1E3A8A"])
 
-
-def wealth(X, delta, cap):
-    """Log10 wealth path of the bet against E[x] <= delta (aGRAPA, as betting_log_evalues in stage5_interventional)."""
-    n, k = X.shape
-    logw, sx, sxx = np.zeros(k), np.zeros(k), np.zeros(k)
-    path = np.zeros((n, k))
-    lam_max = cap / (1 + delta)
-    for t in range(n):
-        mu = (delta + sx) / (t + 1)
-        var = (PRIOR + sxx - (sx * sx / t if t else 0.0)) / (t + 1)
-        d = mu - delta
-        lam = np.clip(d / (np.maximum(var, 1e-12) + d * d), 0, lam_max)
-        logw += np.log1p(lam * (X[t] - delta))
-        sx += X[t]
-        sxx += X[t] ** 2
-        path[t] = logw
-    return path / np.log(10)
-
-
-def ebh(log10e):
-    o = np.argsort(-log10e)
-    ok = log10e[o] >= np.log10(K / (ALPHA * np.arange(1, K + 1)))
-    k = np.nonzero(ok)[0].max() + 1 if ok.any() else 0
-    return set(o[:k].tolist())
-
-
-z = np.load(D / "delta.npz")
-delta = json.loads((D / "pilot.json").read_text())["delta"]
-P = np.vstack([z["B__resample"], z["O__resample"]])[:, :K].astype(float)
-tau = P.mean(0) / delta
-rng = np.random.default_rng(3)
-X = P[rng.permutation(len(P))[:N]]
-r = rng.integers(0, K - 1, size=X.shape)
-r = r + (r >= np.arange(K))
-D_j = (X - np.take_along_axis(X, r, axis=1)) / 2
-ours, khera = wealth(X, delta, 0.9), wealth(D_j, 0.0, 0.5)
-sel_o, sel_k = ebh(ours[-1]), ebh(khera[-1])
-print("selected ours", sorted(np.round(tau[list(sel_o)], 2)), "khera", sorted(np.round(tau[list(sel_k)], 2)))
-order = np.argsort(-tau)
-comp = tau.mean()
-
-fig = plt.figure(figsize=(7.0, 2.35), dpi=300)
-
-
-def title(ax, s):
-    ax.set_title(s, fontsize=6.6, color=INK, fontweight="bold", loc="left", pad=4)
-
-
-# (a) what an intervention does
-ax = fig.add_axes([0.0, 0.13, 0.275, 0.74])
-ax.set_xlim(0, 30)
-ax.set_ylim(-0.4, 12.2)
+rng = np.random.default_rng(4)
+fig = plt.figure(figsize=(7.0, 3.5), dpi=300)
+ax = fig.add_axes([0, 0, 1, 1])
+ax.set_xlim(0, 100)
+ax.set_ylim(0, 50.3)
 ax.axis("off")
-title(ax, "(a) editing one latent on one input")
-tokens = ["the", "film", "is", "a", "quiet", "delight"]
-rows = [("original", [0, 0, 0, 0, 2.7, 3.9], "#1E3A8A", 0.92), ("resample", [0, 0, 0, 0.7, 1.2, 2.2], OURS, 0.86),
-        ("zero", [0, 0, 0, 0, 0, 0], THEM, 0.74)]
-for i, (name, a, col, m) in enumerate(rows):
-    y0 = 8.3 - i * 3.9
-    ax.text(0, y0 + 1.0, name, color=col, fontsize=6.0, fontweight="bold", va="center")
-    for t, v in enumerate(a):
-        x = 6.6 + t * 2.45
-        ax.bar(x, v * 0.72, width=1.7, bottom=y0, color=col, lw=0)
-    ax.plot([5.5, 20.4], [y0, y0], color=FRAME, lw=0.5)
-    ax.add_patch(FancyArrowPatch((20.7, y0 + 1), (22.3, y0 + 1), arrowstyle="-|>", mutation_scale=5, color=MUTED, lw=0.6))
-    ax.barh(y0 + 1, 6.6, height=1.5, left=22.8, color="white", edgecolor=FRAME, lw=0.4)
-    ax.barh(y0 + 1, 6.6 * m, height=1.5, left=22.8, color=col, alpha=0.8, lw=0)
-    ax.text(22.8 + 6.6 * m - 0.2, y0 + 1, f"{m:.2f}", ha="right", va="center", color="white", fontsize=5.2)
-for t, w in enumerate(tokens):
-    ax.text(6.6 + t * 2.45, 0.2, w, rotation=38, ha="right", va="top", fontsize=4.9, color=MUTED, family="DejaVu Sans Mono")
-ax.text(26.1, 12.0, "$m(x)$", ha="center", va="center", fontsize=5.8, color=MUTED)
-ax.text(13, 12.0, "activation of latent $j$", ha="center", va="center", fontsize=5.4, color=MUTED)
 
-# (b, c) wealth
-picks = [(order[0], "#1E3A8A"), (order[1], "#2563EB"), (order[3], KEY), (order[8], "#94A3B8")]
-xs = np.arange(1, N + 1)
-for frame, path, name, col, ttl in [([0.33, 0.2, 0.165, 0.67], ours, "ours", OURS, "(b) bet: effect above $\\delta$"),
-                                    ([0.515, 0.2, 0.165, 0.67], khera, "Khera", THEM, "(c) bet: effect above a random candidate")]:
-    ax = fig.add_axes(frame)
-    for j, c in picks:
-        ax.plot(xs[::8], np.maximum(path[::8, j], -3), color=c, lw=0.9)
-    ax.axhline(np.log10(K / ALPHA), color="#B91C1C", lw=0.7, ls=(0, (3, 1.5)))
-    ax.axhline(0, color=FRAME, lw=0.5)
-    ax.set_xlim(0, N)
-    ax.set_ylim(-3, max(ours[-1].max(), khera[-1].max()) * 1.08)
-    ax.set_xticks([0, 2000, 4000], ["0", "2k", "4k"])
-    ax.set_xlabel("inputs", fontsize=5.6, color=MUTED, labelpad=1)
-    ax.tick_params(labelsize=5.2, pad=1)
-    for s in ("top", "right"):
-        ax.spines[s].set_visible(False)
-    title(ax, "(b) ours: beat $\\delta$" if name == "ours" else "(c) Khera: beat a random one")
-    if name != "ours":
-        ax.set_yticklabels([])
-    if name == "ours":
-        ax.set_ylabel("log$_{10}$ wealth", fontsize=5.6, color=MUTED, labelpad=1)
-        ax.text(60, np.log10(K / ALPHA) + 0.3, "$K/\\alpha$", color="#B91C1C", fontsize=5.2, va="bottom")
-    if name != "ours":
-        for j, c in picks:
-            ax.annotate(f"$\\tau$ = {tau[j]:.2f}$\\delta$", (N, path[-1, j]), xytext=(1.5, 0), textcoords="offset points",
-                        fontsize=4.8, color=c, va="center", annotation_clip=False)
 
-# (d) who is selected
-ax = fig.add_axes([0.79, 0.2, 0.205, 0.67])
-n_show = 12
-ids = order[:n_show]
-ax.bar(range(n_show), tau[ids], width=0.72, color="#CBD5E1", lw=0)
-for i, j in enumerate(ids):
-    top = tau[j] + 0.09
-    if j in sel_o:
-        ax.scatter([i - 0.17], [top], s=5, color=OURS, lw=0, zorder=5)
-    if j in sel_k:
-        ax.scatter([i + 0.17], [top], s=5, color=THEM, lw=0, zorder=5)
-ax.axhline(1, color=KEY, lw=0.8)
-ax.axhline(comp, color=THEM, lw=0.8, ls=(0, (3, 1.5)))
-ax.text(n_show - 0.5, 1.03, "$\\delta$", color=KEY, fontsize=6, ha="right", va="bottom")
-ax.text(n_show - 0.5, comp + 0.03, "random candidate", color=THEM, fontsize=5.0, ha="right", va="bottom")
-ax.scatter([], [], s=5, color=OURS, label="selected, ours")
-ax.scatter([], [], s=5, color=THEM, label="selected, Khera")
-ax.legend(frameon=False, fontsize=5.0, loc="upper right", handletextpad=0.1, borderpad=0, labelspacing=0.2)
-ax.set_xticks([])
-ax.set_xlabel("top latents, by measured effect", fontsize=5.6, color=MUTED, labelpad=2)
-ax.set_ylabel("effect $\\tau_j / \\delta$", fontsize=5.6, color=MUTED, labelpad=1)
-ax.tick_params(labelsize=5.2, pad=1)
-for s in ("top", "right"):
-    ax.spines[s].set_visible(False)
-title(ax, "(d) who is selected")
+def arrow(x0, y0, x1, y1, color=INK, lw=0.7, ls="-"):
+    ax.add_patch(FancyArrowPatch((x0, y0), (x1, y1), arrowstyle="-|>", mutation_scale=5.5, color=color, lw=lw, ls=ls,
+                                 shrinkA=0, shrinkB=0))
 
-out = ROOT / "results" / "figures"
+
+def text(x, y, s, color=MUTED, size=5.5, ha="center", va="center", **kw):
+    ax.text(x, y, s, color=color, fontsize=size, ha=ha, va=va, linespacing=1.2, **kw)
+
+
+def tag(x, y, s, ha="center"):
+    ax.text(x, y, s, color=AMBER, fontsize=4.9, ha=ha, va="center", linespacing=1.15,
+            bbox=dict(boxstyle="round,pad=0.22,rounding_size=0.25", fc=AMBER_BG, ec=AMBER, lw=0.4))
+
+
+def column(x, y0, h, w, v, cmap, vmax=2.2, zero_white=False):
+    n = len(v)
+    ch = h / n
+    for i, a in enumerate(v):
+        fc = "white" if (zero_white and a == 0) else cmap(min(a / vmax, 1))
+        ax.add_patch(Rectangle((x, y0 + i * ch), w, ch, facecolor=fc, edgecolor=FRAME, lw=0.25))
+
+
+def slabs(x, y0, h, n, label):
+    for i in range(n):
+        xi = x + i * 1.35
+        ax.add_patch(Polygon([[xi, y0], [xi + 0.95, y0 + 1.5], [xi + 0.95, y0 + h + 1.5], [xi, y0 + h]], closed=True,
+                             facecolor="#F1F5F9", edgecolor=LINE, lw=0.5))
+    text(x + (n * 1.35) / 2 + 0.2, y0 - 1.6, label)
+
+
+# ---------------------------------------------------------------------------
+# top: the model
+# ---------------------------------------------------------------------------
+ym, y0, H = 37.0, 31.0, 12.0
+for i, t in enumerate(["Review:", "quiet", "delight", "Sentiment:"]):
+    y = 41.6 - i * 3.0
+    ax.add_patch(FancyBboxPatch((0.8, y), 9.6, 2.3, boxstyle="round,pad=0,rounding_size=0.5", facecolor="white",
+                                edgecolor=LINE, lw=0.45))
+    text(5.6, y + 1.15, t, color=INK, size=5.4, family="DejaVu Sans Mono")
+text(5.6, y0 - 1.6, "one input $x$")
+arrow(10.7, ym, 12.2, ym)
+slabs(12.5, y0, H, 4, "layers $\\leq L$")
+arrow(18.3, ym, 19.8, ym)
+
+v = np.abs(rng.normal(1, 0.6, 16))
+column(20.1, y0, H, 2.0, v, SLATE)
+text(21.1, y0 - 1.6, "$h$", color=INK, size=6.2)
+arrow(22.4, ym, 23.7, ym)
+
+ax.add_patch(Polygon([[24, ym - 2.6], [24, ym + 2.6], [29, ym + 6.6], [29, ym - 6.6]], closed=True, facecolor=SAE_FILL,
+                     edgecolor=SAE_EDGE, lw=0.6))
+text(26.5, ym, "SAE\nencoder", color="#4338CA", size=4.9, fontweight="bold")
+arrow(29.2, ym, 30.5, ym)
+
+n_l, J = 26, 16
+lat = np.zeros(n_l)
+lat[[3, 9, 21]] = [1.4, 2.0, 1.1]
+lat[J] = 2.3
+col_x, col_w = 30.9, 2.3
+column(col_x, y0 - 1, H + 2, col_w, lat, BLUE, vmax=2.6, zero_white=True)
+ch = (H + 2) / n_l
+ax.add_patch(Rectangle((col_x - 0.15, y0 - 1 + J * ch - 0.1), col_w + 0.3, ch + 0.2, facecolor="none", edgecolor=ACCENT, lw=0.9, zorder=5))
+text(col_x + col_w / 2, y0 - 2.6, "16k latents", size=5.2)
+yj = y0 - 1 + J * ch + ch / 2
+
+# the edit, as an inset
+ax.add_patch(FancyBboxPatch((24.6, 44.4), 19.4, 4.2, boxstyle="round,pad=0,rounding_size=0.6", facecolor="#F5F3FF", edgecolor=ACCENT, lw=0.6))
+ax.plot([col_x + col_w / 2, col_x + col_w / 2], [yj + ch / 2 + 0.1, 44.4], color=ACCENT, lw=0.5, ls=(0, (2, 1.5)))
+text(34.3, 47.3, "edit latent $j$ only", color=ACCENT, size=5.2, fontweight="bold")
+text(34.3, 45.6, "$a_j \\rightarrow \\tilde a_j$, resampled from a fitted model", color=ACCENT, size=4.8)
+tag(50.2, 46.5, "Khera: $\\tilde a_j = 0$")
+
+arrow(33.5, ym, 34.8, ym)
+ax.add_patch(Polygon([[35.1, ym - 6.6], [35.1, ym + 3.6], [40.1, ym + 2.6], [40.1, ym - 2.6]], closed=True, facecolor=SAE_FILL,
+                     edgecolor=SAE_EDGE, lw=0.6))
+text(37.6, ym - 1, "SAE\ndecoder", color="#4338CA", size=4.9, fontweight="bold")
+arrow(40.3, ym, 41.6, ym)
+
+v2 = v.copy()
+v2[[5, 6, 7]] += 0.7
+column(41.9, y0, H, 2.0, v2, SLATE)
+ax.add_patch(Rectangle((41.75, y0 + 5 * H / 16), 2.3, 3 * H / 16, facecolor="none", edgecolor=ACCENT, lw=0.7))
+text(42.9, y0 - 1.6, "edited $h$", color=ACCENT, size=5.4)
+
+# error term: skip connection
+ax.plot([21.1, 21.1], [y0 - 3.2, y0 - 4.6], color=LINE, lw=0.6)
+ax.plot([21.1, 42.9], [y0 - 4.6, y0 - 4.6], color=LINE, lw=0.6)
+arrow(42.9, y0 - 4.6, 42.9, y0 - 2.9, color=LINE, lw=0.6)
+text(32.0, y0 - 5.6, "SAE error and all other latents kept", size=4.9)
+
+arrow(44.3, ym, 46.0, ym)
+slabs(46.3, y0, H, 4, "layers $> L$")
+arrow(52.1, ym, 53.8, ym)
+
+# output
+for y, name, w_, col in [(ym + 2.5, "correct", 7.4, GREEN), (ym - 2.5, "wrong", 1.6, LINE)]:
+    ax.add_patch(Rectangle((54.1, y - 1.2), 8.6, 2.4, facecolor="white", edgecolor=FRAME, lw=0.4))
+    ax.add_patch(Rectangle((54.1, y - 1.2), w_, 2.4, facecolor=col, lw=0, alpha=0.8))
+    text(58.4, y + 2.0, name, size=4.9)
+text(58.4, y0 - 1.6, "class probabilities")
+tag(58.4, y0 + 13.6, "Khera: logit gap")
+
+# unedited run and difference
+arrow(62.9, ym, 67.0, ym)
+text(64.8, ym + 1.1, "$m(x;j)$", color=ACCENT, size=5.2)
+ax.add_patch(Circle((68.0, ym), 1.0, facecolor="white", edgecolor=INK, lw=0.6))
+text(68.0, ym, "−", color=INK, size=7)
+ax.plot([21.1, 21.1], [y0 + H + 0.2, 49.5], color=LINE, lw=0.6, ls=(0, (2, 1.5)))
+ax.plot([21.1, 68.0], [49.5, 49.5], color=LINE, lw=0.6, ls=(0, (2, 1.5)))
+arrow(68.0, 49.5, 68.0, ym + 1.1, color=LINE, lw=0.6, ls=(0, (2, 1.5)))
+text(69.0, 47.8, "same input, no edit: $m(x)$", size=4.9, ha="left")
+arrow(69.1, ym, 72.6, ym)
+ax.add_patch(FancyBboxPatch((72.9, ym - 3.6), 25.6, 7.2, boxstyle="round,pad=0,rounding_size=0.7", facecolor=GREEN_BG, edgecolor=GREEN, lw=0.6))
+text(85.7, ym + 1.4, "effect of latent $j$ on input $x$", color=GREEN, size=5.2)
+text(85.7, ym - 1.3, "$\\Delta_j(x) = m(x) - m(x;j)$", color=INK, size=6.2)
+
+# ---------------------------------------------------------------------------
+# bottom: data splits feed the procedure
+# ---------------------------------------------------------------------------
+y_h, h_h = 19.4, 2.5
+segs = [(0.8, 15.0, "pilot"), (17.0, 22.0, "screening split A"), (40.2, 44.8, "test split B"), (86.2, 12.8, "oracle split O")]
+for x, w, name in segs:
+    ax.add_patch(Rectangle((x, y_h), w, h_h, facecolor="#E2E8F0", edgecolor=LINE, lw=0.4))
+    text(x + w / 2, y_h + h_h / 2, name, color=INK, size=5.3, fontweight="bold")
+y_t, y_b = 18.4, 6.2
+
+# pilot: delta
+ax.plot([2.5, 14.2], [12.5, 12.5], color=LINE, lw=0.6)
+ax.plot([2.5, 2.5], [11.9, 13.1], color=LINE, lw=0.6)
+ax.plot([6.0, 6.0], [11.2, 13.8], color=ACCENT, lw=1.0)
+text(2.5, 10.7, "0", size=4.9)
+text(6.0, 15.0, "$\\delta$", color=ACCENT, size=6.6)
+text(8.3, 3.3, "fix the smallest\neffect that counts")
+
+# A: ranking
+n = 34
+h_ = np.exp(-np.arange(n) / 7.0) * 11.0
+for i, v_ in enumerate(h_):
+    ax.add_patch(Rectangle((18.2 + i * 0.57, y_b), 0.42, v_, lw=0, facecolor=BLUE(0.7) if i < 11 else FRAME))
+ax.plot([24.6, 24.6], [y_b, 17.9], color=ACCENT, lw=0.6, ls=(0, (2, 1.5)))
+text(25.1, 16.6, "top $K$", color=ACCENT, size=5.0, ha="left")
+text(28.0, 3.3, "attribution ranks all 16k,\nkeep the top 50")
+tag(28.0, 0.9, "Khera: active on $\\geq$20% of prompts")
+
+# B: effect matrix -> bet -> e-BH
+mx, my, mw, mh, cols, rows_ = 41.4, y_b, 9.5, 11.0, 12, 9
+M = np.abs(rng.normal(0.4, 0.3, (rows_, cols)))
+for r in range(rows_):
+    for c in range(cols):
+        ax.add_patch(Rectangle((mx + c * mw / cols, my + r * mh / rows_), mw / cols, mh / rows_, lw=0, facecolor=SLATE(min(M[r, c], 1))))
+ax.add_patch(Rectangle((mx, my), mw, mh, facecolor="none", edgecolor=FRAME, lw=0.4))
+ax.add_patch(Rectangle((mx + 4 * mw / cols, my), mw / cols, mh, facecolor="none", edgecolor=ACCENT, lw=0.8))
+text(46.1, 3.3, "$\\Delta_j(x)$ for every\ninput and candidate")
+
+arrow(51.4, 11.7, 53.8, 11.7)
+px, pw = 54.2, 12.5
+ax.plot([px, px], [y_b, y_b + 11], color=LINE, lw=0.5)
+ax.plot([px, px + pw], [y_b + 2.4, y_b + 2.4], color=LINE, lw=0.4, ls=(0, (2, 1.5)))
+t = np.linspace(0, 1, 40)
+ax.plot(px + t * pw, y_b + 2.4 + 8.2 * t ** 1.6, color=GREEN, lw=1.0)
+ax.plot(px + t * pw, y_b + 2.4 - 1.6 * t, color=LINE, lw=1.0)
+text(px + 0.6, y_b + 11.0, "wealth", size=4.8, ha="left", va="top")
+text(px + pw / 2 + 0.3, 3.3, "bet each effect beats $\\delta$:\nfinal wealth = e-value")
+tag(60.6, 0.9, "Khera: bet it beats a random candidate")
+
+arrow(67.1, 11.7, 69.5, 11.7)
+vals = 10.5 * np.exp(-np.arange(9) / 2.6)
+for i, v_ in enumerate(vals):
+    ax.add_patch(Rectangle((69.9 + i * 1.25, y_b), 0.95, v_, lw=0, facecolor=GREEN if i < 3 else FRAME))
+line_x = 69.9 + np.arange(9) * 1.25 + 0.5
+ax.plot(line_x, y_b + 6.6 / (1 + np.arange(9) * 0.32), color="#B91C1C", lw=0.8)
+text(75.5, 3.3, "e-BH keeps a list\nwith FDR $\\leq \\alpha$")
+
+# O
+arrow(82.0, 11.7, 86.2, 11.7)
+for i, name in enumerate(["$j_1$", "$j_2$", "$j_3$"]):
+    y = 14.2 - i * 3.5
+    ax.add_patch(FancyBboxPatch((87.8, y), 3.2, 2.4, boxstyle="round,pad=0,rounding_size=0.4", facecolor=GREEN_BG, edgecolor=GREEN, lw=0.5))
+    text(89.4, y + 1.2, name, color=GREEN, size=5.2)
+    arrow(91.3, y + 1.2, 92.6, y + 1.2, color=LINE, lw=0.5)
+    text(93.0, y + 1.2, "$\\tau_j > \\delta$ ?", color=INK, size=5.3, ha="left")
+text(92.6, 3.3, "check realised FDR\non held-out inputs")
+tag(92.6, 0.9, "Khera: synthetic only")
+
+# connector from the effect into the matrix
+ax.plot([85.7, 85.7], [ym - 3.8, 26.2], color=INK, lw=0.7)
+ax.plot([85.7, 46.1], [26.2, 26.2], color=INK, lw=0.7)
+arrow(46.1, 26.2, 46.1, y_h + h_h + 0.1)
+text(66.0, 27.3, "repeat for every input in B and every candidate latent", color=INK, size=5.2)
+
+out = Path(__file__).resolve().parents[1] / "results" / "figures"
 fig.savefig(out / "fig_pipeline.pdf", bbox_inches="tight", pad_inches=0.03)
 fig.savefig(out / "fig_pipeline.png", bbox_inches="tight", pad_inches=0.03, dpi=220)
 print("wrote", out / "fig_pipeline.pdf")
