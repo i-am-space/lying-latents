@@ -4517,97 +4517,227 @@
    "results/<model>/stage5/<task>/evaluate.json (attribution top-k)"
   ],
   "_spec": {
-   "khera": "zero ablation as published; D_j = drop(random other candidate) - drop(j), comparator redrawn per input; aGRAPA, cap 0.5/B; e-BH at alpha 0.05",
-   "ours": "resampling, K = 50, cap 0.9, alpha 0.1",
-   "scored_against": "tau_j > delta (the minimum-effect truth); khera_fdr_own_target against tau_j > mean tau of the other candidates"
+   "khera": "D_j = drop(random other candidate) - drop(j), comparator redrawn per input from the tested set; aGRAPA, cap 0.5/B; e-BH at alpha 0.05. Reimplementation on our candidates and metric (probability; Khera: logit difference, features active on >= 20% of prompts)",
+   "setups": {
+    "test50_pool50": "K = 50, comparator from those 50",
+    "test250_pool250": "K = 250, comparator from those 250",
+    "sensitivity_test50_pool250": "K = 50, comparator from 250 (not Khera's design)"
+   },
+   "ours": "resampling, K = 50, cap 0.9",
+   "caution": "n = 4000 leaves 1000 inputs for the oracle; re-splits share one finite pool",
+   "scored_against": "tau_j > delta (the minimum-effect truth); khera_fdr_own_target against tau_j > mean tau of the other latents in the comparator pool"
   },
   "gemma2_2b": {
    "sst2": {
     "delta": 0.0076,
-    "mean_tau_random_candidate_resample": 0.0006,
-    "top50_beating_random_candidate": 28,
-    "top50_above_delta": 3,
-    "as_published_n1000": {
-     "khera_zero_alpha0.05": {
-      "fdr": 0.0,
-      "power": 0.7327,
-      "mean_selected": 3.0
+    "comparator_pools_resample": {
+     "test50_pool50": {
+      "tau_above_delta": 3,
+      "tau_above_random_candidate": 7,
+      "mean_tau_comparator_pool": 0.0028,
+      "K": 50,
+      "comparator_pool": 50
      },
-     "khera_fdr_own_target": 0.0,
-     "ours_resample_alpha0.1": {
-      "fdr": 0.0,
-      "power": 0.6667,
-      "mean_selected": 2.0
+     "test250_pool250": {
+      "tau_above_delta": 3,
+      "tau_above_random_candidate": 28,
+      "mean_tau_comparator_pool": 0.0006,
+      "K": 250,
+      "comparator_pool": 250
+     },
+     "sensitivity_test50_pool250": {
+      "tau_above_delta": 3,
+      "tau_above_random_candidate": 28,
+      "mean_tau_comparator_pool": 0.0006,
+      "K": 50,
+      "comparator_pool": 250
      }
     },
-    "same_intervention_resample_by_n": {
+    "khera_zero_ablation": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.7327,
+        "mean_selected": 3.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.7327,
+        "mean_selected": 3.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.7327,
+        "mean_selected": 3.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_zero_ablation_same_K_cap_n1000_alpha0.05": {
+     "fdr": 0.0,
+     "power": 0.7327,
+     "mean_selected": 3.0
+    },
+    "khera_resample_by_n": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6667,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6625,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.9838,
+        "mean_selected": 3.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.9613,
+        "mean_selected": 3.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.66,
+        "mean_selected": 1.98
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6625,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.9838,
+        "mean_selected": 3.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.9613,
+        "mean_selected": 3.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6667,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6687,
+        "mean_selected": 2.02
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.9838,
+        "mean_selected": 3.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.369,
+        "power": 1.0,
+        "mean_selected": 5.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_resample_by_n": {
      "1000": {
-      "khera": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.6667,
        "mean_selected": 2.0
       },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
-       "fdr": 0.0,
-       "power": 0.6667,
-       "mean_selected": 2.0
-      },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.6667,
        "mean_selected": 2.0
       }
      },
      "2000": {
-      "khera": {
-       "fdr": 0.0,
-       "power": 0.6671,
-       "mean_selected": 2.015
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.9888,
        "mean_selected": 2.985
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.9337,
        "mean_selected": 2.82
       }
      },
      "3000": {
-      "khera": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.9838,
        "mean_selected": 3.0
       },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
-       "fdr": 0.0,
-       "power": 0.9838,
-       "mean_selected": 3.0
-      },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.9838,
        "mean_selected": 3.0
       }
      },
      "4000": {
-      "khera": {
-       "fdr": 0.369,
-       "power": 1.0,
-       "mean_selected": 5.0
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.9613,
        "mean_selected": 3.0
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.9613,
        "mean_selected": 3.0
@@ -4631,90 +4761,214 @@
    },
    "ag_news": {
     "delta": 0.0111,
-    "mean_tau_random_candidate_resample": 0.001,
-    "top50_beating_random_candidate": 30,
-    "top50_above_delta": 4,
-    "as_published_n1000": {
-     "khera_zero_alpha0.05": {
-      "fdr": 0.0,
-      "power": 0.4726,
-      "mean_selected": 2.85
+    "comparator_pools_resample": {
+     "test50_pool50": {
+      "tau_above_delta": 4,
+      "tau_above_random_candidate": 8,
+      "mean_tau_comparator_pool": 0.004,
+      "K": 50,
+      "comparator_pool": 50
      },
-     "khera_fdr_own_target": 0.0,
-     "ours_resample_alpha0.1": {
-      "fdr": 0.0,
-      "power": 0.455,
-      "mean_selected": 1.82
+     "test250_pool250": {
+      "tau_above_delta": 4,
+      "tau_above_random_candidate": 33,
+      "mean_tau_comparator_pool": 0.001,
+      "K": 250,
+      "comparator_pool": 250
+     },
+     "sensitivity_test50_pool250": {
+      "tau_above_delta": 4,
+      "tau_above_random_candidate": 30,
+      "mean_tau_comparator_pool": 0.001,
+      "K": 50,
+      "comparator_pool": 250
      }
     },
-    "same_intervention_resample_by_n": {
-     "1000": {
-      "khera": {
-       "fdr": 0.0,
-       "power": 0.25,
-       "mean_selected": 1.0
+    "khera_zero_ablation": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.3317,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.3317,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.4751,
+        "mean_selected": 2.865
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_zero_ablation_same_K_cap_n1000_alpha0.05": {
+     "fdr": 0.0,
+     "power": 0.4975,
+     "mean_selected": 3.0
+    },
+    "khera_resample_by_n": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.25,
+        "mean_selected": 1.0
+       },
+       "khera_fdr_own_target": 0.0
       },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.63,
+        "mean_selected": 2.52
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.9838,
+        "mean_selected": 3.935
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.1729,
+        "power": 1.0,
+        "mean_selected": 4.925
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.25,
+        "mean_selected": 1.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.5825,
+        "mean_selected": 2.33
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 1.0,
+        "mean_selected": 4.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.3461,
+        "power": 1.0,
+        "mean_selected": 6.125
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.25,
+        "mean_selected": 1.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.8912,
+        "mean_selected": 3.565
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.3471,
+        "power": 1.0,
+        "mean_selected": 6.145
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.4293,
+        "power": 1.0,
+        "mean_selected": 7.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_resample_by_n": {
+     "1000": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.455,
        "mean_selected": 1.82
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.4138,
        "mean_selected": 1.655
       }
      },
      "2000": {
-      "khera": {
-       "fdr": 0.0,
-       "power": 0.9125,
-       "mean_selected": 3.65
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.7462,
        "mean_selected": 2.985
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.7388,
        "mean_selected": 2.955
       }
      },
      "3000": {
-      "khera": {
-       "fdr": 0.35,
-       "power": 1.0,
-       "mean_selected": 6.175
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.75,
        "mean_selected": 3.0
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.75,
        "mean_selected": 3.0
       }
      },
      "4000": {
-      "khera": {
-       "fdr": 0.4293,
-       "power": 1.0,
-       "mean_selected": 7.0
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.7512,
        "mean_selected": 3.0
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.7512,
        "mean_selected": 3.0
@@ -4738,90 +4992,214 @@
    },
    "bias_in_bios": {
     "delta": 0.0147,
-    "mean_tau_random_candidate_resample": 0.0007,
-    "top50_beating_random_candidate": 40,
-    "top50_above_delta": 1,
-    "as_published_n1000": {
-     "khera_zero_alpha0.05": {
-      "fdr": 0.0,
-      "power": 0.8083,
-      "mean_selected": 2.92
+    "comparator_pools_resample": {
+     "test50_pool50": {
+      "tau_above_delta": 1,
+      "tau_above_random_candidate": 16,
+      "mean_tau_comparator_pool": 0.0026,
+      "K": 50,
+      "comparator_pool": 50
      },
-     "khera_fdr_own_target": 0.0,
-     "ours_resample_alpha0.1": {
-      "fdr": 0.0,
-      "power": 0.925,
-      "mean_selected": 0.925
+     "test250_pool250": {
+      "tau_above_delta": 1,
+      "tau_above_random_candidate": 57,
+      "mean_tau_comparator_pool": 0.0007,
+      "K": 250,
+      "comparator_pool": 250
+     },
+     "sensitivity_test50_pool250": {
+      "tau_above_delta": 1,
+      "tau_above_random_candidate": 40,
+      "mean_tau_comparator_pool": 0.0007,
+      "K": 50,
+      "comparator_pool": 250
      }
     },
-    "same_intervention_resample_by_n": {
-     "1000": {
-      "khera": {
-       "fdr": 0.0,
-       "power": 0.09,
-       "mean_selected": 0.09
+    "khera_zero_ablation": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6179,
+        "mean_selected": 2.23
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.5542,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.7975,
+        "mean_selected": 2.88
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_zero_ablation_same_K_cap_n1000_alpha0.05": {
+     "fdr": 0.0,
+     "power": 0.6442,
+     "mean_selected": 2.33
+    },
+    "khera_resample_by_n": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.025,
+        "mean_selected": 0.025
+       },
+       "khera_fdr_own_target": 0.0
       },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 1.0,
+        "mean_selected": 1.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 1.0,
+        "mean_selected": 1.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 1.0,
+        "mean_selected": 1.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 1.0,
+        "mean_selected": 1.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 1.0,
+        "mean_selected": 1.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 1.0,
+        "mean_selected": 1.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.105,
+        "mean_selected": 0.105
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 1.0,
+        "mean_selected": 1.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 1.0,
+        "mean_selected": 1.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.7538,
+        "power": 1.0,
+        "mean_selected": 4.075
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_resample_by_n": {
+     "1000": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.925,
        "mean_selected": 0.925
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.825,
        "mean_selected": 0.825
       }
      },
      "2000": {
-      "khera": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 1.0,
        "mean_selected": 1.0
       },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
-       "fdr": 0.0,
-       "power": 1.0,
-       "mean_selected": 1.0
-      },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 1.0,
        "mean_selected": 1.0
       }
      },
      "3000": {
-      "khera": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 1.0,
        "mean_selected": 1.0
       },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
-       "fdr": 0.0,
-       "power": 1.0,
-       "mean_selected": 1.0
-      },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 1.0,
        "mean_selected": 1.0
       }
      },
      "4000": {
-      "khera": {
-       "fdr": 0.7555,
-       "power": 1.0,
-       "mean_selected": 4.11
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 1.0,
        "mean_selected": 1.0
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 1.0,
        "mean_selected": 1.0
@@ -4845,90 +5223,214 @@
    },
    "europarl": {
     "delta": 0.0096,
-    "mean_tau_random_candidate_resample": 0.0011,
-    "top50_beating_random_candidate": 31,
-    "top50_above_delta": 5,
-    "as_published_n1000": {
-     "khera_zero_alpha0.05": {
-      "fdr": 0.0,
-      "power": 0.5342,
-      "mean_selected": 4.01
+    "comparator_pools_resample": {
+     "test50_pool50": {
+      "tau_above_delta": 5,
+      "tau_above_random_candidate": 11,
+      "mean_tau_comparator_pool": 0.0051,
+      "K": 50,
+      "comparator_pool": 50
      },
-     "khera_fdr_own_target": 0.0,
-     "ours_resample_alpha0.1": {
-      "fdr": 0.0,
-      "power": 0.5625,
-      "mean_selected": 2.835
+     "test250_pool250": {
+      "tau_above_delta": 5,
+      "tau_above_random_candidate": 31,
+      "mean_tau_comparator_pool": 0.0011,
+      "K": 250,
+      "comparator_pool": 250
+     },
+     "sensitivity_test50_pool250": {
+      "tau_above_delta": 5,
+      "tau_above_random_candidate": 31,
+      "mean_tau_comparator_pool": 0.0011,
+      "K": 50,
+      "comparator_pool": 250
      }
     },
-    "same_intervention_resample_by_n": {
-     "1000": {
-      "khera": {
-       "fdr": 0.0,
-       "power": 0.398,
-       "mean_selected": 2.0
+    "khera_zero_ablation": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.5233,
+        "mean_selected": 3.93
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.5275,
+        "mean_selected": 3.96
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.5327,
+        "mean_selected": 4.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_zero_ablation_same_K_cap_n1000_alpha0.05": {
+     "fdr": 0.0,
+     "power": 0.57,
+     "mean_selected": 4.275
+    },
+    "khera_resample_by_n": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.398,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
       },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.5405,
+        "mean_selected": 2.62
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6255,
+        "mean_selected": 3.05
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.0058,
+        "power": 0.8093,
+        "mean_selected": 4.025
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.398,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6027,
+        "mean_selected": 2.93
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0048,
+        "power": 0.822,
+        "mean_selected": 4.03
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.2667,
+        "power": 0.9945,
+        "mean_selected": 6.885
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.398,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6282,
+        "mean_selected": 3.055
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.2662,
+        "power": 1.0,
+        "mean_selected": 6.86
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.4408,
+        "power": 1.0,
+        "mean_selected": 9.025
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_resample_by_n": {
+     "1000": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.5625,
        "mean_selected": 2.835
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.5253,
        "mean_selected": 2.65
       }
      },
      "2000": {
-      "khera": {
-       "fdr": 0.0,
-       "power": 0.6217,
-       "mean_selected": 3.025
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.6165,
        "mean_selected": 3.0
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.6165,
        "mean_selected": 3.0
       }
      },
      "3000": {
-      "khera": {
-       "fdr": 0.2638,
-       "power": 1.0,
-       "mean_selected": 6.845
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.7824,
        "mean_selected": 3.805
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.6417,
        "mean_selected": 3.125
       }
      },
      "4000": {
-      "khera": {
-       "fdr": 0.4394,
-       "power": 1.0,
-       "mean_selected": 9.0
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.8113,
        "mean_selected": 4.0
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.8113,
        "mean_selected": 4.0
@@ -4954,90 +5456,214 @@
   "gemma3_1b": {
    "sst2": {
     "delta": 0.0084,
-    "mean_tau_random_candidate_resample": 0.0005,
-    "top50_beating_random_candidate": 32,
-    "top50_above_delta": 4,
-    "as_published_n1000": {
-     "khera_zero_alpha0.05": {
-      "fdr": 0.0,
-      "power": 0.7378,
-      "mean_selected": 2.975
+    "comparator_pools_resample": {
+     "test50_pool50": {
+      "tau_above_delta": 4,
+      "tau_above_random_candidate": 9,
+      "mean_tau_comparator_pool": 0.0027,
+      "K": 50,
+      "comparator_pool": 50
      },
-     "khera_fdr_own_target": 0.0,
-     "ours_resample_alpha0.1": {
-      "fdr": 0.0,
-      "power": 0.2725,
-      "mean_selected": 1.09
+     "test250_pool250": {
+      "tau_above_delta": 4,
+      "tau_above_random_candidate": 33,
+      "mean_tau_comparator_pool": 0.0005,
+      "K": 250,
+      "comparator_pool": 250
+     },
+     "sensitivity_test50_pool250": {
+      "tau_above_delta": 4,
+      "tau_above_random_candidate": 32,
+      "mean_tau_comparator_pool": 0.0005,
+      "K": 50,
+      "comparator_pool": 250
      }
     },
-    "same_intervention_resample_by_n": {
-     "1000": {
-      "khera": {
-       "fdr": 0.0,
-       "power": 0.2487,
-       "mean_selected": 0.995
+    "khera_zero_ablation": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.705,
+        "mean_selected": 2.84
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.5062,
+        "mean_selected": 2.035
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.7388,
+        "mean_selected": 2.98
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_zero_ablation_same_K_cap_n1000_alpha0.05": {
+     "fdr": 0.0,
+     "power": 0.7433,
+     "mean_selected": 3.0
+    },
+    "khera_resample_by_n": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.2412,
+        "mean_selected": 0.965
+       },
+       "khera_fdr_own_target": 0.0
       },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.3262,
+        "mean_selected": 1.305
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.993,
+        "mean_selected": 3.98
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.0013,
+        "power": 0.9868,
+        "mean_selected": 4.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.0362,
+        "mean_selected": 0.145
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.2575,
+        "mean_selected": 1.03
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.9942,
+        "mean_selected": 3.985
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.0013,
+        "power": 0.9868,
+        "mean_selected": 4.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.2487,
+        "mean_selected": 0.995
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6775,
+        "mean_selected": 2.71
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.003,
+        "power": 0.998,
+        "mean_selected": 4.015
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.2015,
+        "power": 1.0,
+        "mean_selected": 5.1
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_resample_by_n": {
+     "1000": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.2725,
        "mean_selected": 1.09
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.2612,
        "mean_selected": 1.045
       }
      },
      "2000": {
-      "khera": {
-       "fdr": 0.0,
-       "power": 0.66,
-       "mean_selected": 2.64
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.505,
        "mean_selected": 2.02
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.4313,
        "mean_selected": 1.725
       }
      },
      "3000": {
-      "khera": {
-       "fdr": 0.003,
-       "power": 0.998,
-       "mean_selected": 4.015
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.9147,
        "mean_selected": 3.665
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.8322,
        "mean_selected": 3.335
       }
      },
      "4000": {
-      "khera": {
-       "fdr": 0.2071,
-       "power": 1.0,
-       "mean_selected": 5.145
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0013,
        "power": 0.9855,
        "mean_selected": 3.995
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0013,
        "power": 0.9842,
        "mean_selected": 3.99
@@ -5061,90 +5687,214 @@
    },
    "ag_news": {
     "delta": 0.0088,
-    "mean_tau_random_candidate_resample": 0.0014,
-    "top50_beating_random_candidate": 39,
-    "top50_above_delta": 8,
-    "as_published_n1000": {
-     "khera_zero_alpha0.05": {
-      "fdr": 0.0,
-      "power": 0.2216,
-      "mean_selected": 2.735
+    "comparator_pools_resample": {
+     "test50_pool50": {
+      "tau_above_delta": 8,
+      "tau_above_random_candidate": 10,
+      "mean_tau_comparator_pool": 0.0064,
+      "K": 50,
+      "comparator_pool": 50
      },
-     "khera_fdr_own_target": 0.0,
-     "ours_resample_alpha0.1": {
-      "fdr": 0.0,
-      "power": 0.4783,
-      "mean_selected": 3.865
+     "test250_pool250": {
+      "tau_above_delta": 8,
+      "tau_above_random_candidate": 39,
+      "mean_tau_comparator_pool": 0.0014,
+      "K": 250,
+      "comparator_pool": 250
+     },
+     "sensitivity_test50_pool250": {
+      "tau_above_delta": 8,
+      "tau_above_random_candidate": 39,
+      "mean_tau_comparator_pool": 0.0014,
+      "K": 50,
+      "comparator_pool": 250
      }
     },
-    "same_intervention_resample_by_n": {
-     "1000": {
-      "khera": {
-       "fdr": 0.0,
-       "power": 0.2471,
-       "mean_selected": 2.0
+    "khera_zero_ablation": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.1611,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.1611,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.2194,
+        "mean_selected": 2.71
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_zero_ablation_same_K_cap_n1000_alpha0.05": {
+     "fdr": 0.0,
+     "power": 0.3215,
+     "mean_selected": 3.99
+    },
+    "khera_resample_by_n": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.2471,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
       },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.2787,
+        "mean_selected": 2.28
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.5974,
+        "mean_selected": 4.92
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6047,
+        "mean_selected": 5.01
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.2471,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.4131,
+        "mean_selected": 3.37
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.7397,
+        "mean_selected": 6.085
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.0771,
+        "power": 0.9928,
+        "mean_selected": 8.955
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.2471,
+        "mean_selected": 2.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6114,
+        "mean_selected": 5.005
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0881,
+        "power": 0.995,
+        "mean_selected": 9.01
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.2806,
+        "power": 1.0,
+        "mean_selected": 11.665
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_resample_by_n": {
+     "1000": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.4783,
        "mean_selected": 3.865
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.3887,
        "mean_selected": 3.14
       }
      },
      "2000": {
-      "khera": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.6108,
        "mean_selected": 5.0
       },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
-       "fdr": 0.0,
-       "power": 0.6108,
-       "mean_selected": 5.0
-      },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.6102,
        "mean_selected": 4.995
       }
      },
      "3000": {
-      "khera": {
-       "fdr": 0.0866,
-       "power": 0.9939,
-       "mean_selected": 8.985
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.6253,
        "mean_selected": 5.145
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.6079,
        "mean_selected": 5.005
       }
      },
      "4000": {
-      "khera": {
-       "fdr": 0.2868,
-       "power": 1.0,
-       "mean_selected": 11.775
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0052,
        "power": 0.7241,
        "mean_selected": 6.035
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.656,
        "mean_selected": 5.43
@@ -5168,90 +5918,214 @@
    },
    "bias_in_bios": {
     "delta": 0.0161,
-    "mean_tau_random_candidate_resample": 0.0007,
-    "top50_beating_random_candidate": 40,
-    "top50_above_delta": 3,
-    "as_published_n1000": {
-     "khera_zero_alpha0.05": {
-      "fdr": 0.0,
-      "power": 0.6717,
-      "mean_selected": 3.8
+    "comparator_pools_resample": {
+     "test50_pool50": {
+      "tau_above_delta": 3,
+      "tau_above_random_candidate": 12,
+      "mean_tau_comparator_pool": 0.0031,
+      "K": 50,
+      "comparator_pool": 50
      },
-     "khera_fdr_own_target": 0.0,
-     "ours_resample_alpha0.1": {
-      "fdr": 0.0,
-      "power": 0.2117,
-      "mean_selected": 0.635
+     "test250_pool250": {
+      "tau_above_delta": 3,
+      "tau_above_random_candidate": 44,
+      "mean_tau_comparator_pool": 0.0007,
+      "K": 250,
+      "comparator_pool": 250
+     },
+     "sensitivity_test50_pool250": {
+      "tau_above_delta": 3,
+      "tau_above_random_candidate": 40,
+      "mean_tau_comparator_pool": 0.0007,
+      "K": 50,
+      "comparator_pool": 250
      }
     },
-    "same_intervention_resample_by_n": {
-     "1000": {
-      "khera": {
-       "fdr": 0.0,
-       "power": 0.0183,
-       "mean_selected": 0.055
+    "khera_zero_ablation": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.3647,
+        "mean_selected": 2.075
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.2662,
+        "mean_selected": 1.52
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6733,
+        "mean_selected": 3.81
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_zero_ablation_same_K_cap_n1000_alpha0.05": {
+     "fdr": 0.0,
+     "power": 0.3364,
+     "mean_selected": 1.93
+    },
+    "khera_resample_by_n": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.0017,
+        "mean_selected": 0.005
+       },
+       "khera_fdr_own_target": 0.0
       },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "2000": {
+       "khera": {
+        "fdr": 0.0083,
+        "power": 0.9983,
+        "mean_selected": 2.995
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.2762,
+        "power": 1.0,
+        "mean_selected": 4.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.3475,
+        "power": 1.0,
+        "mean_selected": 4.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.0,
+        "mean_selected": 0.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0083,
+        "power": 0.96,
+        "mean_selected": 2.88
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.2762,
+        "power": 1.0,
+        "mean_selected": 4.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.3528,
+        "power": 1.0,
+        "mean_selected": 4.035
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.0217,
+        "mean_selected": 0.065
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.2075,
+        "power": 1.0,
+        "mean_selected": 3.805
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.2897,
+        "power": 1.0,
+        "mean_selected": 4.09
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.5617,
+        "power": 1.0,
+        "mean_selected": 5.97
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_resample_by_n": {
+     "1000": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.2117,
        "mean_selected": 0.635
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.1583,
        "mean_selected": 0.475
       }
      },
      "2000": {
-      "khera": {
-       "fdr": 0.2025,
-       "power": 1.0,
-       "mean_selected": 3.785
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.3392,
        "mean_selected": 1.0
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.3392,
        "mean_selected": 1.0
       }
      },
      "3000": {
-      "khera": {
-       "fdr": 0.2905,
-       "power": 1.0,
-       "mean_selected": 4.095
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.3592,
        "mean_selected": 1.0
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.3592,
        "mean_selected": 1.0
       }
      },
      "4000": {
-      "khera": {
-       "fdr": 0.5609,
-       "power": 1.0,
-       "mean_selected": 5.975
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.4371,
        "mean_selected": 1.0
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.4371,
        "mean_selected": 1.0
@@ -5275,90 +6149,214 @@
    },
    "europarl": {
     "delta": 0.0091,
-    "mean_tau_random_candidate_resample": 0.0015,
-    "top50_beating_random_candidate": 24,
-    "top50_above_delta": 9,
-    "as_published_n1000": {
-     "khera_zero_alpha0.05": {
-      "fdr": 0.0,
-      "power": 0.6152,
-      "mean_selected": 6.0
+    "comparator_pools_resample": {
+     "test50_pool50": {
+      "tau_above_delta": 9,
+      "tau_above_random_candidate": 11,
+      "mean_tau_comparator_pool": 0.0075,
+      "K": 50,
+      "comparator_pool": 50
      },
-     "khera_fdr_own_target": 0.0,
-     "ours_resample_alpha0.1": {
-      "fdr": 0.0,
-      "power": 0.6481,
-      "mean_selected": 6.0
+     "test250_pool250": {
+      "tau_above_delta": 9,
+      "tau_above_random_candidate": 25,
+      "mean_tau_comparator_pool": 0.0015,
+      "K": 250,
+      "comparator_pool": 250
+     },
+     "sensitivity_test50_pool250": {
+      "tau_above_delta": 9,
+      "tau_above_random_candidate": 24,
+      "mean_tau_comparator_pool": 0.0015,
+      "K": 50,
+      "comparator_pool": 250
      }
     },
-    "same_intervention_resample_by_n": {
-     "1000": {
-      "khera": {
-       "fdr": 0.0,
-       "power": 0.5412,
-       "mean_selected": 5.01
+    "khera_zero_ablation": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.4241,
+        "mean_selected": 4.13
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.4129,
+        "mean_selected": 4.02
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6141,
+        "mean_selected": 5.99
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_zero_ablation_same_K_cap_n1000_alpha0.05": {
+     "fdr": 0.0,
+     "power": 0.6152,
+     "mean_selected": 6.0
+    },
+    "khera_resample_by_n": {
+     "test50_pool50": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.4453,
+        "mean_selected": 4.125
+       },
+       "khera_fdr_own_target": 0.0
       },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6303,
+        "mean_selected": 5.735
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6671,
+        "mean_selected": 6.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6888,
+        "mean_selected": 6.0
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "test250_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.4314,
+        "mean_selected": 3.995
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.6593,
+        "mean_selected": 6.0
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.0155,
+        "power": 0.7089,
+        "mean_selected": 6.495
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.1945,
+        "power": 0.9994,
+        "mean_selected": 10.955
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     },
+     "sensitivity_test50_pool250": {
+      "1000": {
+       "khera": {
+        "fdr": 0.0,
+        "power": 0.5417,
+        "mean_selected": 5.015
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "2000": {
+       "khera": {
+        "fdr": 0.0007,
+        "power": 0.6635,
+        "mean_selected": 6.045
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "3000": {
+       "khera": {
+        "fdr": 0.1737,
+        "power": 0.9984,
+        "mean_selected": 10.975
+       },
+       "khera_fdr_own_target": 0.0
+      },
+      "4000": {
+       "khera": {
+        "fdr": 0.3045,
+        "power": 1.0,
+        "mean_selected": 12.75
+       },
+       "khera_fdr_own_target": 0.0
+      }
+     }
+    },
+    "ours_resample_by_n": {
+     "1000": {
+      "alpha0.1": {
        "fdr": 0.0,
        "power": 0.6481,
        "mean_selected": 6.0
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.6481,
        "mean_selected": 6.0
       }
      },
      "2000": {
-      "khera": {
-       "fdr": 0.0007,
-       "power": 0.6609,
-       "mean_selected": 6.02
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0007,
        "power": 0.6593,
        "mean_selected": 6.005
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.6593,
        "mean_selected": 6.0
       }
      },
      "3000": {
-      "khera": {
-       "fdr": 0.1728,
-       "power": 0.9995,
-       "mean_selected": 10.975
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0007,
        "power": 0.6671,
        "mean_selected": 6.005
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.6671,
        "mean_selected": 6.0
       }
      },
      "4000": {
-      "khera": {
-       "fdr": 0.3008,
-       "power": 1.0,
-       "mean_selected": 12.67
-      },
-      "khera_fdr_own_target": 0.0,
-      "ours_alpha0.1": {
+      "alpha0.1": {
        "fdr": 0.0007,
        "power": 0.6888,
        "mean_selected": 6.005
       },
-      "ours_alpha0.05": {
+      "alpha0.05": {
        "fdr": 0.0,
        "power": 0.6888,
        "mean_selected": 6.0

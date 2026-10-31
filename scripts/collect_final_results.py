@@ -378,49 +378,50 @@ def _fps(d):
 def khera():
     """Khera (2026) run on our zero-ablation and resampling effects (scripts/stage5_khera_baseline.py), next to ours
     on the same re-splits; plus the attribution top-k baseline (Marks et al.) against the same oracle."""
-    import numpy as np
     f = R / "stage5_khera_baseline.json"
     kb = load(f)
     if kb is None:
         return "PENDING: run scripts/stage5_khera_baseline.py"
     iv = kb["interventions"]
     out = {"_source": [rel(f), "results/<model>/stage5/<task>/evaluate.json (attribution top-k)"],
-           "_spec": {"khera": "zero ablation as published; D_j = drop(random other candidate) - drop(j), comparator "
-                              "redrawn per input; aGRAPA, cap 0.5/B; e-BH at alpha 0.05",
-                     "ours": "resampling, K = 50, cap 0.9, alpha 0.1",
+           "_spec": {"khera": "D_j = drop(random other candidate) - drop(j), comparator redrawn per input from the "
+                              "tested set; aGRAPA, cap 0.5/B; e-BH at alpha 0.05. Reimplementation on our candidates "
+                              "and metric (probability; Khera: logit difference, features active on >= 20% of prompts)",
+                     "setups": {"test50_pool50": "K = 50, comparator from those 50",
+                                "test250_pool250": "K = 250, comparator from those 250",
+                                "sensitivity_test50_pool250": "K = 50, comparator from 250 (not Khera's design)"},
+                     "ours": "resampling, K = 50, cap 0.9",
+                     "caution": "n = 4000 leaves 1000 inputs for the oracle; re-splits share one finite pool",
                      "scored_against": "tau_j > delta (the minimum-effect truth); khera_fdr_own_target against "
-                                       "tau_j > mean tau of the other candidates"}}
+                                       "tau_j > mean tau of the other latents in the comparator pool"}}
     for key, m in MODELS.items():
         if m["stage5"] is None:
             continue
         tasks = {}
         for t in STAGE5_TASKS:
             z, r = iv["zero"][m["name"]][t], iv["resample"][m["name"]][t]
-            d = np.load(m["stage5"] / t / "delta.npz")
-            P = np.vstack([d["B__resample"], d["O__resample"]])[:, :int(d["n_candidates"])]
-            tau = P.mean(0)
-
             def cell(res, spec, n, a, k):
                 return res["resplit"][spec].get(str(n), {}).get(str(a), {}).get(k)
-            same = {}
-            for n in ("1000", "2000", "3000", "4000"):
-                same[n] = {"khera": _fps(cell(r, "v2_cap0.5", n, 0.05, "khera_vs_delta")),
-                           "khera_fdr_own_target": (cell(r, "v2_cap0.5", n, 0.05, "khera_vs_own_target") or {}).get("fdr"),
-                           "ours_alpha0.1": _fps(cell(r, "v2", n, 0.1, "ours_vs_delta")),
-                           "ours_alpha0.05": _fps(cell(r, "v2", n, 0.05, "ours_vs_delta"))}
+
+            def setup(res, spec, ns):
+                return {n: {"khera": _fps(cell(res, spec, n, 0.05, "khera_vs_delta")),
+                            "khera_fdr_own_target": (cell(res, spec, n, 0.05, "khera_vs_own_target") or {}).get("fdr")}
+                        for n in ns}
+            same = ("1000", "2000", "3000", "4000")
+            specs = {"test50_pool50": "v2_cap0.5", "test250_pool250": "prereg",
+                     "sensitivity_test50_pool250": "v2_cap0.5_pool250"}
+            ours = {n: {"alpha0.1": _fps(cell(r, "v2", n, 0.1, "ours_vs_delta")),
+                        "alpha0.05": _fps(cell(r, "v2", n, 0.05, "ours_vs_delta"))} for n in same}
             ev = load(m["stage5"] / t / "evaluate.json")
             topk = {k: {"fdr": v["fdr"], "power": v["power"]}
                     for k, v in ev["interventions"]["resample"]["baselines"].items() if k.startswith("atp_top")}
             tasks[t] = {
                 "delta": r["delta"],
-                "mean_tau_random_candidate_resample": float(tau.mean()),
-                "top50_beating_random_candidate": r["counts_full_pool"]["v2"]["tau_above_random_candidate"],
-                "top50_above_delta": r["counts_full_pool"]["v2"]["tau_above_delta"],
-                "as_published_n1000": {
-                    "khera_zero_alpha0.05": _fps(cell(z, "v2_cap0.5", 1000, 0.05, "khera_vs_delta")),
-                    "khera_fdr_own_target": cell(z, "v2_cap0.5", 1000, 0.05, "khera_vs_own_target")["fdr"],
-                    "ours_resample_alpha0.1": _fps(cell(r, "v2", 1000, 0.1, "ours_vs_delta"))},
-                "same_intervention_resample_by_n": same,
+                "comparator_pools_resample": {k: r["counts_full_pool"][sp] for k, sp in specs.items()},
+                "khera_zero_ablation": {k: setup(z, sp, ("1000",)) for k, sp in specs.items()},
+                "ours_zero_ablation_same_K_cap_n1000_alpha0.05": _fps(cell(z, "v2_cap0.5", 1000, 0.05, "ours_vs_delta")),
+                "khera_resample_by_n": {k: setup(r, sp, same) for k, sp in specs.items()},
+                "ours_resample_by_n": ours,
                 "attribution_topk_vs_oracle": topk,
             }
         out[key] = tasks

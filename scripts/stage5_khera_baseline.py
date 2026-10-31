@@ -3,7 +3,7 @@
 Khera tests whether zero-ablating latent j hurts the task more than zero-ablating a randomly chosen latent: per
 input, D_j(x) = Delta_j(x) - Delta_r(x) with r drawn uniformly from the other candidates (Khera, Appendix A), a
 betting e-value (aGRAPA, one-sided) against E[D_j] <= 0, and e-BH. Khera's metric is a logit difference; ours is
-the correct-class probability. We run it on the zero-ablation effects of the 250 screened candidates
+the correct-class probability. We run it on the zero-ablation effects of the screened candidates
 on the same re-split replicates as evaluate2 (same permutation streams), next to our procedure on the same inputs
 (zero ablation, minimum effect delta), and score both against:
   - the minimum-effect truth tau_j > delta (our target), and
@@ -33,13 +33,14 @@ EXTRA_N = {"resample": [3000, 4000]}  # the resampling pool has 5,000 inputs: fo
 CHUNK = 25
 
 
-def khera_stat(X: np.ndarray, Kk: int, rng: np.random.Generator) -> np.ndarray:
-    """(c, n, Kc) effects -> (c, n, Kk) paired differences Delta_j - Delta_r, r uniform over the other candidates,
-    drawn per replicate, input and hypothesis; halved into [-1, 1] for the bounded-mean bet (null: mean <= 0)."""
-    c, n, Kc = X.shape
-    r = rng.integers(0, Kc - 1, size=(c, n, Kk))
+def khera_stat(X: np.ndarray, Kk: int, Kr: int, rng: np.random.Generator) -> np.ndarray:
+    """(c, n, Kc) effects -> (c, n, Kk) paired differences Delta_j - Delta_r, r uniform over the first Kr latents
+    except j, drawn per replicate, input and hypothesis; halved into [-1, 1] for the bounded-mean bet (null: mean <= 0).
+    Khera draws r from the tested set, so Kr = Kk; Kr > Kk is the comparator-pool sensitivity."""
+    c, n, _ = X.shape
+    r = rng.integers(0, Kr - 1, size=(c, n, Kk))
     r = r + (r >= np.arange(Kk))                                                  # skip j itself
-    ref = np.take_along_axis(X, r, axis=2)
+    ref = np.take_along_axis(X[:, :, :Kr], r, axis=2)
     return (X[:, :, :Kk] - ref) / 2.0
 
 
@@ -58,15 +59,16 @@ def run_task(cfg: dict, task: str, kind: str) -> dict | None:
     P = np.vstack([z[f"B__{kind}"], z[f"O__{kind}"]])[:, :Kc].astype(np.float64)     # candidates only
     N = P.shape[0]
     K50 = min(int(v2["candidates"]), Kc)
-    # Khera caps the bet at c = 0.5 / B with |X| <= B, so every factor stays in [0.5, 1.5]: cap 0.5 on our halved
-    # difference. "v2" runs both procedures at our cap (0.9); "v2_cap0.5" at Khera's.
-    specs = {"prereg": (Kc, float(ev["bet_cap"])), "v2": (K50, float(v2["bet_cap"])), "v2_cap0.5": (K50, 0.5)}
+    # (tested K, bet cap, comparator pool). Khera caps the bet at c = 0.5 / B with |X| <= B, so every factor stays in
+    # [0.5, 1.5]: cap 0.5 on our halved difference. Khera's comparator comes from the tested set: pool = K.
+    specs = {"prereg": (Kc, float(ev["bet_cap"]), Kc), "v2": (K50, float(v2["bet_cap"]), K50),
+             "v2_cap0.5": (K50, 0.5, K50), "v2_cap0.5_pool250": (K50, 0.5, Kc)}
     tau = P.mean(0)
-    others = (tau.sum() - tau) / (Kc - 1)
     out = {"delta": delta0, "N": N, "candidates": Kc,
            "counts_full_pool": {sp: {"tau_above_delta": int((tau[:Kk] > delta0).sum()),
-                                     "tau_above_random_candidate": int((tau[:Kk] > others[:Kk]).sum()), "K": Kk}
-                                for sp, (Kk, _) in specs.items()},
+                                     "tau_above_random_candidate": int((tau[:Kk] > (tau[:Kr].sum() - tau[:Kk]) / (Kr - 1)).sum()),
+                                     "mean_tau_comparator_pool": float(tau[:Kr].mean()), "K": Kk, "comparator_pool": Kr}
+                                for sp, (Kk, _, Kr) in specs.items()},
            "resplit": {sp: {} for sp in specs}}
     for n in list(s5["test_sizes"]) + EXTRA_N.get(kind, []):
         if n > N - v2["min_oracle"]:
@@ -79,15 +81,15 @@ def run_task(cfg: dict, task: str, kind: str) -> dict | None:
             tau_r += [P[pm[n:]].mean(0) for pm in perms]
             Xte = P[np.stack([pm[:n] for pm in perms])]                                # (c, n, Kc)
             rng = stream_rng(cfg, "s5_order", ti, 4000 + KINDS[kind], n, r0)
-            for sp, (Kk, cap) in specs.items():
+            for sp, (Kk, cap, Kr) in specs.items():
                 for a, s in _selections(Xte[:, :, :Kk], delta0, cap, ev, alphas).items():
                     acc[(sp, "ours")][a].append(s)
-                for a, s in _selections(khera_stat(Xte, Kk, rng), 0.0, cap, ev, alphas).items():
+                for a, s in _selections(khera_stat(Xte, Kk, Kr, rng), 0.0, cap, ev, alphas).items():
                     acc[(sp, "khera")][a].append(s)
         tau_r = np.stack(tau_r)                                                       # (R, Kc) oracle per replicate
-        oth_r = (tau_r.sum(1, keepdims=True) - tau_r) / (Kc - 1)
-        for sp, (Kk, _) in specs.items():
-            t_delta, t_own = tau_r[:, :Kk] > delta0, tau_r[:, :Kk] > oth_r[:, :Kk]
+        for sp, (Kk, _, Kr) in specs.items():
+            oth_r = (tau_r[:, :Kr].sum(1, keepdims=True) - tau_r[:, :Kk]) / (Kr - 1)
+            t_delta, t_own = tau_r[:, :Kk] > delta0, tau_r[:, :Kk] > oth_r
             rec = {}
             for a in alphas:
                 ours, kh = np.concatenate(acc[(sp, "ours")][a]), np.concatenate(acc[(sp, "khera")][a])
