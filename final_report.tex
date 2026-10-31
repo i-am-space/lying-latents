@@ -460,15 +460,12 @@ question directly.
 
 \paragraph{Contributions.}
 \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=2pt]
-  \item A systematic audit of SAE feature selection: 3 models, 9 datasets, 3 families of knockoff samplers (Gaussian, hurdle, learned) and
-        e-value splitting (\S\ref{sec:audit}), including evidence that per-latent diagnostics mislead (\S\ref{sec:samplers}).
-  \item A downstream check: every latent selected by Gaussian and hurdle knockoffs is intervened on and scored
-        against measured effects (\S\ref{sec:downstream}).
-  \item Interventional e-BH with a minimum-effect null, an absolute target that does not depend on the candidate
-        set, with finite-sample FDR control under arbitrary dependence (\S\ref{sec:method}).
-  \item Validation against measured effects on real models, with a stress test and a held-out model, a comparison
-        with zero-effect and relative nulls, and the finding that few screened latents have a meaningful effect
-        on their own (\S\ref{sec:results}).
+  \item An audit of SAE feature selection on 3 models and 9 datasets, covering Gaussian, hurdle and learned knockoffs
+        and e-value splitting (\S\ref{sec:audit}).
+  \item A downstream check that scores every latent knockoffs select against measured effects (\S\ref{sec:downstream}).
+  \item Interventional e-BH with an absolute minimum-effect null (\S\ref{sec:method}).
+  \item Validation against measured effects on two real models, a comparison with zero-effect and relative nulls,
+        and the finding that few screened latents matter on their own (\S\ref{sec:results}).
 \end{enumerate}
 
 %=======================================================
@@ -494,43 +491,31 @@ to select SAE latents \citep{marks2025sparse}. None of these controls the error 
 dependence \citep{benjamini2001control}. Selecting hypotheses from the data that tests them is selective inference
 \citep{berk2013valid, taylor2015statistical}.
 
-\paragraph{Knockoffs.} A latent is null if it tells us nothing about the label $Y$ once all other latents
-are known. Model-X knockoffs \citep{candes2018panning} test this by building, for each latent, a fake copy
-(its \emph{knockoff}) without looking at $Y$. The copies must be \emph{exchangeable} with the real latents:
-swapping any set of latents with their knockoffs leaves the joint distribution unchanged, so no test can
-tell which column is real. A sparse logistic model is then fitted on real and fake latents together, and a
-latent is selected if it predicts the label clearly better than its own fake. A null latent and its fake are
-interchangeable, so each is equally likely to win. Counting how often fakes win therefore estimates the
-number of false selections, and the Knockoff+ threshold \citep{barber2015controlling} uses that count to
-keep FDR at most $q$ (Appendix~\ref{app:planted}). If the knockoffs are not exactly exchangeable, the FDR
-inflation is bounded by a KL gap, a measure of how far their joint distribution is from the exact one
-\citep{barber2020}. Samplers include second-order Gaussian knockoffs, which match only means and
-covariances (equicorrelated or MVR are two ways of choosing how different each knockoff is from its latent, and block MVR
-computes MVR on blocks of at most 512 latents; \citealp{spector2022powerful}); SCIP, which draws each knockoff from the latent's conditional distribution
-in turn \citep{candes2018panning}; Metropolized, a Metropolis--Hastings version of SCIP
-\citep{bates2021metropolized}; and deep generative samplers \citep{romano2020deep}.
+\paragraph{Knockoffs.} A latent is null if it says nothing about the label $Y$ once all other latents are known.
+Model-X knockoffs \citep{candes2018panning} build, without looking at $Y$, a fake copy of each latent (its
+\emph{knockoff}). The copies must be \emph{exchangeable}: swapping any latents with their knockoffs leaves the joint
+distribution unchanged. A latent is selected if it predicts the label clearly better than its fake in a sparse
+logistic fit. A null latent and its fake are equally likely to win, so counting the fakes' wins estimates the false
+selections, and the Knockoff+ threshold \citep{barber2015controlling} uses this to keep FDR at most $q$
+(Appendix~\ref{app:planted}). Inexact knockoffs inflate FDR by at most a KL gap \citep{barber2020}. Samplers include
+second-order Gaussian knockoffs, which match only means and covariances (equicorrelated, MVR, and block MVR on blocks of at
+most 512 latents; \citealp{spector2022powerful}); SCIP, which draws each knockoff from its conditional distribution in turn
+\citep{candes2018panning}; its Metropolized version \citep{bates2021metropolized}; and deep samplers \citep{romano2020deep}.
 
-\paragraph{E-values.} An e-value is a nonnegative score whose average is at most 1 when the null hypothesis
-is true, so a large value is evidence against the null: by Markov's inequality, $\Pr(E \ge 1/\alpha) \le \alpha$.
-e-BH \citep{wang2022evalues} turns $K$ e-values into a list of discoveries. It rejects the $k$ largest, for
-the largest $k$ such that the $k$-th largest is at least $K/(\alpha k)$, and controls FDR at $\alpha$ under any
-dependence between the tests, which the usual $p$-value BH procedure does not guarantee. Betting builds an
-e-value for a bounded mean \citep{waudbysmith2024betting}. A gambler starts with wealth 1 and, one
-observation at a time, bets part of it that the mean exceeds the null value. Under the null the game is fair
-or unfavourable, so the expected final wealth is at most 1; a real effect makes the wealth grow. The final
-wealth is the e-value.
+\paragraph{E-values.} An e-value is a nonnegative score that averages at most 1 under the null, so a large value is
+evidence against it. e-BH \citep{wang2022evalues} turns $K$ e-values into a list of discoveries with FDR at most $\alpha$
+under any dependence. Betting builds an e-value for a bounded mean \citep{waudbysmith2024betting}: a gambler starting
+with wealth 1 repeatedly bets that the mean exceeds the null value. Under the null the expected wealth does not grow, and
+the final wealth is the e-value.
 
-\paragraph{SAE-specific work.} Three recent papers ask which SAE latents are real. \citet{enkhbayar2025}
-applies Gaussian knockoffs to 512 high-activity latents of a Pythia-70M SAE on SST-2 and selects 129 at
-$q = 0.1$. That guarantee assumes the knockoffs are exchangeable with the latents; Section~\ref{sec:audit}
-shows they are not. \citet{khera2026} tests whether zero-ablating a latent hurts a task more than zero-ablating a
-randomly chosen latent, with a betting e-process per latent and e-BH across latents, and finds 6 such latents in GPT-2 Small on
-indirect-object identification, where knockoffs find none. We use the same e-value tools, concurrently, but differ in
-three ways. We require the absolute effect to exceed a minimum size $\delta$, rather than a random latent's effect. We intervene by resampling realistic
-values rather than zeroing. And we check the realised FDR against held-out oracle effects. Our target is absolute, while Khera's depends on the candidate set (\S\ref{sec:results}). \citet{shi2024hypothesis} test a whole circuit rather than single latents. \citet{guo2026discovery} show that observational discovery evidence does not determine an intervention's first-order effect. \citet{bal2026} finds that many SAE
-features which match a known direction are causally inert: 9--14\% in trained SAEs and up to 77\% in a
-degraded one. We measure the same gap on real tasks with error control: most of 250 screened latents have
-some effect, but only 1--9 have a meaningful one.
+\paragraph{SAE-specific work.} \citet{enkhbayar2025} applies Gaussian knockoffs to 512 high-activity latents of a Pythia-70M
+SAE on SST-2 and selects 129 at $q = 0.1$, assuming the exchangeability that \S\ref{sec:audit} tests. \citet{khera2026}
+compares zero-ablating a latent with zero-ablating a random one, using a betting e-process per latent and e-BH, and finds 6 latents
+in GPT-2 Small on indirect-object identification, where knockoffs find none. We use the same e-value tools, concurrently,
+but with an absolute minimum effect, and we compare the two in \S\ref{sec:results}. \citet{shi2024hypothesis} test a whole
+circuit rather than single latents. \citet{guo2026discovery} show that observational discovery evidence does not determine an
+intervention's first-order effect. \citet{bal2026} finds that 9--14\% of SAE features matching a known direction are
+causally inert in trained SAEs, and up to 77\% in a degraded one.
 
 %=======================================================
 \section{Setup}
@@ -594,12 +579,10 @@ Ranges are over three scoring methods.}
 \label{tab:reuse}
 \end{table}
 
-We test this recipe with a linear probe on pooled latents: rank the latents by one of three scores, keep the
-top 10, and test whether zeroing them jointly raises the probe's log-loss, on either the selection rows or
-held-out rows. This zeroes latents in the probe, not in the language model, so it measures the recipe's
-statistical error, not model behaviour. A first version that zeroed single latents certified noise in only
-0.2--1.6\% of experiments, but it also fired on only 10--50\% of planted signals, so we replaced it with this
-test, specified before it ran.
+We test this recipe with a linear probe on pooled latents: rank the latents by one of three scores, keep the top 10, and
+test whether zeroing them jointly raises the probe's log-loss, on selection or held-out rows. This measures the recipe's
+statistical error, not model behaviour. An earlier version that zeroed single latents certified noise in only 0.2--1.6\% of
+experiments but fired on only 10--50\% of planted signals, so we replaced it before running this test.
 
 As Table~\ref{tab:reuse} shows, validating on the selection data certifies noise almost always. Held-out
 validation stays above nominal on Gemma-2 because its null (``ablation changes nothing'') is false even
@@ -639,19 +622,15 @@ and the 3 thresholded Pythia settings.}
 \label{tab:exch}
 \end{table}
 
-A typical latent is exactly zero on 89\% of SST-2 sentences and on 30--73\% of SAEBench texts; Gaussian
-knockoffs never are (Figure~\ref{fig:overview}). We call this point mass at exactly 0 the \emph{zero atom}.
-It gives a simple way to tell them apart, the
-\emph{zero rule}: shown a latent's real value and its knockoff in random order, guess that the one equal to
-exactly 0 is real, and guess at random if neither is. When the real value is 0, which happens with
-probability $\Pr(X=0)$, the rule is always right; otherwise it is right half the time. Its accuracy is
-therefore $(1 + \Pr(X=0))/2$, and for valid knockoffs it would be 0.5. In Table~\ref{tab:exch} it reaches
-0.95 on SST-2, and one swapped Gaussian knockoff is detected on every dataset, while the control stays near
-chance (AUC 0.49--0.51). The planned control check, a band from 10 permutations, passes on only 6, 2 and
-5 of 8 datasets for Gemma-2, Gemma-3 and Pythia. The misses are at most about 0.015, far smaller than the
-violations, but Gemma-3's formal generalisation verdict is therefore not made. Hurdle knockoffs are close to chance one latent at a time but are still detected when all are swapped. On synthetic Gaussian data, where the knockoffs are valid, all tests pass (AUC 0.497, MMD
-$p = 0.96$; \citealp{gretton2012kernel}). Any atom also makes the KL term in the robustness bound
-infinite \citep{barber2020}.
+A typical latent is exactly zero on 89\% of SST-2 sentences and on 30--73\% of SAEBench texts; Gaussian knockoffs never
+are (Figure~\ref{fig:overview}). This \emph{zero atom} gives a simple test, the \emph{zero rule}: shown a real value and
+its knockoff, guess that the one equal to 0 is real. Its accuracy is $(1 + \Pr(X=0))/2$, against 0.5 for valid knockoffs,
+and it reaches 0.95 on SST-2 (Table~\ref{tab:exch}). One swapped Gaussian knockoff is detected on every dataset, while the
+control stays near chance (AUC 0.49--0.51). The planned control check, a band from 10 permutations, passes on only 6, 2
+and 5 of 8 datasets for Gemma-2, Gemma-3 and Pythia. The misses are at most about 0.015, far smaller than the violations,
+but Gemma-3's formal generalisation verdict is therefore not made. Hurdle knockoffs are near chance one latent at a time
+but are detected when all are swapped. On synthetic Gaussian data all tests pass (AUC 0.497, MMD $p = 0.96$;
+\citealp{gretton2012kernel}). Any atom also makes the KL term in the robustness bound infinite \citep{barber2020}.
 
 \subsection{Non-exchangeability becomes FDR breaches}
 \label{sec:breach}
@@ -749,33 +728,23 @@ are ones the model uses. We replace the steering check we first planned with dir
 classification tasks, because there every latent's effect on the answer can be measured, which gives a ground
 truth for each candidate.
 
-\paragraph{Target.} For a prompted classification task, $m(x)$ is the model's probability of the
-correct answer on input $x$, normalised over the label tokens; for a positive SST-2 review, it is the
-probability of ``positive'' rather than ``negative''. The effect of latent $j$ on input $x$ is how much
-this probability drops when we intervene on $j$ (defined below):
+\paragraph{Target.} For a prompted classification task, $m(x)$ is the model's probability of the correct answer on input
+$x$, normalised over the label tokens. The effect of latent $j$ on $x$ is how much this drops when we intervene on $j$:
 \begin{equation}
-\Delta_j(x) = m(x) - m(x;\ \text{intervene on } j).
+\Delta_j(x) = m(x) - m(x;\ \text{intervene on } j) \in [-1, 1].
 \end{equation}
-It lies in $[-1, 1]$ and is negative if the intervention helps. The average effect over the task's inputs is
-$\tauj = \mathbb{E}_x[\Delta_j(x)]$, and we test $H_j: \tauj \le \delta$, where $\delta$ is the smallest
-drop we count as meaningful. We set $\delta = 0.05\,\mathrm{SD}(m)$, 5\% of the spread of $m$ across a
-separate pilot split: 0.008--0.016, about one percentage point. We do not test $\tauj > 0$, because almost
-every latent moves the output slightly, and with enough data a zero-effect null rejects nearly all of them
-(\S\ref{sec:results}). $\delta$ separates a meaningful effect from a merely detectable one. The claim is causal within the model's computation, for these
-prompts; redundant latents can be missed.
+With $\tauj = \mathbb{E}_x[\Delta_j(x)]$, we test $H_j: \tauj \le \delta$, where $\delta$ is the smallest drop we count as
+meaningful: $0.05\,\mathrm{SD}(m)$ on a separate pilot split, 0.008--0.016, about one percentage point. A null of $\tauj
+\le 0$ would not do, because almost every latent moves the output slightly (\S\ref{sec:results}). The claim is causal
+within the model's computation, for these prompts; redundant latents can be missed.
 
-\paragraph{Intervention.} Let $L$ be the layer the SAE reads (Table~\ref{tab:models}) and $h$ the
-residual-stream activation after layer $L$ at one token. The SAE writes $h$ as a sum of latent activations
-$a_j$ times decoder directions $d_j$, plus an error term, the part of $h$ it does not reconstruct. To
-intervene on latent $j$ we replace $a_j$ with a new value $\tilde a_j$ and set
-$h \leftarrow h + (\tilde a_j - a_j)\, d_j$, leaving every other latent and the error term unchanged. We do
-this on every token of the query, meaning the input being classified and the template tokens around it (such
-as ``Review:'' and ``Sentiment:''), but not on the instruction or the demonstrations in the prompt. The primary $\tilde a_j$ is \emph{resampling}: a realistic value drawn from a
-token-level hurdle model of $a_j$ given its 64 most co-active latents (Appendix~\ref{app:stage5}). Zero
-ablation ($\tilde a_j = 0$) and mean ablation ($\tilde a_j$ = its mean activation on the screening split)
-are sensitivity analyses. Validity does not depend on this sampler. For speed we cache the forward pass up
-to layer $L$ and rerun only the later layers on the edited $h$; this matches the full forward pass to within
-$4\times10^{-6}$.
+\paragraph{Intervention.} Let $h$ be the residual-stream activation after the SAE's layer (Table~\ref{tab:models}) at one
+token. The SAE writes $h$ as latent activations $a_j$ times decoder directions $d_j$, plus an error term. To intervene we
+replace $a_j$ with $\tilde a_j$ and set $h \leftarrow h + (\tilde a_j - a_j)\, d_j$, leaving everything else unchanged, on every
+query token, including the template around the input (``Review:'', ``Sentiment:'') but not the instruction or demonstrations.
+The primary $\tilde a_j$ is \emph{resampling}: a realistic value drawn from a token-level hurdle model of $a_j$ given its 64
+most co-active latents (Appendix~\ref{app:stage5}). Zero ablation and mean ablation are sensitivity analyses. Validity does
+not depend on this sampler. We rerun only the layers after the edit, which matches the full forward pass to within $4\times10^{-6}$.
 
 \paragraph{Tasks.} SST-2, AG News, Bias in Bios (5 occupations) and EuroParl (5 languages), one
 demonstration per class, on Gemma-2 and Gemma-3; a pair runs if pilot balanced accuracy is $\ge$0.70
@@ -853,21 +822,16 @@ We now turn the measurement of \S\ref{sec:downstream} into a selection procedure
         \begin{equation}
         E_j = \prod_{t=1}^{n} \bigl(1 + \lambda_t(\Delta_j(x_t) - \delta)\bigr).
         \end{equation}
-        The bet is \emph{predictable}: $\lambda_t$ depends only on $x_1, \dots, x_{t-1}$, never on the input
-        being bet on. We use aGRAPA, $\lambda_t = (\hat\mu - \delta)/(\hat\sigma^2 + (\hat\mu - \delta)^2)$ from
-        the running mean $\hat\mu$ and variance $\hat\sigma^2$ of past effects, with $\hat\mu$ shrunk towards
-        $\delta$ and $\hat\sigma^2$ given a prior pseudo-observation of 0.25, which approximately maximises
-        the growth rate of the wealth. It is clipped to $[0, 0.9/(1+\delta)]$. Since
-        $\Delta_j - \delta \ge -(1+\delta)$, each factor stays at least 0.1, so one input can never wipe out
-        the wealth.
+        The bet is \emph{predictable}: $\lambda_t$ depends only on $x_1, \dots, x_{t-1}$. We use aGRAPA,
+        $\lambda_t = (\hat\mu - \delta)/(\hat\sigma^2 + (\hat\mu - \delta)^2)$ from the running mean and variance of past
+        effects, with $\hat\mu$ shrunk towards $\delta$ and $\hat\sigma^2$ given a prior pseudo-observation of 0.25, clipped
+        to $[0, 0.9/(1+\delta)]$ so each factor stays at least 0.1.
   \item e-BH \citep{wang2022evalues} over the $K$ e-values: sort them as $E_{(1)} \ge \dots \ge E_{(K)}$
         and reject the $k^*$ largest, $k^* = \max\{k : E_{(k)} \ge K/(\alpha
         k)\}$.
 \end{enumerate}
-Under $H_j$ each bet has a nonpositive expected return, so the wealth is a nonnegative supermartingale: it
-cannot go below zero and does not grow in expectation. Its final value $E_j$ is therefore an e-value, and
-e-BH controls FDR at $\alpha$ under any dependence. Assumptions: inputs are drawn at random, and the
-screening split A is independent of B.
+Under $H_j$ each bet has a nonpositive expected return, so the wealth is a nonnegative supermartingale, $E_j$ is an e-value,
+and e-BH controls FDR at $\alpha$ under any dependence. Assumptions: inputs are drawn at random, and split A is independent of B.
 
 \paragraph{Validation.} The oracle $\tauj$ comes from held-out inputs. 200 replicates re-split B $\cup$ O
 into $n$ test inputs (100--2,000) and an oracle. A \emph{stress test} shifts every $\Delta_j$ to mean
@@ -973,31 +937,11 @@ grows with $n$ (Figure~\ref{fig:zeronull}) while staying near 0 against its own 
 \paragraph{Attribution top-$k$.} Keeping the top $k$ attribution scores finds most latents above $\delta$ (power 0.75--1.00),
 but realised FDR is 0.10--0.90 at $k = 10$, 0.64--0.96 at $k = 25$ and 0.82--0.98 at $k = 50$, and nothing says which $k$ to use.
 
-\begin{table}[t]
-\centering
-\small
-\setlength{\tabcolsep}{3pt}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{lll}
-\toprule
- & \citet{khera2026} & Ours \\
-\midrule
-Null & no worse than a random candidate & $\tauj \le \delta$ \\
-Target & relative to the candidate set & absolute \\
-Intervention & zero ablation & resampling \\
-Metric & logit difference & correct-class probability \\
-Candidates & active on $\ge$20\% of prompts & attribution top 50 \\
-Bet cap & $0.5/B$ & $0.9/(1+\delta)$ \\
-Ground truth & synthetic model & measured on two real models \\
-\bottomrule
-\end{tabular}}
-\caption{The two procedures. Both use aGRAPA e-values and e-BH.}
-\label{tab:methods}
-\end{table}
-
-\paragraph{A relative null.} \citet{khera2026} test whether ablating a latent hurts more than ablating a random
-candidate. Table~\ref{tab:methods} sets out how the procedures differ. We reran this test on our candidates and metric, drawing the comparator from the tested set (Table~\ref{tab:khera}),
-so this is a reimplementation, not a reproduction. Against its own target, its FDR is 0.000 in every
+\paragraph{A relative null.} \citet{khera2026} shares our e-values and e-BH, but asks a different question: does ablating a
+latent hurt more than ablating a random candidate, rather than does the effect exceed a fixed $\delta$? It also zeroes latents
+instead of resampling them, measures a logit difference, and takes candidates active on at least 20\% of prompts; its
+ground truth comes from a synthetic model. We reran its test on our candidates and metric, drawing the comparator from the
+tested set (Table~\ref{tab:khera}), so this is a reimplementation, not a reproduction. Against its own target, its FDR is 0.000 in every
 cell. The target itself depends on the candidate set: a candidate's mean effect is 1.2--5.7 times below $\delta$ among the
 top 50 and 6--23 times below it among the 250, so on our tasks $\delta$ is the stricter bar. The two agree at $n \le
 2{,}000$. At $n = 4{,}000$ the relative null exceeds $\alpha$ on two of eight tasks with $K = 50$ and on five with $K = 250$,
