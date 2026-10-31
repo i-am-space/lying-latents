@@ -3,7 +3,7 @@
 %  Self-contained: the bibliography is embedded below (filecontents), so this file can be pasted
 %  into an Overleaf project made from the ACL template (it provides acl.sty and acl_natbib.bst).
 %  Figures: upload fig_overview.pdf, fig20_stage5_power.png, fig21_stage5_zero_null.png and
-%  fig22_stage5_effects.png to the project root; a missing figure prints a red box instead of failing.
+%  fig22_stage5_effects.png and fig_pipeline.pdf to the project root; a missing figure prints a red box instead of failing.
 %  Red "TBD" boxes mark runs that are still in progress.
 %  Every number comes from lying-latents/docs/findings/*.md and lying-latents/results/.
 % ==============================================================================
@@ -394,6 +394,7 @@
 \usepackage{url}
 \usepackage{enumitem}
 \usepackage{placeins}
+\usepackage{float}
 
 % A red box for results that are still running.
 \newcommand{\placeholder}[1]{%
@@ -412,6 +413,12 @@
   Vishal Rao \quad Ayush Daga \quad Krithik Kambhampati \quad Mohammed Sami \\
   International Institute of Information Technology, Hyderabad
 }
+
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\dblfloatsep}{6pt plus 2pt minus 2pt}
 
 \begin{document}
 \maketitle
@@ -809,7 +816,15 @@ $\delta$ has no such limit, because every pick was measured. Consistent with thi
 \label{sec:method}
 %=======================================================
 
-We now turn the measurement of \S\ref{sec:downstream} into a selection procedure with a guarantee.
+We now turn the measurement of \S\ref{sec:downstream} into a selection procedure with a guarantee (Figure~\ref{fig:pipeline}).
+
+\begin{figure*}[t]
+\centering
+\figfile{0.92\textwidth}{fig_pipeline.pdf}
+\caption{Interventional FDR control. Top: one latent is edited inside the model and the drop in the correct-class
+probability is recorded. Bottom: from all latents to a selected list. Schematic; all values are illustrative.}
+\label{fig:pipeline}
+\end{figure*}
 
 \paragraph{Procedure.} Disjoint splits: pilot (300), screening A (1,000), test B (2,500), oracle O
 (2,500).
@@ -992,18 +1007,15 @@ cap were tuned on Gemma-2, so only Gemma-3's power is held out. The audit uses p
 \label{app:data}
 %=======================================================
 
-\paragraph{Excluding the BOS token.} At Gemma-2's layer 20 the beginning-of-sequence position is an
-attention sink: its residual norm is about 2,900 against about 350 for content tokens, its SAE $L_0$
-is about 7,000 against 69, and its relative reconstruction error is 3.9 against 0.3. Including it in
-the mean drives the SAE's explained variance to $-13$, so we average over non-special tokens only.
+\paragraph{Excluding the BOS token.} At Gemma-2's layer 20 the beginning-of-sequence position is an attention sink (residual
+norm about 2,900 vs.\ 350, SAE $L_0$ about 7,000 vs.\ 69). Including it drives the SAE's explained variance to $-13$, so we
+average over non-special tokens only.
 
-\paragraph{Pooling cannot remove the zero atom.} Mean and max pooling give the same SST-2 zero
-fraction (median 0.891), because a latent is zero for a text exactly when it is silent on every
-token. The last content token alone gives 0.9998.
+\paragraph{Pooling cannot remove the zero atom.} Mean and max pooling give the same SST-2 zero fraction (median 0.891), since
+a latent is zero for a text exactly when it is silent on every token.
 
-\paragraph{Covariance.} At $p = 2{,}048$ the sample covariance is ill-conditioned (condition number
-$1.3\times10^4$ on SST-2); Ledoit--Wolf shrinkage \citep{ledoit2004} reduces it to about 4,800 while
-barely changing the matrix.
+\paragraph{Covariance.} At $p = 2{,}048$ the sample covariance has condition number $1.3\times10^4$ on SST-2; Ledoit--Wolf
+shrinkage \citep{ledoit2004} reduces it to about 4,800.
 
 %=======================================================
 \section{Planted-Signal Benchmark}
@@ -1018,31 +1030,24 @@ $\{j : W_j \ge \tau\}$ with
 \tau = \min\Bigl\{t>0 : \tfrac{1 + |\{j : W_j \le -t\}|}{\max(1, |\{j: W_j \ge t\}|)} \le q\Bigr\}
 \end{equation}
 
-Signal latents $S$ are drawn at random; the logit is $a \cdot X_S w / \sqrt{k}$ with random signs $w$
-(linear), or $0.7$ of that plus $0.3$ of standardised pairwise products (interaction), centred for
-class balance. Designs range from few strong signals ($k = 10, 30$) to many weak ones
-($k = 100, 300$), with amplitudes swept and matched to the probe AUC of real labels. Knockoff+ runs at
-$q \in \{0.05, 0.1, 0.2\}$; a cell breaches when its mean FDR exceeds $q$ significantly after BY
-correction across cells. The fair-coin test computes, per replicate, the share of null latents with
-$W_j > 0$ among those with $W_j \ne 0$, and tests the mean over replicates against 0.5.
+Signal latents $S$ are drawn at random; the logit is $a \cdot X_S w / \sqrt{k}$ with random signs $w$ (linear), or $0.7$ of
+that plus $0.3$ of standardised pairwise products (interaction). Designs run from few strong signals ($k = 10, 30$) to many weak
+ones ($k = 100, 300$), with amplitudes swept and matched to the probe AUC of real labels. A cell breaches when its mean FDR
+exceeds $q$ significantly after BY correction. The fair-coin test takes, per replicate, the share of null latents with $W_j > 0$
+among those with $W_j \ne 0$, and tests the mean against 0.5.
 
 %=======================================================
 \section{Hurdle and Deep Knockoff Samplers}
 \label{app:samplers}
 %=======================================================
 
-\paragraph{Hurdle (SCIP).} For $j = 1, \dots, p$ in order, a ridge logistic model gives
-$\Pr(X_j > 0 \mid X_{-j}, \Xk_{<j})$ and a ridge linear model gives $\log X_j \mid X_j > 0$ (log-normal
-sizes); $\Xk_j$ is drawn from the fitted conditionals. SCIP is exact only if the conditionals are
-correct; ours are estimated, so validity is checked by the swap test.
+\paragraph{Hurdle (SCIP).} For $j = 1, \dots, p$ in order, ridge models give $\Pr(X_j > 0 \mid X_{-j}, \Xk_{<j})$ and
+$\log X_j \mid X_j > 0$, and $\Xk_j$ is drawn from them. SCIP is exact only if these are correct, so we check validity with the swap test.
 
-\paragraph{Deep knockoffs.} The residual version adds a learned residual (two hidden layers of 1,024) to the block-MVR
-Gaussian knockoff and trains it with swap MMD, moment matching and decorrelation losses
-\citep{romano2020deep}, cross-fitted over two row folds. The second-order-exact version replaces the Gaussian noise with a
-learned noise that is mapped on every draw to exactly the Gaussian noise's mean and covariance and
-zero covariance with $X$, so the second moments are exact by construction; the network (width 256,
-early stopped) learns only third-order exchangeability moments. Trained on the Gaussian control, it
-does not damage a valid starting point.
+\paragraph{Deep knockoffs.} The residual version adds a learned residual (two hidden layers of 1,024) to the block-MVR knockoff,
+trained with swap MMD, moment matching and decorrelation losses \citep{romano2020deep}, cross-fitted over two folds. The
+second-order-exact version maps learned noise on every draw to the Gaussian noise's mean and covariance and zero covariance with
+$X$, so the network (width 256, early stopped) learns only third-order moments.
 
 %=======================================================
 \section{Observational e-Values}
@@ -1060,7 +1065,7 @@ conservative calibration step is what kept the capped version within target.
 \label{app:sst2repairs}
 %=======================================================
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \small
 \setlength{\tabcolsep}{3pt}
@@ -1096,18 +1101,10 @@ label words \emph{positive / negative}. AG News uses \emph{World, Sports, Busine
 in Bios set 1 \emph{accountant, architect, attorney, dentist, filmmaker}; EuroParl \emph{English,
 French, German, Spanish, Dutch}. The metric uses the first token of each label word.
 
-\paragraph{Gate.} Prompted balanced accuracy on the pilot split: Gemma-2 SST-2 0.95, AG News 0.84,
-Bias in Bios 0.85, EuroParl 0.95; Gemma-3 0.87, 0.77, 0.83, 0.82. Replay error at most
-$4\times10^{-6}$.
+\paragraph{Resampling sampler.} Covariates are the log activations of a latent's 64 most co-active latents on split-A
+query tokens; a ridge logistic model gives the firing probability and a ridge log-normal model the size, clipped to the observed range.
 
-\paragraph{Resampling sampler.} For each latent, the covariates are the log activations of its 64
-most co-active latents on split-A query tokens; a ridge logistic model gives the firing probability
-and a ridge log-normal model the size, clipped to the observed range.
-
-\paragraph{Power table.} Power against the oracle at $\alpha = 0.1$, resampling, $K = 250$ (cap 0.5)
-$\rightarrow$ $K = 50$ (cap 0.9).
-
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \small
 \setlength{\tabcolsep}{2.5pt}
@@ -1126,7 +1123,7 @@ G-3 & Bios & .00$\to$.00 & .00$\to$.00 & .00$\to$.21 & .28$\to$.34 \\
 G-3 & EuroParl & .02$\to$.28 & .31$\to$.58 & .54$\to$.65 & .66$\to$.66 \\
 \bottomrule
 \end{tabular}}
-\caption{Power by number of test inputs.}
+\caption{Power by number of test inputs at $\alpha = 0.1$, resampling: $K = 250$, cap 0.5 $\rightarrow$ $K = 50$, cap 0.9.}
 \label{tab:power-full}
 \end{table}
 
@@ -1136,7 +1133,7 @@ G-3 & EuroParl & .02$\to$.28 & .31$\to$.58 & .54$\to$.65 & .66$\to$.66 \\
 in Bios 0.16 / 0.56 / 0.84, EuroParl 0.05 / 0.44 / 0.60. Against $\tauj > 2$ SE it is at most 0.002
 everywhere.
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \small
 \setlength{\tabcolsep}{3pt}
