@@ -53,7 +53,7 @@ def fig_power():
                 n, pw = curve(rs[sp]["primary"], "power")
                 ax.plot(n, pw, ls, color=col, marker="o", ms=4, label=lab)
             ntrue = ev["interventions"]["resample"]["counts"]["tau_above_delta"]
-            ax.set_title(f"{m}: {tl}  ({ntrue} with $\\tau>\\delta$)", fontsize=11)
+            ax.set_title(f"{m}: {tl}  ({ntrue} with $\\tau>\\delta$)", fontsize=9.5)
             ax.set_xscale("log")
             ax.set_ylim(-0.03, 1.03)
             ax.grid(alpha=0.3)
