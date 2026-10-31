@@ -793,23 +793,17 @@ On Gemma-2 Bias in Bios they select the only latent above $\delta$ in every draw
 These methods use pooled raw-text activations and target association, so they answer a different question (an \emph{estimand mismatch});
 this is not a breach on their own target.
 
-\paragraph{Better knockoff samplers vs.\ the oracle.} Gaussian, block-MVR and hurdle knockoffs on the
-real labels (paired draws, fixed and cross-validated penalties) select nothing at $q = 0.1$ on 6 of 7 tasks,
-and 19--71 latents per draw on Gemma-2 SST-2. None of the SST-2 picks exceeds $\delta$, and 43--61\% have
-$\tauj > 2$ SE. In the planned paired contrast (cross-validated penalty), hurdle picks more often have
-$\tauj > 2$ SE than block-MVR picks ($+0.07$, $p = 0.015$, 10 paired draws that share data, so descriptive), but less often than
-equicorrelated picks ($-0.11$). A better sampler changes the mix of false positives and still recovers
-none of the latents above $\delta$ at $q = 0.1$; at $q = 0.2$ a few picks on AG News and Gemma-3 EuroParl exceed
-$\delta$ (2--5\% of picks, at most 6\% of the latents above $\delta$), similar to the 0.4--3.6\% of measured
-latents above $\delta$, a descriptive comparison on few hits. Better exchangeability does not give better picks.
+\paragraph{Better knockoff samplers vs.\ the oracle.} On Gemma-2 SST-2, Gaussian, block-MVR and hurdle knockoffs (paired draws,
+fixed and cross-validated penalties) select 19--71 latents per draw; none exceeds $\delta$, and 43--61\% have $\tauj > 2$ SE. In
+the planned paired contrast (cross-validated penalty), hurdle picks more often have $\tauj > 2$ SE than block-MVR picks ($+0.07$,
+$p = 0.015$, 10 paired draws that share data, so descriptive), but less often than equicorrelated picks ($-0.11$). At $q = 0.2$ a
+few picks on AG News and Gemma-3 EuroParl exceed $\delta$ (2--5\% of picks, at most 6\% of the latents above $\delta$), similar
+to the 0.4--3.6\% of measured latents above $\delta$, a descriptive comparison on few hits. Better exchangeability does not give better picks.
 
-\paragraph{The latent pool.} Knockoffs choose from the 2,048 most frequently firing latents. Of the 33 latents above
-$\delta$ on the seven tasks, 25 lie in that pool, and knockoffs pick none of them at $q = 0.1$, so the pool does
-not explain the miss. The other 8 fire too rarely to enter it, and no method on that pool can select them;
-attribution screens all 16k. Recall here is among latents we measured, not all 16k; the share of picks above
-$\delta$ has no such limit, because every pick was measured. Consistent with this gap,
-\citet{khera2026} report that Gaussian knockoffs select nothing on GPT-2 small and exceed the target on a synthetic SAE, and
-\citet{guo2026discovery} show that observational evidence does not determine an intervention's first-order effect.
+\paragraph{The latent pool.} Knockoffs choose from the 2,048 most frequently firing latents. Of the 33 latents above $\delta$ on
+the seven tasks, 25 lie in that pool, and knockoffs pick none at $q = 0.1$, so the pool does not explain the miss. The other 8
+fire too rarely to enter it; attribution screens all 16k. Recall here is among measured latents, while the share of picks above
+$\delta$ has no such limit, because every pick was measured.
 
 %=======================================================
 \section{Interventional FDR Control}
@@ -820,7 +814,7 @@ We now turn the measurement of \S\ref{sec:downstream} into a selection procedure
 
 \begin{figure*}[t]
 \centering
-\figfile{\textwidth}{fig_pipeline.pdf}
+\figfile{0.9\textwidth}{fig_pipeline.pdf}
 \caption{Architecture of interventional FDR control. Top: one latent is edited between the SAE's encoder and decoder, and the
 drop in the correct-class probability is recorded. Bottom: how the data splits feed the procedure. Schematic.}
 \label{fig:pipeline}
@@ -969,33 +963,31 @@ below 0.002. Under zero ablation, with the same $K$ and cap at $n = 1{,}000$, ne
 \label{sec:discussion}
 %=======================================================
 
-Observational SAE feature selection has two separate problems. Its guarantee rests on a joint distributional
-assumption none of our samplers can be certified to meet, and its target is association rather than effect. The
-hurdle sampler shows that these are distinct: it repairs the zeros and single-latent exchangeability, yet its picks
-have no more meaningful effects than Gaussian ones. Interventional e-BH needs neither assumption. The minimum effect is the central
-choice: ``most screened latents have some effect'' and ``1--9 have a meaningful one'' are both true, and a zero-effect
-null erases the difference. A relative null keeps a useful question, whether a latent stands out from its candidate set,
-but that answer changes with the set; an absolute $\delta$ does not, at the cost of power near a cut-off we had to choose.
-Future work: larger models, group testing of correlated latents, and other interventions such as steering.
+Observational SAE feature selection has two separate problems: a guarantee resting on a joint assumption none of our samplers
+can be certified to meet, and a target of association rather than effect. The hurdle sampler shows these are distinct: it repairs
+the zeros, yet its picks have no more meaningful effects than Gaussian ones. Interventional e-BH needs neither assumption. The
+minimum effect is the central choice: ``most screened latents have some effect'' and ``1--9 have a meaningful one'' are both true,
+and a zero-effect null erases the difference. A relative null asks whether a latent stands out from its candidate set, an answer
+that changes with the set; an absolute $\delta$ does not, at the cost of power near a cut-off we had to choose.
 
 %=======================================================
 \section{Conclusion}
 %=======================================================
 
-Search-then-validate can certify noise, knockoffs need an exchangeability SAE latents break, and better samplers
-repair the statistics without changing what is selected: the latents knockoffs pick are rarely ones the model
-uses. Testing interventions directly with betting e-values, e-BH and a minimum-effect null controls the FDR of causal
-claims about latents without any assumption about their distribution, and shows that few of the screened SAE latents
-have a meaningful effect on their own.
+Search-then-validate can certify noise, knockoffs need an exchangeability SAE latents break, and better samplers repair the
+statistics without changing what is selected. Testing interventions directly with betting e-values, e-BH and a minimum-effect null
+controls the FDR of causal claims about latents without any assumption about their distribution, and shows that few of the
+screened latents have a meaningful effect on their own.
 
 %=======================================================
-\section*{Limitations}
+\section*{Limitations and Future Work}
 %=======================================================
 
-Models have 1--2B parameters, with one SAE each. The interventional experiments use four tasks and one prompt format. Power is
-relative to screened candidates, single-latent tests miss jointly redundant latents, and power at small
-$n$ is limited. Observational baselines see pooled raw-text activations of 2,048 latents. Steering was planned but not run, so we do not test sufficiency. The comparison with \citet{khera2026} is a reimplementation, and its large-$n$ part uses resampling. $K$ and the bet
-cap were tuned on Gemma-2, so only Gemma-3's power is held out. The audit uses planted labels on real latents.
+Models have 1--2B parameters, with one SAE each, and the interventional experiments use four tasks and one prompt format. Power is
+relative to screened candidates, and single-latent tests miss jointly redundant latents. Steering was planned but not run, so we do
+not test sufficiency. The comparison with \citet{khera2026} is a reimplementation, and its large-$n$ part uses resampling. $K$ and
+the bet cap were tuned on Gemma-2, so only Gemma-3's power is held out. The audit uses planted labels on real latents. Future work:
+larger models, group testing of correlated latents, and other interventions such as steering.
 
 \bibliography{lyinglatents}
 \bibliographystyle{acl_natbib}
